@@ -79,17 +79,18 @@ Signals ──> Intelligence ──> IAES Standard ──> Connectors ──> En
 
 ## Producers
 
-IAES is not just for AI. Any system that observes industrial assets can produce events:
+IAES events are produced by systems capable of **interpreting** operational signals — not by the signals themselves. A PLC knows `vibration_rms = 4.6`. That is telemetry. IAES begins where interpretation begins.
 
 | Producer | `source` example |
 |----------|-----------------|
 | AI diagnosis engine | `wertek.ai.vibration` |
-| Sensor gateway | `banner.dxm100` |
+| Rule / threshold engine | `acme.rule_engine` |
 | Manual inspection | `operator.manual_inspection` |
 | Expert assessment | `operator.field_assessment` |
-| Rule engine | `acme.rule_engine` |
 | Lab analysis | `lab.oil_analysis` |
-| SCADA/PLC | `scada.plc_01` |
+| Maintenance application | `wertek.ai.cmms` |
+
+Operational systems (PLCs, SCADA, sensor gateways) emit raw signals. These are converted into IAES events by downstream intelligence layers. An edge device MAY produce IAES directly if it has sufficient intelligence (edge AI, embedded rule engine).
 
 ## System Compatibility
 
