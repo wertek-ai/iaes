@@ -50,6 +50,10 @@ Signals ──> Intelligence ──> IAES Standard ──> Connectors ──> En
 }
 ```
 
+## Website
+
+**[iaes.dev](https://iaes.dev)** — Browse the specification, schemas, and examples online.
+
 ## Specification
 
 - **[IAES_SPEC.md](IAES_SPEC.md)** — Full specification (human-readable)
