@@ -14,13 +14,17 @@ IAES provides the **neutral layer in between** — a common event format that an
 Signals ──> Intelligence ──> IAES Standard ──> Connectors ──> Enterprise Systems
 ```
 
-## Event Types (v1.0)
+## Event Types (v1.1)
 
-| Event Type | Purpose |
-|------------|---------|
-| `asset.measurement` | Physical sensor reading (vibration, temperature, pressure, current, etc.) |
-| `asset.health` | AI diagnosis or expert assessment (health index, fault classification, RUL, recommended action) |
-| `maintenance.work_order_intent` | Intent to create a work order (the consumer decides how to act) |
+| Event Type | Version | Purpose |
+|------------|---------|---------|
+| `asset.measurement` | 1.0 | Physical sensor reading (vibration, temperature, pressure, current, etc.) |
+| `asset.health` | 1.0 | AI diagnosis or expert assessment (health index, fault classification, RUL, recommended action) |
+| `maintenance.work_order_intent` | 1.0 | Intent to create a work order (the consumer decides how to act) |
+| `maintenance.completion` | 1.1 | Work order completion acknowledgment with outcome details |
+| `asset.hierarchy` | 1.1 | Asset hierarchy structure sync (organization, plant, area, equipment) |
+| `sensor.registration` | 1.1 | Sensor discovery, onboarding, and lifecycle tracking |
+| `maintenance.spare_part_usage` | 1.1 | Spare parts consumed during maintenance activities |
 
 ## Quick Example
 
@@ -50,24 +54,29 @@ Signals ──> Intelligence ──> IAES Standard ──> Connectors ──> En
 }
 ```
 
-## Website
-
-**[iaes.dev](https://iaes.dev)** — Browse the specification, schemas, and examples online.
-
 ## Specification
 
 - **[IAES_SPEC.md](IAES_SPEC.md)** — Full specification (human-readable)
 - **[schema/](schema/)** — JSON Schema files (machine-readable)
-  - `iaes-envelope.schema.json` — Common envelope
+  - `iaes-envelope.schema.json` — Common envelope (with `batch_id`)
   - `asset-measurement.schema.json`
   - `asset-health.schema.json`
   - `maintenance-work-order-intent.schema.json`
+  - `maintenance-completion.schema.json` (v1.1)
+  - `asset-hierarchy.schema.json` (v1.1)
+  - `sensor-registration.schema.json` (v1.1)
+  - `maintenance-spare-part-usage.schema.json` (v1.1)
 - **[examples/](examples/)** — Complete JSON examples
   - `asset-health-ai.json` — AI-originated health event
   - `asset-health-human.json` — Human expert assessment
   - `asset-measurement.json` — Sensor reading
   - `work-order-intent.json` — Work order intent
-  - `full-flow.json` — Complete flow (measurement -> diagnosis -> intent)
+  - `full-flow.json` — Complete v1.0 flow (measurement -> diagnosis -> intent)
+  - `maintenance-completion.json` — Work order completion (v1.1)
+  - `asset-hierarchy.json` — 4-level hierarchy sync (v1.1)
+  - `sensor-registration.json` — MCSA CT sensor registration (v1.1)
+  - `spare-part-usage.json` — Spare part consumption (v1.1)
+  - `full-flow-v1.1.json` — Complete v1.1 flow (measurement -> health -> WO -> completion + spare part)
 
 ## Design Principles
 
@@ -79,18 +88,17 @@ Signals ──> Intelligence ──> IAES Standard ──> Connectors ──> En
 
 ## Producers
 
-IAES events are produced by systems capable of **interpreting** operational signals — not by the signals themselves. A PLC knows `vibration_rms = 4.6`. That is telemetry. IAES begins where interpretation begins.
+IAES is not just for AI. Any system that observes industrial assets can produce events:
 
 | Producer | `source` example |
 |----------|-----------------|
 | AI diagnosis engine | `wertek.ai.vibration` |
-| Rule / threshold engine | `acme.rule_engine` |
+| Sensor gateway | `banner.dxm100` |
 | Manual inspection | `operator.manual_inspection` |
 | Expert assessment | `operator.field_assessment` |
+| Rule engine | `acme.rule_engine` |
 | Lab analysis | `lab.oil_analysis` |
-| Maintenance application | `wertek.ai.cmms` |
-
-Operational systems (PLCs, SCADA, sensor gateways) emit raw signals. These are converted into IAES events by downstream intelligence layers. An edge device MAY produce IAES directly if it has sufficient intelligence (edge AI, embedded rule engine).
+| SCADA/PLC | `scada.plc_01` |
 
 ## System Compatibility
 
@@ -105,11 +113,18 @@ Operational systems (PLCs, SCADA, sensor gateways) emit raw signals. These are c
 
 ## Roadmap
 
-**v1.1** (planned):
+**v1.1** (current):
+- `maintenance.completion` — WO completion acknowledgment
 - `asset.hierarchy` — Asset tree sync
 - `sensor.registration` — Sensor onboarding
-- `maintenance.completion` — WO completion acknowledgment
 - `maintenance.spare_part_usage` — Parts consumed
+- `batch_id` — Batch operation grouping
+- Failure Mode Taxonomy (Appendix A, based on ISO 14224)
+
+**v2.0** (planned):
+- Streaming events (time-series batches)
+- Binary payload support (waveforms, spectra)
+- Event schema registry with versioned evolution
 
 ## Reference Implementation
 
@@ -121,4 +136,4 @@ IAES is an open specification. The specification text and JSON schemas are licen
 
 ---
 
-*IAES v1.0 — March 2026*
+*IAES v1.1 — March 2026*

@@ -1,4 +1,4 @@
-# IAES — Industrial Asset Event Standard v1.0
+# IAES — Industrial Asset Event Standard v1.1
 
 > A vendor-neutral event format for industrial asset intelligence.
 
@@ -36,11 +36,12 @@ Every IAES event shares this envelope:
 
 ```json
 {
-  "spec_version": "1.0",
+  "spec_version": "1.1",
   "event_type": "asset.health",
   "event_id": "uuid",
   "correlation_id": "uuid",
   "source_event_id": "uuid | null",
+  "batch_id": "string | null",
   "timestamp": "ISO 8601",
   "source": "vendor.system.subsystem",
   "content_hash": "sha256_16char",
@@ -58,13 +59,14 @@ Every IAES event shares this envelope:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `spec_version` | string | yes | IAES spec version (currently `"1.0"`) |
+| `spec_version` | string | yes | IAES spec version (`"1.0"` or `"1.1"`) |
 | `event_type` | string | yes | Dot-notation event type |
 | `event_id` | UUID | yes | Unique identifier for this event |
 | `correlation_id` | UUID | yes | Groups related events in a single flow |
 | `source_event_id` | UUID | no | References the originating event |
 | `timestamp` | ISO 8601 | yes | When the event occurred |
 | `source` | string | yes | Dot-notation producer identity (e.g. `wertek.ai.diagnosis`, `operator.manual_inspection`) |
+| `batch_id` | string | no | Groups events from a single batch operation (e.g. gateway poll, bulk sync) |
 | `content_hash` | string | no | SHA-256 prefix (16 chars) of `data` payload for dedup |
 | `asset` | object | yes | Asset identity (see Asset Identity) |
 | `data` | object | yes | Event-specific payload |
@@ -82,7 +84,7 @@ Every IAES event shares this envelope:
 
 The standard deliberately does NOT define a full asset hierarchy. Different organizations model hierarchies differently (ISO 14224, ISA-95, custom). IAES only requires enough context to identify the asset.
 
-## Event Types (v1.0)
+## Event Types
 
 ### `asset.measurement`
 
@@ -163,7 +165,136 @@ Declares the INTENT to create a work order. The consumer decides whether and how
 | `description` | string | no | Detailed description |
 | `priority` | enum | yes | low, medium, high, emergency |
 | `recommended_due_days` | integer | no | Suggested deadline in days |
-| `triggered_by` | string | no | What caused this intent (alert, schedule, manual) |
+| `triggered_by` | string | no | What caused this intent: `alert`, `schedule`, `manual`, `threshold`, `ai_diagnosis` |
+
+> **Note: severity vs priority.** `severity` (on `asset.health`) describes the *condition* of the asset. `priority` (on `maintenance.work_order_intent`) describes the *urgency of response*. They are related but distinct: a critical severity typically maps to emergency priority, but the consumer decides this mapping.
+
+### `maintenance.completion` (v1.1)
+
+Acknowledges the completion of a work order. Links back to the original intent via `correlation_id`.
+
+```json
+{
+  "event_type": "maintenance.completion",
+  "data": {
+    "status": "completed",
+    "work_order_id": "WO-2026-0042",
+    "actual_duration_seconds": 7200,
+    "technician_id": "TECH-003",
+    "checklist_completion_pct": 100,
+    "completion_notes": "Bearing replaced. Post-repair vibration 0.8 mm/s.",
+    "spare_parts_count": 1,
+    "failure_confirmed": true,
+    "failure_mode": "bearing_inner_race"
+  }
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `status` | enum | yes | completed, partially_completed, cancelled, deferred |
+| `work_order_id` | string | yes | Identifier of the completed work order |
+| `actual_duration_seconds` | integer | no | Actual time spent in seconds |
+| `technician_id` | string | no | Identifier of the technician |
+| `checklist_completion_pct` | float 0-100 | no | Percentage of checklist completed |
+| `completion_notes` | string | no | Free-text notes from the technician |
+| `spare_parts_count` | integer | no | Number of spare parts consumed (detail in `spare_part_usage` events) |
+| `failure_confirmed` | boolean | no | Whether the predicted failure mode was confirmed |
+| `failure_mode` | string | no | Confirmed or observed failure mode (see Appendix A) |
+
+### `asset.hierarchy` (v1.1)
+
+Synchronizes asset hierarchy structure across systems. Each event represents one node and its relationship.
+
+```json
+{
+  "event_type": "asset.hierarchy",
+  "data": {
+    "hierarchy_level": "equipment",
+    "relationship_type": "child_of",
+    "parent_asset_id": "AREA-TURBINAS",
+    "asset_type": "motor",
+    "serial_number": "WEG-2024-78432",
+    "manufacturer": "WEG",
+    "model": "W22 Premium 75HP",
+    "is_active": true
+  }
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `hierarchy_level` | enum | yes | organization, plant, area, equipment |
+| `relationship_type` | enum | yes | parent_of, child_of, sibling_of, depends_on |
+| `parent_asset_id` | string | no | Identifier of the parent node |
+| `asset_type` | string | no | Equipment type (motor, pump, compressor, etc.) |
+| `serial_number` | string | no | Manufacturer serial number |
+| `manufacturer` | string | no | Equipment manufacturer |
+| `model` | string | no | Equipment model |
+| `location` | string | no | Physical location description |
+| `is_active` | boolean | no | Whether the asset is active/operational |
+
+### `sensor.registration` (v1.1)
+
+Sensor discovery, onboarding, and lifecycle tracking.
+
+```json
+{
+  "event_type": "sensor.registration",
+  "data": {
+    "sensor_id": "MCSA-T41-001",
+    "registration_status": "registered",
+    "sensor_model": "Wertek MCSA CT Module",
+    "device_serial": "T41-2026-00042",
+    "firmware_version": "1.0.3",
+    "measurement_capabilities": ["current_waveform", "current_spectrum", "current_rms", "thd"],
+    "calibration_date": "2026-03-05",
+    "communication_protocol": "mqtt"
+  }
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `sensor_id` | string | yes | Unique sensor identifier |
+| `registration_status` | enum | yes | discovered, registered, calibrated, decommissioned |
+| `sensor_model` | string | no | Sensor hardware model |
+| `device_serial` | string | no | Device serial number |
+| `firmware_version` | string | no | Current firmware version |
+| `measurement_capabilities` | string[] | no | Measurement types this sensor provides |
+| `calibration_date` | ISO 8601 date | no | Last calibration date |
+| `communication_protocol` | string | no | Protocol (mqtt, modbus_tcp, opcua, lorawan, etc.) |
+
+### `maintenance.spare_part_usage` (v1.1)
+
+Records spare parts consumed during a maintenance activity. Linked to the work order via `work_order_id` and to the completion event via `correlation_id`. There may be 0-N spare part usage events per work order.
+
+```json
+{
+  "event_type": "maintenance.spare_part_usage",
+  "data": {
+    "work_order_id": "WO-2026-0042",
+    "spare_part_id": "SP-SKF-6205",
+    "quantity_used": 1,
+    "part_number": "SKF 6205-2RS",
+    "part_name": "Rodamiento rigido de bolas 6205-2RS",
+    "unit_cost": 28.50,
+    "currency": "USD",
+    "total_cost": 28.50
+  }
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `work_order_id` | string | yes | Work order that consumed the part |
+| `spare_part_id` | string | yes | Part identifier in the inventory system |
+| `quantity_used` | number | yes | Quantity consumed (> 0) |
+| `part_number` | string | no | Manufacturer part number |
+| `part_name` | string | no | Human-readable part name |
+| `unit_cost` | number | no | Cost per unit |
+| `currency` | string | no | ISO 4217 currency code (USD, MXN, BRL) |
+| `total_cost` | number | no | Total cost (quantity_used * unit_cost) |
 
 ## Severity Standard
 
@@ -188,17 +319,39 @@ Consumers SHOULD use `content_hash` + `asset.asset_id` + `event_type` to detect 
 
 ## Producers
 
-IAES events can originate from any source — not just AI systems:
+IAES events are produced by systems capable of interpreting operational signals — not by the signals themselves.
+
+A PLC, sensor, or gateway knows `vibration_rms = 4.6`. That is telemetry, not a diagnosis. IAES begins where interpretation begins: an AI model that classifies a bearing fault, a rule engine that triggers on a threshold, or a technician who hears cavitation.
+
+### Intelligence layer producers
 
 | Source | Example `source` value | Typical events |
 |--------|----------------------|----------------|
 | AI diagnosis engine | `wertek.ai.vibration` | `asset.health` |
 | Rule/threshold engine | `acme.rule_engine` | `asset.health` |
-| Sensor gateway | `banner.dxm100` | `asset.measurement` |
 | Manual inspection | `operator.manual_inspection` | `asset.health`, `asset.measurement` |
 | Technician assessment | `operator.field_assessment` | `asset.health` |
 | Lab analysis | `lab.oil_analysis` | `asset.measurement` |
-| SCADA/PLC | `scada.plc_01` | `asset.measurement` |
+| Maintenance application | `wertek.ai.cmms` | `maintenance.work_order_intent` |
+
+### Signal sources (upstream of IAES)
+
+Operational systems such as PLCs, SCADA platforms, sensor gateways, and historians typically emit raw signals or measurements. These are converted into IAES events by downstream intelligence layers.
+
+```
+Industrial Signals              IAES Events
+(PLC / Sensors / SCADA)         (semantic, interpreted)
+        │                               │
+        ▼                               ▼
+  Telemetry Layer               ┌──────────────┐
+  (OPC UA / Modbus / MQTT)      │  CMMS        │
+        │                       │  Dashboards   │
+        ▼                       │  Historians   │
+  Intelligence Layer     ──────>│  Integrations │
+  (AI / rules / human)         └──────────────┘
+```
+
+An edge device MAY produce IAES events directly if it has sufficient intelligence (e.g. edge AI, embedded rule engine). But the typical flow is: signals are ingested by an intelligence layer, which then emits IAES events.
 
 The `source` field is what makes IAES vendor-neutral. A technician with a stethoscope and an AI model both produce the same `asset.health` event — the consumer doesn't need to know the difference.
 
@@ -268,7 +421,7 @@ Systems that receive IAES events MUST follow these rules:
 Observation (sensor, AI, or human expert)
     |
     v
-asset.measurement
+asset.measurement ─── [batch_id groups gateway polls]
     |
     v
 Diagnosis (AI engine, rule engine, or expert assessment)
@@ -281,7 +434,15 @@ maintenance.work_order_intent
     |
     v
 Connector Adapter (SAP / Odoo / MaintainX / Fracttal / PI System)
+    |
+    v
+maintenance.completion ─── [technician closes WO]
+    |
+    v
+maintenance.spare_part_usage ─── [0-N parts consumed]
 ```
+
+All events in the chain share the same `correlation_id`. Each references its predecessor via `source_event_id`.
 
 ## System Compatibility
 
@@ -295,14 +456,6 @@ Connector Adapter (SAP / Odoo / MaintainX / Fracttal / PI System)
 | Fracttal | Custom fields + OT |
 | Grafana | Dashboard metrics |
 | Any MQTT broker | JSON payload |
-
-## Future (v1.1)
-
-Planned additional event types:
-- `asset.hierarchy` — Full asset tree sync
-- `sensor.registration` — Sensor discovery and onboarding
-- `maintenance.completion` — Work order completion acknowledgment
-- `maintenance.spare_part_usage` — Parts consumed during maintenance
 
 ## Versioning
 
@@ -319,6 +472,48 @@ IAES uses semantic versioning for the specification itself:
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | March 2026 | Initial release. 3 event types, common envelope, JSON Schema. |
+| 1.1 | March 2026 | 4 new event types (maintenance.completion, asset.hierarchy, sensor.registration, maintenance.spare_part_usage), batch_id envelope field, failure mode taxonomy (Appendix A). |
+
+## Appendix A: Failure Mode Taxonomy
+
+Standard failure mode values for use in `asset.health` and `maintenance.completion` events. Based on ISO 14224 failure mode classification. Custom values are allowed — this list provides interoperability defaults.
+
+### Rotating Equipment
+
+| Value | Description |
+|-------|-------------|
+| `bearing_inner_race` | Inner race defect |
+| `bearing_outer_race` | Outer race defect |
+| `bearing_ball` | Rolling element defect |
+| `bearing_cage` | Cage/retainer defect |
+| `misalignment` | Shaft misalignment (angular or parallel) |
+| `unbalance` | Mass unbalance |
+| `looseness_mechanical` | Mechanical looseness (structural or rotating) |
+| `looseness_electrical` | Electrical looseness (connections) |
+| `gear_mesh` | Gear mesh defect |
+| `gear_tooth` | Gear tooth wear or breakage |
+
+### Electrical
+
+| Value | Description |
+|-------|-------------|
+| `electrical_fault` | General electrical fault |
+| `winding_short` | Stator or rotor winding short circuit |
+| `broken_rotor_bar` | Broken rotor bar (induction motors) |
+| `eccentricity` | Air gap eccentricity (static or dynamic) |
+
+### Fluid / Thermal
+
+| Value | Description |
+|-------|-------------|
+| `cavitation` | Cavitation in pumps or valves |
+| `overheating` | Abnormal temperature rise |
+| `lubrication_failure` | Inadequate or degraded lubrication |
+| `seal_leak` | Seal or gasket leak |
+| `fouling` | Surface fouling or buildup |
+| `corrosion` | Corrosion or material degradation |
+
+Producers SHOULD use these values when applicable. Custom values (e.g. `blade_erosion`, `coupling_wear`) are valid and consumers MUST tolerate them.
 
 ## License
 
@@ -326,6 +521,6 @@ IAES is an open specification licensed under [CC BY 4.0](https://creativecommons
 
 ---
 
-*IAES v1.0 — March 2026*
+*IAES v1.1 — March 2026*
 *Created by the [Wertek AI](https://wertek.ai) team.*
 *Reference implementation: [Wertek Integration Framework](https://github.com/wertek-ai/wertek-integrations)*
