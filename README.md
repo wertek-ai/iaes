@@ -18,7 +18,7 @@ Sensors --> Intelligence --> IAES --> Connectors --> Enterprise Systems
 
 ```bash
 pip install iaes            # Python
-npm install iaes            # TypeScript / Node.js
+npm install @iaes/sdk            # TypeScript / Node.js
 ```
 
 ## Examples
@@ -41,7 +41,7 @@ payload = event.to_dict()  # IAES wire format, ready for json.dumps()
 ```
 
 ```typescript
-import { AssetMeasurement } from "iaes"
+import { AssetMeasurement } from "@iaes/sdk"
 
 const event = new AssetMeasurement({
   asset_id: "MOTOR-001",
