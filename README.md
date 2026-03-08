@@ -1,41 +1,207 @@
 # IAES — Industrial Asset Event Standard
 
-> A vendor-neutral event specification for industrial asset measurements, diagnoses, and maintenance intents.
+> A vendor-neutral event format for industrial asset measurements, diagnoses, and maintenance intents.
 
-IAES defines how industrial observations — whether from sensors, AI engines, or human experts — are represented and transferred across operational systems like CMMS, historians, SCADA platforms, and dashboards.
-
-## Why IAES?
+[![PyPI](https://img.shields.io/pypi/v/iaes)](https://pypi.org/project/iaes/)
+[![npm](https://img.shields.io/npm/v/iaes)](https://www.npmjs.com/package/iaes)
+[![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
 Industrial systems speak different languages. A vibration sensor outputs raw waveforms. An AI model outputs health scores. SAP expects maintenance notifications. PI System expects tag values. MaintainX expects user variables.
 
-IAES provides the **neutral layer in between** — a common event format that any producer can emit and any consumer can understand, without knowing each other's implementation.
+IAES provides the **neutral layer in between** — one event format that any producer can emit and any consumer can understand.
 
 ```
-Signals ──> Intelligence ──> IAES Standard ──> Connectors ──> Enterprise Systems
+Sensors --> Intelligence --> IAES --> Connectors --> Enterprise Systems
+```
+
+## Install
+
+```bash
+pip install iaes            # Python
+npm install iaes            # TypeScript / Node.js
+```
+
+## Examples
+
+### Vibration measurement
+
+```python
+from iaes import AssetMeasurement
+
+event = AssetMeasurement(
+    asset_id="MOTOR-001",
+    measurement_type="vibration_velocity",
+    value=4.2,
+    unit="mm/s",
+    source="acme.sensors.plant1",
+    units_qualifier="rms",           # ISO 17359
+    sampling_rate_hz=25600,
+)
+payload = event.to_dict()  # IAES wire format, ready for json.dumps()
+```
+
+```typescript
+import { AssetMeasurement } from "iaes"
+
+const event = new AssetMeasurement({
+  asset_id: "MOTOR-001",
+  measurement_type: "vibration_velocity",
+  value: 4.2,
+  unit: "mm/s",
+  source: "acme.sensors.plant1",
+  units_qualifier: "rms",
+  sampling_rate_hz: 25600,
+})
+const payload = JSON.stringify(event)  // toJSON() called automatically
+```
+
+### Energy / power quality
+
+```python
+from iaes import AssetMeasurement
+
+pf_event = AssetMeasurement(
+    asset_id="SUBSTATION-A",
+    measurement_type="power_factor",
+    value=0.82,
+    unit="ratio",
+    source="ion8650.meter_01",
+)
+
+thd_event = AssetMeasurement(
+    asset_id="SUBSTATION-A",
+    measurement_type="thd_voltage",
+    value=6.3,
+    unit="%",
+    source="ion8650.meter_01",
+)
+```
+
+### AI health diagnosis
+
+```python
+from iaes import AssetHealth, Severity
+
+event = AssetHealth(
+    asset_id="MOTOR-001",
+    health_index=0.16,
+    severity=Severity.CRITICAL,
+    failure_mode="bearing_inner_race",
+    rul_days=5,
+    recommended_action="Replace bearing immediately",
+    source="ai.vibration_model",
+    iso_13374_status="unacceptable",   # ISO 13374
+    iso_14224={                         # ISO 14224
+        "mechanism_code": "1.1",
+        "cause_code": "1",
+        "detection_method": "VIB",
+    },
+)
+```
+
+### Work order intent
+
+```python
+from iaes import WorkOrderIntent
+
+event = WorkOrderIntent(
+    asset_id="MOTOR-001",
+    title="Replace bearing DE — AI diagnosis critical",
+    priority="high",
+    triggered_by="ai_diagnosis",
+    recommended_due_days=3,
+    source="ai.vibration_model",
+    source_event_id="<health_event_id>",  # links to the diagnosis
+)
+```
+
+### Maintenance completion
+
+```python
+from iaes import MaintenanceCompletion
+
+event = MaintenanceCompletion(
+    asset_id="MOTOR-001",
+    work_order_id="WO-2026-0042",
+    status="completed",
+    actual_duration_seconds=7200,
+    failure_confirmed=True,
+    failure_mode="bearing_inner_race",
+    source="cmms.sap_pm",
+)
+```
+
+## Validate
+
+```python
+from iaes import validate, ValidationError
+
+try:
+    validate(event.to_dict())
+    print("Valid IAES event")
+except ValidationError as e:
+    print(e)
+```
+
+Requires: `pip install iaes[validate]`
+
+## Deserialize
+
+```python
+import json
+from iaes import from_dict
+
+# Any IAES envelope -> correct model instance
+wire = json.loads(mqtt_message)
+event = from_dict(wire)  # AssetMeasurement, AssetHealth, etc.
+print(event.asset_id, event.value)
 ```
 
 ## Event Types (v1.2)
 
-| Event Type | Version | Purpose |
-|------------|---------|---------|
-| `asset.measurement` | 1.0 | Physical sensor reading (vibration, temperature, pressure, current, etc.) |
-| `asset.health` | 1.0 | AI diagnosis or expert assessment (health index, fault classification, RUL, recommended action) |
-| `maintenance.work_order_intent` | 1.0 | Intent to create a work order (the consumer decides how to act) |
-| `maintenance.completion` | 1.1 | Work order completion acknowledgment with outcome details |
-| `asset.hierarchy` | 1.1 | Asset hierarchy structure sync (organization, plant, area, equipment) |
-| `sensor.registration` | 1.1 | Sensor discovery, onboarding, and lifecycle tracking |
-| `maintenance.spare_part_usage` | 1.1 | Spare parts consumed during maintenance activities |
+| Event Type | Python | TypeScript | Purpose |
+|------------|--------|------------|---------|
+| `asset.measurement` | `AssetMeasurement` | `AssetMeasurement` | Sensor reading (vibration, temperature, pressure, current, power factor, THD...) |
+| `asset.health` | `AssetHealth` | `AssetHealth` | AI diagnosis or expert assessment (health index, fault, RUL) |
+| `maintenance.work_order_intent` | `WorkOrderIntent` | `WorkOrderIntent` | Intent to create a work order |
+| `maintenance.completion` | `MaintenanceCompletion` | `MaintenanceCompletion` | Work order completion acknowledgment |
+| `asset.hierarchy` | `AssetHierarchy` | `AssetHierarchy` | Asset hierarchy sync (org > plant > area > equipment) |
+| `sensor.registration` | `SensorRegistration` | `SensorRegistration` | Sensor discovery and lifecycle |
+| `maintenance.spare_part_usage` | `SparePartUsage` | `SparePartUsage` | Spare parts consumed during maintenance |
 
-## Quick Example
+## Enums
+
+All enums accept either the enum constant or a plain string:
+
+```python
+AssetHealth(asset_id="M-001", severity=Severity.CRITICAL)
+AssetHealth(asset_id="M-001", severity="critical")  # also works
+```
+
+| Enum | Values |
+|------|--------|
+| `Severity` | info, low, medium, high, critical |
+| `MeasurementType` | vibration_velocity, vibration_acceleration, temperature, current, voltage, power, pressure, flow, speed, power_factor, thd_voltage, thd_current, frequency, ... |
+| `UnitsQualifier` | rms, peak, peak_to_peak, average, true_rms |
+| `ISO13374Status` | unknown, normal, satisfactory, unsatisfactory, unacceptable, imminent_failure, failed |
+| `WorkOrderPriority` | low, medium, high, emergency |
+| `CompletionStatus` | completed, partially_completed, cancelled, deferred |
+| `HierarchyLevel` | organization, plant, area, equipment |
+| `RelationshipType` | parent_of, child_of, sibling_of, depends_on |
+| `RegistrationStatus` | discovered, registered, calibrated, decommissioned |
+
+## Wire Format
+
+Every event serializes to the same envelope structure:
 
 ```json
 {
   "spec_version": "1.2",
-  "event_type": "asset.health",
-  "event_id": "a9e3c4b2-9d3a-4a12-b1f3-2e44a1caa8a1",
-  "correlation_id": "3b2f9d8c-1c33-4a8a-9b77-54d11b2efc12",
-  "timestamp": "2026-03-06T17:50:17Z",
-  "source": "wertek.ai.vibration",
+  "event_type": "asset.measurement",
+  "event_id": "a9e3c4b2-...",
+  "correlation_id": "3b2f9d8c-...",
+  "timestamp": "2026-03-08T12:00:00+00:00",
+  "source": "acme.sensors.plant1",
   "content_hash": "8a3f9c2e1b4d7e6f",
   "asset": {
     "asset_id": "MOTOR-001",
@@ -44,122 +210,71 @@ Signals ──> Intelligence ──> IAES Standard ──> Connectors ──> En
     "area": "Turbinas"
   },
   "data": {
-    "health_index": 0.16,
-    "anomaly_score": 0.92,
-    "severity": "critical",
-    "failure_mode": "bearing_inner_race",
-    "rul_days": 5,
-    "recommended_action": "Replace bearing immediately",
-    "iso_13374_status": "intervention_required",
-    "iso_14224": {
-      "failure_mechanism": "FAT",
-      "failure_cause": "AGE",
-      "detection_method": "VIB"
-    }
+    "measurement_type": "vibration_velocity",
+    "value": 4.2,
+    "unit": "mm/s",
+    "units_qualifier": "rms",
+    "sampling_rate_hz": 25600
   }
 }
 ```
 
-## Specification
-
-- **[IAES_SPEC.md](IAES_SPEC.md)** — Full specification (human-readable)
-- **[schema/](schema/)** — JSON Schema files (machine-readable)
-  - `iaes-envelope.schema.json` — Common envelope (with `batch_id`)
-  - `asset-measurement.schema.json` — includes `units_qualifier`, `sampling_rate_hz`, `acquisition_duration_s` (ISO 17359, v1.2)
-  - `asset-health.schema.json` — includes `iso_13374_status`, `iso_14224` object (v1.2)
-  - `maintenance-work-order-intent.schema.json`
-  - `maintenance-completion.schema.json` — includes `iso_14224` object (v1.2)
-  - `asset-hierarchy.schema.json` (v1.1)
-  - `sensor-registration.schema.json` (v1.1)
-  - `maintenance-spare-part-usage.schema.json` (v1.1)
-- **[examples/](examples/)** — Complete JSON examples
-  - `asset-health-ai.json` — AI-originated health event
-  - `asset-health-human.json` — Human expert assessment
-  - `asset-measurement.json` — Sensor reading
-  - `work-order-intent.json` — Work order intent
-  - `full-flow.json` — Complete v1.0 flow (measurement -> diagnosis -> intent)
-  - `maintenance-completion.json` — Work order completion (v1.1)
-  - `asset-hierarchy.json` — 4-level hierarchy sync (v1.1)
-  - `sensor-registration.json` — MCSA CT sensor registration (v1.1)
-  - `spare-part-usage.json` — Spare part consumption (v1.1)
-  - `full-flow-v1.1.json` — Complete v1.1 flow (measurement -> health -> WO -> completion + spare part)
-
-## Design Principles
-
-1. **Vendor neutrality** — No dependency on any specific system
-2. **Legacy compatibility** — Maps cleanly to CMMS, historians, SCADA, IoT
-3. **Event-oriented** — Each object represents something that happened
-4. **Complete traceability** — `event_id` + `correlation_id` + `source_event_id`
-5. **Extensibility** — `data` payload allows new fields without breaking consumers
+`content_hash` is a 16-char SHA-256 prefix of the `data` payload, computed identically in Python and TypeScript for cross-language idempotency.
 
 ## ISO Standards Alignment
 
-IAES v1.2 aligns with four ISO standards for industrial asset management and condition monitoring:
+| Standard | IAES Fields | Purpose |
+|----------|-------------|---------|
+| **ISO 17359** | `units_qualifier`, `sampling_rate_hz`, `acquisition_duration_s` | Condition monitoring measurement metadata |
+| **ISO 13374** | `iso_13374_status` | 7-level condition status (normal to failed) |
+| **ISO 14224** | `iso_14224` object | Failure mechanism, cause, and detection codes |
+| **ISO 55000** | Architectural | Asset management principles embedded in design |
 
-| Standard | Alignment | IAES Fields |
-|----------|-----------|-------------|
-| **ISO 55000** | Asset Management principles | Architectural — IAES embodies AM principles without requiring specific fields |
-| **ISO 17359** | Condition Monitoring guidelines | `units_qualifier`, `sampling_rate_hz`, `acquisition_duration_s` on `asset.measurement` |
-| **ISO 13374** | CM&D data processing architecture | `iso_13374_status` on `asset.health` (7-level condition status) |
-| **ISO 14224** | Reliability & failure data | `iso_14224` object on `asset.health` + `maintenance.completion` (mechanism/cause/detection codes) |
+All ISO fields are optional. v1.0/v1.1 events remain fully valid.
 
-All ISO alignment fields are optional. Existing v1.0/v1.1 events remain fully valid.
+## Zero Dependencies
 
-## Producers
+The core SDK uses only standard library. No runtime dependencies.
 
-IAES is not just for AI. Any system that observes industrial assets can produce events:
+| | Core | Validation |
+|-|------|------------|
+| **Python** | stdlib only | `pip install iaes[validate]` adds `jsonschema` |
+| **TypeScript** | Node.js `crypto` only | `ajv` optional |
 
-| Producer | `source` example |
-|----------|-----------------|
-| AI diagnosis engine | `wertek.ai.vibration` |
-| Sensor gateway | `banner.dxm100` |
-| Manual inspection | `operator.manual_inspection` |
-| Expert assessment | `operator.field_assessment` |
-| Rule engine | `acme.rule_engine` |
-| Lab analysis | `lab.oil_analysis` |
-| SCADA/PLC | `scada.plc_01` |
+## Cross-Language Compatibility
+
+Both SDKs produce identical wire format and identical `content_hash` for the same data. Events created in Python validate in TypeScript and vice versa. This is tested on every commit.
+
+## Resources
+
+- **[IAES_SPEC.md](IAES_SPEC.md)** — Full specification
+- **[schema/](schema/)** — 8 JSON Schema files
+- **[examples/](examples/)** — 10 JSON examples
+- **[iaes.dev](https://iaes.dev)** — Website
+
+## Design Principles
+
+1. **Vendor neutrality** — No dependency on any specific platform or system
+2. **Legacy compatibility** — Maps cleanly to CMMS, historians, SCADA, IoT
+3. **Event-oriented** — Each object represents something that happened
+4. **Complete traceability** — `event_id` + `correlation_id` + `source_event_id` chain
+5. **Extensibility** — `data` payload allows new fields without breaking consumers
 
 ## System Compatibility
 
 | System | IAES Mapping |
 |--------|-------------|
 | SAP PM | Maintenance Notification / Order |
-| PI System | Tag value writes |
-| AVEVA Data Hub | SDS Stream writes |
+| PI System / AVEVA | Tag value writes / SDS streams |
 | Odoo | maintenance.request |
 | MaintainX | User Variables |
 | Fracttal | Custom fields + OT |
-
-## Roadmap
-
-**v1.2** (current):
-- ISO 17359 alignment — `units_qualifier`, `sampling_rate_hz`, `acquisition_duration_s` on `asset.measurement`
-- ISO 13374 alignment — `iso_13374_status` on `asset.health` (7-level condition status)
-- ISO 14224 alignment — `iso_14224` object on `asset.health` + `maintenance.completion`
-- Appendix B: ISO 14224 failure classification codes
-- Appendix C: ISO 13374 health status mapping
-- Full backward compatibility with v1.0/v1.1
-
-**v1.1** (March 2026):
-- `maintenance.completion` — WO completion acknowledgment
-- `asset.hierarchy` — Asset tree sync
-- `sensor.registration` — Sensor onboarding
-- `maintenance.spare_part_usage` — Parts consumed
-- `batch_id` — Batch operation grouping
-- Failure Mode Taxonomy (Appendix A, based on ISO 14224)
-
-**v2.0** (planned):
-- Streaming events (time-series batches)
-- Binary payload support (waveforms, spectra)
-- Event schema registry with versioned evolution
-
-## Reference Implementation
-
-The reference implementation is the [Wertek AI Integration Framework](https://wertek.ai), which uses IAES internally for all connector adapters.
+| Node-RED | `node-red-contrib-iaes` (coming soon) |
+| MQTT / Kafka | JSON payload on any topic |
 
 ## License
 
-IAES is an open specification. The specification text and JSON schemas are licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Implementations may be proprietary.
+IAES is an open specification. The specification text and JSON schemas are licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Implementations may use any license.
 
 ---
 

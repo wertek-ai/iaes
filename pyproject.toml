@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "iaes"
+version = "0.1.0"
+description = "Industrial Asset Event Standard — vendor-neutral event models for industrial asset intelligence"
+readme = "README.md"
+license = "CC-BY-4.0"
+requires-python = ">=3.9"
+authors = [{ name = "Wertek AI", email = "engineering@wertek.ai" }]
+keywords = [
+    "industrial",
+    "asset",
+    "iot",
+    "maintenance",
+    "cmms",
+    "predictive",
+    "condition-monitoring",
+    "iiot",
+    "reliability",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Libraries",
+    "Typing :: Typed",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[project.optional-dependencies]
+validate = ["jsonschema>=4.0", "referencing>=0.30"]
+dev = ["pytest>=7.0", "jsonschema>=4.0", "referencing>=0.30"]
+
+[project.urls]
+Homepage = "https://iaes.dev"
+Documentation = "https://iaes.dev"
+Repository = "https://github.com/wertek-ai/iaes"
+Changelog = "https://github.com/wertek-ai/iaes/blob/main/IAES_SPEC.md#version-history"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/iaes"]
