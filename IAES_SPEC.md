@@ -1,4 +1,4 @@
-# IAES — Industrial Asset Event Standard v1.1
+# IAES — Industrial Asset Event Standard v1.2
 
 > A vendor-neutral event format for industrial asset intelligence.
 
@@ -36,7 +36,7 @@ Every IAES event shares this envelope:
 
 ```json
 {
-  "spec_version": "1.1",
+  "spec_version": "1.2",
   "event_type": "asset.health",
   "event_id": "uuid",
   "correlation_id": "uuid",
@@ -59,7 +59,7 @@ Every IAES event shares this envelope:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `spec_version` | string | yes | IAES spec version (`"1.0"` or `"1.1"`) |
+| `spec_version` | string | yes | IAES spec version (`"1.0"`, `"1.1"`, or `"1.2"`) |
 | `event_type` | string | yes | Dot-notation event type |
 | `event_id` | UUID | yes | Unique identifier for this event |
 | `correlation_id` | UUID | yes | Groups related events in a single flow |
@@ -110,6 +110,9 @@ A physical sensor reading.
 | `unit` | string | yes | Engineering unit |
 | `sensor_id` | string | no | Physical sensor identifier |
 | `location` | string | no | Measurement point on the asset |
+| `units_qualifier` | string | no | Signal processing method: `rms`, `peak`, `peak_to_peak`, `average`, `true_rms` (ISO 17359 §6.3, v1.2) |
+| `sampling_rate_hz` | number | no | Sampling rate in Hz (v1.2) |
+| `acquisition_duration_s` | number | no | Measurement acquisition window in seconds (v1.2) |
 
 ### `asset.health`
 
@@ -141,6 +144,8 @@ AI diagnosis / health state change. Includes recommended action.
 | `rul_days` | integer | no | Remaining Useful Life in days |
 | `recommended_action` | string | no | Human-readable action suggestion |
 | `estimated_downtime_hours` | float | no | Estimated repair duration |
+| `iso_13374_status` | string | no | ISO 13374-2 health status: `unknown`, `normal`, `satisfactory`, `unsatisfactory`, `unacceptable`, `imminent_failure`, `failed` (v1.2, see Appendix C) |
+| `iso_14224` | object | no | ISO 14224 failure classification codes (v1.2, see Appendix B) |
 
 ### `maintenance.work_order_intent`
 
@@ -201,6 +206,7 @@ Acknowledges the completion of a work order. Links back to the original intent v
 | `spare_parts_count` | integer | no | Number of spare parts consumed (detail in `spare_part_usage` events) |
 | `failure_confirmed` | boolean | no | Whether the predicted failure mode was confirmed |
 | `failure_mode` | string | no | Confirmed or observed failure mode (see Appendix A) |
+| `iso_14224` | object | no | ISO 14224 failure classification codes confirmed during maintenance (v1.2, see Appendix B) |
 
 ### `asset.hierarchy` (v1.1)
 
@@ -473,6 +479,7 @@ IAES uses semantic versioning for the specification itself:
 |---------|------|---------|
 | 1.0 | March 2026 | Initial release. 3 event types, common envelope, JSON Schema. |
 | 1.1 | March 2026 | 4 new event types (maintenance.completion, asset.hierarchy, sensor.registration, maintenance.spare_part_usage), batch_id envelope field, failure mode taxonomy (Appendix A). |
+| 1.2 | March 2026 | ISO alignment: `units_qualifier`, `sampling_rate_hz`, `acquisition_duration_s` on asset.measurement (ISO 17359); `iso_13374_status` on asset.health (ISO 13374); `iso_14224` object on asset.health + maintenance.completion (ISO 14224). All new fields optional — full backward compatibility. Appendix B (ISO 14224 codes), Appendix C (ISO 13374 mapping). |
 
 ## Appendix A: Failure Mode Taxonomy
 
@@ -515,12 +522,127 @@ Standard failure mode values for use in `asset.health` and `maintenance.completi
 
 Producers SHOULD use these values when applicable. Custom values (e.g. `blade_erosion`, `coupling_wear`) are valid and consumers MUST tolerate them.
 
+## Appendix B: ISO 14224 Failure Classification Codes
+
+Optional structured failure coding for use in the `iso_14224` object on `asset.health` and `maintenance.completion` events. Based on ISO 14224:2016 failure classification.
+
+### Object Structure
+
+```json
+{
+  "iso_14224": {
+    "mechanism_code": "1.1",
+    "mechanism_label": "Mechanical wear",
+    "cause_code": "4",
+    "cause_label": "Operations/Maintenance",
+    "detection_method": "2",
+    "detection_label": "Condition monitoring"
+  }
+}
+```
+
+All fields are optional. Producers MAY include any subset.
+
+### Failure Mechanism Codes
+
+| Code | Mechanism | Related IAES failure_mode |
+|------|-----------|--------------------------|
+| 1.1 | Mechanical wear | `bearing_inner_race`, `bearing_outer_race`, `gear_tooth` |
+| 1.2 | Fatigue | `bearing_ball`, `bearing_cage` |
+| 1.3 | Corrosion | `corrosion` |
+| 1.4 | Erosion | `cavitation` |
+| 2.1 | Overheating | `overheating` |
+| 2.2 | Electrical breakdown | `electrical_fault`, `winding_short` |
+| 3.1 | Vibration-induced | `unbalance`, `misalignment`, `looseness_mechanical` |
+| 3.2 | Leakage | `seal_leak` |
+| 4.1 | Contamination | `fouling`, `lubrication_failure` |
+
+### Failure Cause Codes
+
+| Code | Cause Category |
+|------|---------------|
+| 1 | Design-related |
+| 2 | Fabrication / Manufacturing |
+| 3 | Installation |
+| 4 | Operations / Maintenance |
+| 5 | Management / Organization |
+| 6 | Miscellaneous / Unknown |
+
+### Detection Method Codes
+
+| Code | Method | Typical IAES `source` |
+|------|--------|-----------------------|
+| 1 | Periodic maintenance | `operator.manual_inspection` |
+| 2 | Condition monitoring | `wertek.ai.vibration`, `wertek.ai.diagnosis` |
+| 3 | Functional testing | `operator.field_assessment` |
+| 4 | Casual observation | `operator.manual_inspection` |
+| 5 | On demand / Breakdown | — (reactive) |
+
+The `iso_14224` object coexists with the `failure_mode` field from Appendix A. `failure_mode` provides a quick human-readable label; `iso_14224` provides structured classification for interoperability with systems that use ISO 14224 coding (common in oil & gas, power generation, and ISO-certified plants).
+
+## Appendix C: ISO 13374 Health Status Mapping
+
+The `iso_13374_status` field on `asset.health` carries the ISO 13374-2 health status level. This is **complementary** to the IAES `severity` field:
+
+- **`severity`** is ACTION-oriented: what should we DO about this? (info → critical)
+- **`iso_13374_status`** is CONDITION-oriented: what IS the current state? (unknown → failed)
+
+### Status Levels
+
+| ISO 13374 Status | Description | Nearest IAES `severity` |
+|------------------|-------------|------------------------|
+| `unknown` | Insufficient data to determine condition | `info` |
+| `normal` | Operating within normal parameters | `info` |
+| `satisfactory` | Minor deviations, still acceptable | `low` |
+| `unsatisfactory` | Noticeable deviation from normal | `medium` |
+| `unacceptable` | Exceeds acceptable operating limits | `high` |
+| `imminent_failure` | Failure expected in near term | `critical` |
+| `failed` | Asset has failed or is non-functional | `critical` |
+
+### Usage Example
+
+```json
+{
+  "event_type": "asset.health",
+  "data": {
+    "health_index": 0.16,
+    "severity": "critical",
+    "iso_13374_status": "imminent_failure",
+    "failure_mode": "bearing_inner_race",
+    "rul_days": 5,
+    "iso_14224": {
+      "mechanism_code": "1.1",
+      "mechanism_label": "Mechanical wear",
+      "detection_method": "2",
+      "detection_label": "Condition monitoring"
+    }
+  }
+}
+```
+
+Consumers that understand ISO 13374 can use `iso_13374_status` for condition-based reporting. Others use `severity` for action-based alerting. Both fields are optional; when both are present, they provide complementary perspectives.
+
+### ISO 13374 6-Block Processing Model
+
+IAES events map to the ISO 13374-2 processing blocks:
+
+| Block | Name | IAES Event |
+|-------|------|-----------|
+| 1 | Data Acquisition | `asset.measurement` |
+| 2 | Data Manipulation | `asset.measurement` (processed values) |
+| 3 | State Detection | `asset.health` (anomaly_score) |
+| 4 | Health Assessment | `asset.health` (health_index, iso_13374_status) |
+| 5 | Prognostic Assessment | `asset.health` (rul_days) |
+| 6 | Advisory Generation | `asset.health` (recommended_action) + `maintenance.work_order_intent` |
+
+IAES is an event standard, not a processing pipeline. The 6-block model describes internal processing stages; IAES captures the outputs of those stages as events. See `skills/iso-13374/SKILL.md` for implementation guidance.
+
 ## License
 
 IAES is an open specification licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Implementations may be proprietary.
 
 ---
 
-*IAES v1.1 — March 2026*
+*IAES v1.2 — March 2026*
 *Created by the [Wertek AI](https://wertek.ai) team.*
 *Reference implementation: [Wertek Integration Framework](https://github.com/wertek-ai/wertek-integrations)*

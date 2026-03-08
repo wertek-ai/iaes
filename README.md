@@ -14,7 +14,7 @@ IAES provides the **neutral layer in between** — a common event format that an
 Signals ──> Intelligence ──> IAES Standard ──> Connectors ──> Enterprise Systems
 ```
 
-## Event Types (v1.1)
+## Event Types (v1.2)
 
 | Event Type | Version | Purpose |
 |------------|---------|---------|
@@ -30,7 +30,7 @@ Signals ──> Intelligence ──> IAES Standard ──> Connectors ──> En
 
 ```json
 {
-  "spec_version": "1.0",
+  "spec_version": "1.2",
   "event_type": "asset.health",
   "event_id": "a9e3c4b2-9d3a-4a12-b1f3-2e44a1caa8a1",
   "correlation_id": "3b2f9d8c-1c33-4a8a-9b77-54d11b2efc12",
@@ -49,7 +49,13 @@ Signals ──> Intelligence ──> IAES Standard ──> Connectors ──> En
     "severity": "critical",
     "failure_mode": "bearing_inner_race",
     "rul_days": 5,
-    "recommended_action": "Replace bearing immediately"
+    "recommended_action": "Replace bearing immediately",
+    "iso_13374_status": "intervention_required",
+    "iso_14224": {
+      "failure_mechanism": "FAT",
+      "failure_cause": "AGE",
+      "detection_method": "VIB"
+    }
   }
 }
 ```
@@ -59,10 +65,10 @@ Signals ──> Intelligence ──> IAES Standard ──> Connectors ──> En
 - **[IAES_SPEC.md](IAES_SPEC.md)** — Full specification (human-readable)
 - **[schema/](schema/)** — JSON Schema files (machine-readable)
   - `iaes-envelope.schema.json` — Common envelope (with `batch_id`)
-  - `asset-measurement.schema.json`
-  - `asset-health.schema.json`
+  - `asset-measurement.schema.json` — includes `units_qualifier`, `sampling_rate_hz`, `acquisition_duration_s` (ISO 17359, v1.2)
+  - `asset-health.schema.json` — includes `iso_13374_status`, `iso_14224` object (v1.2)
   - `maintenance-work-order-intent.schema.json`
-  - `maintenance-completion.schema.json` (v1.1)
+  - `maintenance-completion.schema.json` — includes `iso_14224` object (v1.2)
   - `asset-hierarchy.schema.json` (v1.1)
   - `sensor-registration.schema.json` (v1.1)
   - `maintenance-spare-part-usage.schema.json` (v1.1)
@@ -85,6 +91,19 @@ Signals ──> Intelligence ──> IAES Standard ──> Connectors ──> En
 3. **Event-oriented** — Each object represents something that happened
 4. **Complete traceability** — `event_id` + `correlation_id` + `source_event_id`
 5. **Extensibility** — `data` payload allows new fields without breaking consumers
+
+## ISO Standards Alignment
+
+IAES v1.2 aligns with four ISO standards for industrial asset management and condition monitoring:
+
+| Standard | Alignment | IAES Fields |
+|----------|-----------|-------------|
+| **ISO 55000** | Asset Management principles | Architectural — IAES embodies AM principles without requiring specific fields |
+| **ISO 17359** | Condition Monitoring guidelines | `units_qualifier`, `sampling_rate_hz`, `acquisition_duration_s` on `asset.measurement` |
+| **ISO 13374** | CM&D data processing architecture | `iso_13374_status` on `asset.health` (7-level condition status) |
+| **ISO 14224** | Reliability & failure data | `iso_14224` object on `asset.health` + `maintenance.completion` (mechanism/cause/detection codes) |
+
+All ISO alignment fields are optional. Existing v1.0/v1.1 events remain fully valid.
 
 ## Producers
 
@@ -113,7 +132,15 @@ IAES is not just for AI. Any system that observes industrial assets can produce 
 
 ## Roadmap
 
-**v1.1** (current):
+**v1.2** (current):
+- ISO 17359 alignment — `units_qualifier`, `sampling_rate_hz`, `acquisition_duration_s` on `asset.measurement`
+- ISO 13374 alignment — `iso_13374_status` on `asset.health` (7-level condition status)
+- ISO 14224 alignment — `iso_14224` object on `asset.health` + `maintenance.completion`
+- Appendix B: ISO 14224 failure classification codes
+- Appendix C: ISO 13374 health status mapping
+- Full backward compatibility with v1.0/v1.1
+
+**v1.1** (March 2026):
 - `maintenance.completion` — WO completion acknowledgment
 - `asset.hierarchy` — Asset tree sync
 - `sensor.registration` — Sensor onboarding
@@ -136,4 +163,4 @@ IAES is an open specification. The specification text and JSON schemas are licen
 
 ---
 
-*IAES v1.1 — March 2026*
+*IAES v1.2 — March 2026*
