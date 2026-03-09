@@ -2,7 +2,7 @@
 
 > IAES Industrial Asset Event Standard nodes for Node-RED.
 
-Create, validate, and route vendor-neutral industrial asset events — no code required.
+Create, validate, route, and bridge Sparkplug B industrial asset events — no code required.
 
 ## Install
 
@@ -22,6 +22,7 @@ Or via the Node-RED palette manager: search for `node-red-contrib-iaes`.
 | **iaes health** | Create `asset.health` events (AI diagnosis, health index, fault classification, RUL) |
 | **iaes work order** | Create `maintenance.work_order_intent` events |
 | **iaes validate** | Validate any IAES event against the JSON schema |
+| **iaes sparkplug** | Bridge Sparkplug B metrics to IAES events (Ignition, Cirrus Link, DXM) |
 
 ## Usage
 
@@ -52,6 +53,24 @@ All nodes accept values from `msg` properties. Leave a field empty in the config
 ```
 
 The **iaes validate** node has two outputs: valid events on output 1, invalid events on output 2.
+
+### Sparkplug B to IAES bridge
+
+```
+[mqtt in: spBv1.0/+/DDATA/+/+] --> [iaes sparkplug] --> [mqtt out: iaes/events]
+                                         |
+                                         +--> [debug] (errors/skipped)
+```
+
+The **iaes sparkplug** node decodes Sparkplug B protobuf payloads and converts each numeric metric into an IAES `asset.measurement` event. It auto-detects measurement types from metric names and maps the Sparkplug device ID to the IAES asset ID.
+
+**Compatible with:** Ignition (Inductive Automation), Cirrus Link, Banner DXM (Sparkplug mode), Eclipse Tahu, any Sparkplug B 3.0 gateway.
+
+**Protobuf support:** Install `sparkplug-payload` in your Node-RED directory for native protobuf decoding. JSON payloads work out of the box.
+
+```bash
+cd ~/.node-red && npm install sparkplug-payload
+```
 
 ## Examples
 

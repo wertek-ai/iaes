@@ -1,7 +1,7 @@
 {
   "name": "node-red-contrib-iaes",
-  "version": "0.1.0",
-  "description": "IAES Industrial Asset Event Standard nodes for Node-RED — create, validate, and route industrial asset events",
+  "version": "0.2.0",
+  "description": "IAES Industrial Asset Event Standard nodes for Node-RED — create, validate, route, and bridge Sparkplug B industrial asset events",
   "keywords": [
     "node-red",
     "iaes",
@@ -14,7 +14,10 @@
     "vibration",
     "predictive",
     "cmms",
-    "scada"
+    "scada",
+    "sparkplug",
+    "sparkplug-b",
+    "ignition"
   ],
   "author": "Wertek AI <engineering@wertek.ai>",
   "license": "CC-BY-4.0",
@@ -27,13 +30,23 @@
   "dependencies": {
     "@iaes/sdk": "^0.1.0"
   },
+  "optionalDependencies": {
+    "sparkplug-payload": "^1.0.2"
+  },
+  "devDependencies": {
+    "node-red-node-test-helper": "^0.3.4"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
   "node-red": {
     "version": ">=2.0.0",
     "nodes": {
       "iaes-measurement": "nodes/iaes-measurement.js",
       "iaes-health": "nodes/iaes-health.js",
       "iaes-work-order": "nodes/iaes-work-order.js",
-      "iaes-validate": "nodes/iaes-validate.js"
+      "iaes-validate": "nodes/iaes-validate.js",
+      "iaes-sparkplug": "nodes/iaes-sparkplug.js"
     }
   },
   "engines": {

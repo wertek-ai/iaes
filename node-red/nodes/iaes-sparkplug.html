@@ -1,0 +1,158 @@
+<script type="text/javascript">
+  RED.nodes.registerType("iaes-sparkplug", {
+    category: "IAES",
+    color: "#f59e0b",
+    defaults: {
+      name: { value: "" },
+      assetIdSource: { value: "device_id" },
+      customAssetId: { value: "" },
+      source: { value: "" },
+      metricFilter: { value: "" },
+      outputMode: { value: "per_metric" },
+      assetName: { value: "" },
+      plant: { value: "" },
+      area: { value: "" },
+    },
+    inputs: 1,
+    outputs: 2,
+    outputLabels: ["IAES events", "errors/skipped"],
+    icon: "font-awesome/fa-exchange",
+    label: function () {
+      return this.name || "iaes sparkplug";
+    },
+    paletteLabel: "iaes sparkplug",
+    oneditprepare: function () {
+      var assetIdSource = $("#node-input-assetIdSource");
+      var customRow = $(".custom-asset-row");
+      function toggleCustom() {
+        if (assetIdSource.val() === "custom") {
+          customRow.show();
+        } else {
+          customRow.hide();
+        }
+      }
+      assetIdSource.on("change", toggleCustom);
+      toggleCustom();
+    },
+  });
+</script>
+
+<script type="text/html" data-template-name="iaes-sparkplug">
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-assetIdSource"><i class="fa fa-cog"></i> Asset ID from</label>
+    <select id="node-input-assetIdSource">
+      <option value="device_id">Sparkplug Device ID (from topic)</option>
+      <option value="edge_node">Sparkplug Edge Node ID (from topic)</option>
+      <option value="custom">Custom (fixed value)</option>
+    </select>
+  </div>
+  <div class="form-row custom-asset-row">
+    <label for="node-input-customAssetId"><i class="fa fa-cog"></i> Asset ID</label>
+    <input type="text" id="node-input-customAssetId" placeholder="MOTOR-001" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-source"><i class="fa fa-plug"></i> Source</label>
+    <input type="text" id="node-input-source" placeholder="sparkplug_b.{group}.{node} (auto)" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-metricFilter"><i class="fa fa-filter"></i> Metric filter</label>
+    <input type="text" id="node-input-metricFilter" placeholder="regex — empty = all metrics" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-outputMode"><i class="fa fa-arrows"></i> Output</label>
+    <select id="node-input-outputMode">
+      <option value="per_metric">One message per metric</option>
+      <option value="batch">Batch (array of IAES events)</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-assetName"><i class="fa fa-industry"></i> Asset Name</label>
+    <input type="text" id="node-input-assetName" placeholder="(optional)" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-plant"><i class="fa fa-building"></i> Plant</label>
+    <input type="text" id="node-input-plant" placeholder="(optional — auto from group_id)" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-area"><i class="fa fa-map"></i> Area</label>
+    <input type="text" id="node-input-area" placeholder="(optional)" />
+  </div>
+</script>
+
+<script type="text/html" data-help-name="iaes-sparkplug">
+  <p>Bridges <b>Sparkplug B</b> metrics to IAES <code>asset.measurement</code> events.</p>
+  <p>Connect an MQTT input node subscribed to <code>spBv1.0/+/DDATA/+/+</code> (or NDATA)
+  and this node will decode the Sparkplug payload and emit one IAES event per metric.</p>
+
+  <h3>Input</h3>
+  <dl class="message-properties">
+    <dt>payload <span class="property-type">buffer | object</span></dt>
+    <dd>Sparkplug B protobuf payload or pre-decoded JSON object.</dd>
+    <dt>topic <span class="property-type">string</span></dt>
+    <dd>MQTT topic (<code>spBv1.0/{group}/{msg_type}/{edge_node}/{device}</code>).</dd>
+  </dl>
+
+  <h3>Outputs</h3>
+  <ol class="node-ports">
+    <li>IAES events
+      <dl class="message-properties">
+        <dt>payload <span class="property-type">object | array</span></dt>
+        <dd>IAES envelope(s) — one per metric or a batch array.</dd>
+        <dt>iaes_event_type <span class="property-type">string</span></dt>
+        <dd><code>asset.measurement</code></dd>
+        <dt>iaes_asset_id <span class="property-type">string</span></dt>
+        <dd>The mapped asset ID.</dd>
+      </dl>
+    </li>
+    <li>Errors / skipped
+      <dl class="message-properties">
+        <dt>iaes_error <span class="property-type">string</span></dt>
+        <dd>Error description (decode failure, no metrics, etc.).</dd>
+        <dt>iaes_skipped <span class="property-type">array</span></dt>
+        <dd>Metric names that were filtered out.</dd>
+      </dl>
+    </li>
+  </ol>
+
+  <h3>Details</h3>
+  <p>This node acts as a bridge between <b>Eclipse Sparkplug B</b> and <b>IAES</b>.
+  It decodes Sparkplug DDATA/NDATA payloads and converts each numeric metric
+  into a standard IAES <code>asset.measurement</code> event.</p>
+
+  <h4>Sparkplug decoding</h4>
+  <p>If the <code>sparkplug-payload</code> npm package is installed, protobuf-encoded
+  payloads are decoded automatically. Otherwise, JSON payloads are accepted as a fallback.</p>
+  <p>To enable protobuf: <code>cd ~/.node-red && npm install sparkplug-payload</code></p>
+
+  <h4>Asset ID mapping</h4>
+  <ul>
+    <li><b>Device ID</b> — uses the Sparkplug device_id from the MQTT topic (default)</li>
+    <li><b>Edge Node ID</b> — uses the edge_node_id from the topic</li>
+    <li><b>Custom</b> — a fixed asset ID configured in the node</li>
+  </ul>
+
+  <h4>Metric type inference</h4>
+  <p>The node auto-detects <code>measurement_type</code> from metric names
+  (e.g., "Temperature" → <code>temperature</code>, "Vibration/Velocity" → <code>vibration_velocity</code>).
+  Unknown metrics are mapped as <code>custom</code>. The original metric name is preserved in <code>sensor_id</code>.</p>
+
+  <h4>Metric filter</h4>
+  <p>Optional regex to select which metrics to convert. Empty = all numeric metrics.
+  Boolean metrics are always skipped.</p>
+
+  <h4>Compatible systems</h4>
+  <ul>
+    <li>Inductive Automation <b>Ignition</b> (Sparkplug B native)</li>
+    <li>Cirrus Link MQTT modules</li>
+    <li>Banner Engineering DXM (Sparkplug B mode)</li>
+    <li>Eclipse Tahu reference implementation</li>
+    <li>Any Sparkplug B 3.0 compliant edge gateway</li>
+  </ul>
+
+  <h4>Example flow</h4>
+  <pre>[mqtt in: spBv1.0/+/DDATA/+/+] --> [iaes sparkplug] --> [mqtt out: iaes/events]</pre>
+</script>
