@@ -28,7 +28,7 @@
     "directory": "node-red"
   },
   "dependencies": {
-    "@iaes/sdk": "^0.1.0"
+    "@iaes/sdk": "^0.2.0"
   },
   "optionalDependencies": {
     "sparkplug-payload": "^1.0.2"
