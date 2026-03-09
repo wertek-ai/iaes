@@ -3,7 +3,7 @@
 > A vendor-neutral event format for industrial asset measurements, diagnoses, and maintenance intents.
 
 [![PyPI](https://img.shields.io/pypi/v/iaes)](https://pypi.org/project/iaes/)
-[![npm](https://img.shields.io/npm/v/iaes)](https://www.npmjs.com/package/iaes)
+[![npm](https://img.shields.io/npm/v/@iaes/sdk)](https://www.npmjs.com/package/@iaes/sdk)
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
 Industrial systems speak different languages. A vibration sensor outputs raw waveforms. An AI model outputs health scores. SAP expects maintenance notifications. PI System expects tag values. MaintainX expects user variables.
