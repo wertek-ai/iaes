@@ -1,0 +1,89 @@
+<script type="text/javascript">
+  RED.nodes.registerType("iaes-publish", {
+    category: "IAES",
+    color: "#8b5cf6",
+    defaults: {
+      name: { value: "" },
+      url: { value: "" },
+      batchSize: { value: 1 },
+      batchTimeout: { value: 5 },
+    },
+    credentials: {
+      apiKey: { type: "password" },
+    },
+    inputs: 1,
+    outputs: 2,
+    outputLabels: ["success", "error"],
+    icon: "font-awesome/fa-cloud-upload",
+    label: function () {
+      return this.name || "iaes publish";
+    },
+    paletteLabel: "iaes publish",
+  });
+</script>
+
+<script type="text/html" data-template-name="iaes-publish">
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-url"><i class="fa fa-globe"></i> URL</label>
+    <input type="text" id="node-input-url" placeholder="https://api.wertek.ai" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-apiKey"><i class="fa fa-key"></i> API Key</label>
+    <input type="password" id="node-input-apiKey" placeholder="(optional)" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-batchSize"><i class="fa fa-layer-group"></i> Batch Size</label>
+    <input type="number" id="node-input-batchSize" min="1" placeholder="1" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-batchTimeout"><i class="fa fa-clock-o"></i> Batch Timeout (s)</label>
+    <input type="number" id="node-input-batchTimeout" min="1" placeholder="5" />
+  </div>
+</script>
+
+<script type="text/html" data-help-name="iaes-publish">
+  <p>Publishes IAES event envelopes to any IAES-compatible HTTP endpoint.</p>
+  <h3>Input</h3>
+  <dl class="message-properties">
+    <dt>payload <span class="property-type">object | string</span></dt>
+    <dd>A complete IAES event envelope (object or JSON string).</dd>
+  </dl>
+  <h3>Outputs</h3>
+  <ol class="node-ports">
+    <li>Success
+      <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>Server response (typically <code>{accepted, rejected, results}</code>).</dd>
+      </dl>
+    </li>
+    <li>Error
+      <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>Error details including <code>error</code> message and optional <code>statusCode</code>.</dd>
+      </dl>
+    </li>
+  </ol>
+  <h3>Configuration</h3>
+  <dl>
+    <dt>URL</dt>
+    <dd>Base URL of the IAES-compatible endpoint. The node appends <code>/api/v1/iaes/ingest</code> automatically.</dd>
+    <dt>API Key</dt>
+    <dd>Optional Bearer token for authentication. Stored securely as a credential.</dd>
+    <dt>Batch Size</dt>
+    <dd>Number of events to buffer before sending (default: 1 = immediate). Set to a higher number to batch events into a single HTTP POST.</dd>
+    <dt>Batch Timeout</dt>
+    <dd>Maximum seconds to wait before flushing an incomplete batch (default: 5).</dd>
+  </dl>
+  <h3>Details</h3>
+  <p>This node is <strong>generic</strong> and works with any IAES-compatible endpoint.
+  Configure the URL to point at your IAES server (e.g., Wertek AI, a custom backend, or any system
+  implementing the IAES ingest API).</p>
+  <p>When <strong>Batch Size</strong> is 1 (default), each event is sent immediately.
+  When greater than 1, events are buffered and sent as a JSON array when the buffer reaches
+  the batch size or the timeout expires — whichever comes first.</p>
+  <p>The node status indicator shows green with accepted count on success, or red on error.</p>
+</script>

@@ -56,3 +56,14 @@ export type {
   SensorRegistrationInit,
   SparePartUsageInit,
 } from "./models";
+
+export {
+  IaesClient,
+  IaesClientError,
+  publish,
+} from "./client";
+
+export type {
+  IaesClientOptions,
+  IngestResponse,
+} from "./client";

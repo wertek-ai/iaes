@@ -1,0 +1,57 @@
+<script type="text/javascript">
+  RED.nodes.registerType("iaes-route", {
+    category: "IAES",
+    color: "#6366f1",
+    defaults: {
+      name: { value: "" },
+    },
+    inputs: 1,
+    outputs: 7,
+    outputLabels: ["measurement", "health", "work order", "completion", "hierarchy", "sensor", "other"],
+    icon: "font-awesome/fa-random",
+    label: function () {
+      return this.name || "iaes route";
+    },
+    paletteLabel: "iaes route",
+  });
+</script>
+
+<script type="text/html" data-template-name="iaes-route">
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name" />
+  </div>
+</script>
+
+<script type="text/html" data-help-name="iaes-route">
+  <p>Routes IAES event envelopes to different outputs based on <code>event_type</code>.</p>
+  <h3>Input</h3>
+  <dl class="message-properties">
+    <dt>payload <span class="property-type">object | string</span></dt>
+    <dd>An IAES event envelope (object or JSON string).</dd>
+  </dl>
+  <h3>Outputs</h3>
+  <ol class="node-ports">
+    <li>measurement — <code>asset.measurement</code></li>
+    <li>health — <code>asset.health</code></li>
+    <li>work order — <code>maintenance.work_order_intent</code></li>
+    <li>completion — <code>maintenance.completion</code></li>
+    <li>hierarchy — <code>asset.hierarchy</code></li>
+    <li>sensor — <code>sensor.registration</code></li>
+    <li>other — <code>maintenance.spare_part_usage</code> and any unrecognized event types</li>
+  </ol>
+  <h3>Message Properties (set on output)</h3>
+  <dl class="message-properties">
+    <dt>iaes_event_type <span class="property-type">string</span></dt>
+    <dd>The event type from the envelope.</dd>
+    <dt>iaes_asset_id <span class="property-type">string</span></dt>
+    <dd>The asset ID from <code>asset.asset_id</code>.</dd>
+  </dl>
+  <h3>Details</h3>
+  <p>Use this node after an <strong>mqtt in</strong> or <strong>iaes validate</strong> node
+  to fan out IAES events to type-specific processing flows.</p>
+  <p>The 7 outputs correspond to the IAES v1.2 event types. The last output (other) receives
+  <code>maintenance.spare_part_usage</code> events and any unknown or future event types,
+  allowing your flow to handle them gracefully.</p>
+  <p>If the payload is a JSON string, it is parsed automatically.</p>
+</script>

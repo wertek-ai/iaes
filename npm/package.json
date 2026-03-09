@@ -1,6 +1,6 @@
 {
   "name": "@iaes/sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Industrial Asset Event Standard — vendor-neutral event models for industrial asset intelligence",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

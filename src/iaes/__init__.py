@@ -47,8 +47,15 @@ from .models import (
     from_dict,
 )
 from .validation import ValidationError, validate, load_schema
+from .client import Client, IaesClientError
 
-__version__ = "0.1.0"
+# AsyncClient is only available if httpx is installed
+try:
+    from .client import AsyncClient
+except ImportError:
+    pass
+
+__version__ = "0.2.0"
 
 __all__ = [
     # Version
@@ -62,6 +69,10 @@ __all__ = [
     "AssetHierarchy",
     "SensorRegistration",
     "SparePartUsage",
+    # Client
+    "Client",
+    "AsyncClient",
+    "IaesClientError",
     # Enums
     "Severity",
     "MeasurementType",

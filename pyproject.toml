@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "iaes"
-version = "0.1.0"
+version = "0.2.0"
 description = "Industrial Asset Event Standard — vendor-neutral event models for industrial asset intelligence"
 readme = "README.md"
 license = "CC-BY-4.0"
@@ -36,7 +36,8 @@ classifiers = [
 
 [project.optional-dependencies]
 validate = ["jsonschema>=4.0", "referencing>=0.30"]
-dev = ["pytest>=7.0", "jsonschema>=4.0", "referencing>=0.30"]
+async = ["httpx>=0.24"]
+dev = ["pytest>=7.0", "jsonschema>=4.0", "referencing>=0.30", "httpx>=0.24"]
 
 [project.urls]
 Homepage = "https://iaes.dev"

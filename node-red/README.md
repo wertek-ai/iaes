@@ -23,6 +23,8 @@ Or via the Node-RED palette manager: search for `node-red-contrib-iaes`.
 | **iaes work order** | Create `maintenance.work_order_intent` events |
 | **iaes validate** | Validate any IAES event against the JSON schema |
 | **iaes sparkplug** | Bridge Sparkplug B metrics to IAES events (Ignition, Cirrus Link, DXM) |
+| **iaes publish** | POST IAES events to any IAES-compatible HTTP endpoint (batching, auth) |
+| **iaes route** | Route IAES events by `event_type` to 7 typed outputs |
 
 ## Usage
 
@@ -92,6 +94,30 @@ cd ~/.node-red && npm install sparkplug-payload
 ```
 [mqtt in] --> [iaes validate] --> [function: run model] --> [iaes health] --> [mqtt out]
 ```
+
+### Publish events to a remote IAES endpoint
+
+```
+[iaes measurement] --> [iaes publish]
+                            |
+                            +--> [debug] (errors)
+```
+
+Configure the **iaes publish** node with the base URL of your IAES-compatible server and an optional API key. The node appends `/api/v1/iaes/ingest` automatically. Set **Batch Size** > 1 to buffer events and send them as a single HTTP POST.
+
+### Route events by type
+
+```
+[mqtt in] --> [iaes route] --1--> [function: process measurement]
+                           --2--> [function: process health]
+                           --3--> [function: process work order]
+                           --4--> [function: process completion]
+                           --5--> [function: process hierarchy]
+                           --6--> [function: process sensor]
+                           --7--> [debug] (spare parts + unknown)
+```
+
+The **iaes route** node reads `event_type` from the IAES envelope and sends the message to the corresponding output. Output 7 receives `maintenance.spare_part_usage` and any unrecognized event types.
 
 ## Links
 
