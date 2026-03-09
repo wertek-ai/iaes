@@ -15,3 +15,4 @@ npm/dist/
 .vscode/
 .idea/
 *.swp
+node-red/node_modules/

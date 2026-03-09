@@ -1,0 +1,117 @@
+<script type="text/javascript">
+  RED.nodes.registerType("iaes-health", {
+    category: "IAES",
+    color: "#dc2626",
+    defaults: {
+      name: { value: "" },
+      assetId: { value: "", required: true },
+      severity: { value: "info" },
+      healthIndex: { value: "1.0" },
+      source: { value: "node_red" },
+      failureMode: { value: "" },
+      rulDays: { value: "" },
+      recommendedAction: { value: "" },
+      anomalyScore: { value: "0.0" },
+      faultConfidence: { value: "0.0" },
+      iso13374Status: { value: "" },
+      assetName: { value: "" },
+      plant: { value: "" },
+      area: { value: "" },
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: "font-awesome/fa-heartbeat",
+    label: function () {
+      return this.name || "iaes health";
+    },
+    paletteLabel: "iaes health",
+  });
+</script>
+
+<script type="text/html" data-template-name="iaes-health">
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-assetId"><i class="fa fa-cog"></i> Asset ID</label>
+    <input type="text" id="node-input-assetId" placeholder="MOTOR-001" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-severity"><i class="fa fa-exclamation-triangle"></i> Severity</label>
+    <select id="node-input-severity">
+      <option value="info">Info</option>
+      <option value="low">Low</option>
+      <option value="medium">Medium</option>
+      <option value="high">High</option>
+      <option value="critical">Critical</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-healthIndex"><i class="fa fa-heart"></i> Health Index</label>
+    <input type="text" id="node-input-healthIndex" placeholder="1.0 (healthy) to 0.0 (failed)" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-source"><i class="fa fa-plug"></i> Source</label>
+    <input type="text" id="node-input-source" placeholder="node_red" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-failureMode"><i class="fa fa-wrench"></i> Failure Mode</label>
+    <input type="text" id="node-input-failureMode" placeholder="bearing_inner_race (optional)" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-rulDays"><i class="fa fa-clock-o"></i> RUL (days)</label>
+    <input type="text" id="node-input-rulDays" placeholder="Remaining useful life (optional)" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-recommendedAction"><i class="fa fa-check-square"></i> Action</label>
+    <input type="text" id="node-input-recommendedAction" placeholder="Recommended action (optional)" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-iso13374Status"><i class="fa fa-certificate"></i> ISO 13374</label>
+    <select id="node-input-iso13374Status">
+      <option value="">(none)</option>
+      <option value="normal">Normal</option>
+      <option value="satisfactory">Satisfactory</option>
+      <option value="unsatisfactory">Unsatisfactory</option>
+      <option value="unacceptable">Unacceptable</option>
+      <option value="imminent_failure">Imminent Failure</option>
+      <option value="failed">Failed</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-assetName"><i class="fa fa-industry"></i> Asset Name</label>
+    <input type="text" id="node-input-assetName" placeholder="(optional)" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-plant"><i class="fa fa-building"></i> Plant</label>
+    <input type="text" id="node-input-plant" placeholder="(optional)" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-area"><i class="fa fa-map"></i> Area</label>
+    <input type="text" id="node-input-area" placeholder="(optional)" />
+  </div>
+</script>
+
+<script type="text/html" data-help-name="iaes-health">
+  <p>Creates an IAES <code>asset.health</code> event.</p>
+  <h3>Input</h3>
+  <dl class="message-properties">
+    <dt>payload <span class="property-type">number | object</span></dt>
+    <dd>If a number, used as <code>health_index</code>. If an object, fields are merged
+    (health_index, severity, failure_mode, rul_days, etc.).</dd>
+    <dt class="optional">asset_id <span class="property-type">string</span></dt>
+    <dd>Override the configured asset ID.</dd>
+    <dt class="optional">severity <span class="property-type">string</span></dt>
+    <dd>Override severity (info, low, medium, high, critical).</dd>
+  </dl>
+  <h3>Output</h3>
+  <dl class="message-properties">
+    <dt>payload <span class="property-type">object</span></dt>
+    <dd>The complete IAES envelope.</dd>
+  </dl>
+  <h3>Details</h3>
+  <p>Use this node to emit AI diagnosis results, rule engine outputs, or manual expert
+  assessments as standard IAES health events. Supports ISO 13374 condition status and
+  ISO 14224 failure codes.</p>
+</script>

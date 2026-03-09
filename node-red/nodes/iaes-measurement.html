@@ -1,0 +1,124 @@
+<script type="text/javascript">
+  RED.nodes.registerType("iaes-measurement", {
+    category: "IAES",
+    color: "#2563eb",
+    defaults: {
+      name: { value: "" },
+      assetId: { value: "", required: true },
+      measurementType: { value: "vibration_velocity" },
+      unit: { value: "mm/s" },
+      source: { value: "node_red" },
+      sensorId: { value: "" },
+      location: { value: "" },
+      unitsQualifier: { value: "" },
+      assetName: { value: "" },
+      plant: { value: "" },
+      area: { value: "" },
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: "font-awesome/fa-line-chart",
+    label: function () {
+      return this.name || "iaes measurement";
+    },
+    paletteLabel: "iaes measurement",
+  });
+</script>
+
+<script type="text/html" data-template-name="iaes-measurement">
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-assetId"><i class="fa fa-cog"></i> Asset ID</label>
+    <input type="text" id="node-input-assetId" placeholder="MOTOR-001" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-measurementType"><i class="fa fa-tachometer"></i> Type</label>
+    <select id="node-input-measurementType">
+      <option value="vibration_velocity">Vibration Velocity</option>
+      <option value="vibration_acceleration">Vibration Acceleration</option>
+      <option value="vibration_displacement">Vibration Displacement</option>
+      <option value="temperature">Temperature</option>
+      <option value="current">Current</option>
+      <option value="voltage">Voltage</option>
+      <option value="power">Power</option>
+      <option value="energy">Energy</option>
+      <option value="pressure">Pressure</option>
+      <option value="flow">Flow</option>
+      <option value="speed">Speed</option>
+      <option value="power_factor">Power Factor</option>
+      <option value="thd_voltage">THD Voltage</option>
+      <option value="thd_current">THD Current</option>
+      <option value="frequency">Frequency</option>
+      <option value="reactive_power">Reactive Power</option>
+      <option value="custom">Custom</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-unit"><i class="fa fa-ruler"></i> Unit</label>
+    <input type="text" id="node-input-unit" placeholder="mm/s" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-source"><i class="fa fa-plug"></i> Source</label>
+    <input type="text" id="node-input-source" placeholder="node_red" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-sensorId"><i class="fa fa-microchip"></i> Sensor ID</label>
+    <input type="text" id="node-input-sensorId" placeholder="(optional)" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-location"><i class="fa fa-map-marker"></i> Location</label>
+    <input type="text" id="node-input-location" placeholder="bearing_drive_end (optional)" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-unitsQualifier"><i class="fa fa-filter"></i> Qualifier</label>
+    <select id="node-input-unitsQualifier">
+      <option value="">(none)</option>
+      <option value="rms">RMS</option>
+      <option value="peak">Peak</option>
+      <option value="peak_to_peak">Peak-to-Peak</option>
+      <option value="average">Average</option>
+      <option value="true_rms">True RMS</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-assetName"><i class="fa fa-industry"></i> Asset Name</label>
+    <input type="text" id="node-input-assetName" placeholder="(optional)" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-plant"><i class="fa fa-building"></i> Plant</label>
+    <input type="text" id="node-input-plant" placeholder="(optional)" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-area"><i class="fa fa-map"></i> Area</label>
+    <input type="text" id="node-input-area" placeholder="(optional)" />
+  </div>
+</script>
+
+<script type="text/html" data-help-name="iaes-measurement">
+  <p>Creates an IAES <code>asset.measurement</code> event.</p>
+  <h3>Input</h3>
+  <dl class="message-properties">
+    <dt>payload <span class="property-type">number</span></dt>
+    <dd>The measurement value.</dd>
+    <dt class="optional">asset_id <span class="property-type">string</span></dt>
+    <dd>Override the configured asset ID.</dd>
+    <dt class="optional">measurement_type <span class="property-type">string</span></dt>
+    <dd>Override the measurement type.</dd>
+    <dt class="optional">unit <span class="property-type">string</span></dt>
+    <dd>Override the engineering unit.</dd>
+    <dt class="optional">source <span class="property-type">string</span></dt>
+    <dd>Override the source identifier.</dd>
+  </dl>
+  <h3>Output</h3>
+  <dl class="message-properties">
+    <dt>payload <span class="property-type">object</span></dt>
+    <dd>The complete IAES envelope (ready for JSON serialization).</dd>
+  </dl>
+  <h3>Details</h3>
+  <p>Wraps <code>@iaes/sdk</code> AssetMeasurement. Supports all IAES v1.2 measurement types
+  including vibration, temperature, power quality (power factor, THD), and custom types.</p>
+  <p>Fields can be configured in the node editor or overridden via <code>msg</code> properties.</p>
+</script>

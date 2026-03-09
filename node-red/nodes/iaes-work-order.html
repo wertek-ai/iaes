@@ -1,0 +1,108 @@
+<script type="text/javascript">
+  RED.nodes.registerType("iaes-work-order", {
+    category: "IAES",
+    color: "#f59e0b",
+    defaults: {
+      name: { value: "" },
+      assetId: { value: "", required: true },
+      title: { value: "" },
+      priority: { value: "medium" },
+      source: { value: "node_red" },
+      description: { value: "" },
+      recommendedDueDays: { value: "" },
+      triggeredBy: { value: "" },
+      assetName: { value: "" },
+      plant: { value: "" },
+      area: { value: "" },
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: "font-awesome/fa-clipboard",
+    label: function () {
+      return this.name || "iaes work order";
+    },
+    paletteLabel: "iaes work order",
+  });
+</script>
+
+<script type="text/html" data-template-name="iaes-work-order">
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-assetId"><i class="fa fa-cog"></i> Asset ID</label>
+    <input type="text" id="node-input-assetId" placeholder="MOTOR-001" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-title"><i class="fa fa-file-text"></i> Title</label>
+    <input type="text" id="node-input-title" placeholder="Replace bearing DE" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-priority"><i class="fa fa-exclamation"></i> Priority</label>
+    <select id="node-input-priority">
+      <option value="low">Low</option>
+      <option value="medium">Medium</option>
+      <option value="high">High</option>
+      <option value="emergency">Emergency</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-source"><i class="fa fa-plug"></i> Source</label>
+    <input type="text" id="node-input-source" placeholder="node_red" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-description"><i class="fa fa-align-left"></i> Description</label>
+    <input type="text" id="node-input-description" placeholder="(optional)" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-recommendedDueDays"><i class="fa fa-calendar"></i> Due (days)</label>
+    <input type="text" id="node-input-recommendedDueDays" placeholder="(optional)" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-triggeredBy"><i class="fa fa-bolt"></i> Triggered By</label>
+    <select id="node-input-triggeredBy">
+      <option value="">(none)</option>
+      <option value="alert">Alert</option>
+      <option value="schedule">Schedule</option>
+      <option value="manual">Manual</option>
+      <option value="threshold">Threshold</option>
+      <option value="ai_diagnosis">AI Diagnosis</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-assetName"><i class="fa fa-industry"></i> Asset Name</label>
+    <input type="text" id="node-input-assetName" placeholder="(optional)" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-plant"><i class="fa fa-building"></i> Plant</label>
+    <input type="text" id="node-input-plant" placeholder="(optional)" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-area"><i class="fa fa-map"></i> Area</label>
+    <input type="text" id="node-input-area" placeholder="(optional)" />
+  </div>
+</script>
+
+<script type="text/html" data-help-name="iaes-work-order">
+  <p>Creates an IAES <code>maintenance.work_order_intent</code> event.</p>
+  <h3>Input</h3>
+  <dl class="message-properties">
+    <dt>payload <span class="property-type">object</span></dt>
+    <dd>Object with work order fields (title, priority, description, etc.).</dd>
+    <dt class="optional">title <span class="property-type">string</span></dt>
+    <dd>Override the work order title.</dd>
+    <dt class="optional">priority <span class="property-type">string</span></dt>
+    <dd>Override priority (low, medium, high, emergency).</dd>
+    <dt class="optional">source_event_id <span class="property-type">string</span></dt>
+    <dd>Link to the originating event (e.g., a health diagnosis event_id).</dd>
+  </dl>
+  <h3>Output</h3>
+  <dl class="message-properties">
+    <dt>payload <span class="property-type">object</span></dt>
+    <dd>The complete IAES envelope.</dd>
+  </dl>
+  <h3>Details</h3>
+  <p>Declares the <em>intent</em> to create a work order. The downstream consumer
+  (SAP, Odoo, MaintainX, Fracttal) decides how to act on it.</p>
+</script>
