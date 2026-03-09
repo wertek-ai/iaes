@@ -1,0 +1,62 @@
+[
+  {
+    "id": "iaes-example-vibration",
+    "type": "tab",
+    "label": "IAES: Vibration Monitoring",
+    "disabled": false,
+    "info": "Simulates a vibration sensor reading and creates an IAES asset.measurement event.\n\nClick the inject node to trigger."
+  },
+  {
+    "id": "inject-vib",
+    "type": "inject",
+    "z": "iaes-example-vibration",
+    "name": "Simulate 4.2 mm/s",
+    "props": [{ "p": "payload" }],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "4.2",
+    "payloadType": "num",
+    "x": 170,
+    "y": 100,
+    "wires": [["iaes-meas-vib"]]
+  },
+  {
+    "id": "iaes-meas-vib",
+    "type": "iaes-measurement",
+    "z": "iaes-example-vibration",
+    "name": "",
+    "assetId": "MOTOR-001",
+    "measurementType": "vibration_velocity",
+    "unit": "mm/s",
+    "source": "node_red.example",
+    "sensorId": "sensor-DE-001",
+    "location": "bearing_drive_end",
+    "unitsQualifier": "rms",
+    "assetName": "Motor Bomba P-101",
+    "plant": "Pesqueria",
+    "area": "Turbinas",
+    "x": 400,
+    "y": 100,
+    "wires": [["debug-vib"]]
+  },
+  {
+    "id": "debug-vib",
+    "type": "debug",
+    "z": "iaes-example-vibration",
+    "name": "IAES Event",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": true,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "payload.data.value",
+    "statusType": "auto",
+    "x": 620,
+    "y": 100,
+    "wires": []
+  }
+]

@@ -1,0 +1,78 @@
+[
+  {
+    "id": "iaes-example-sparkplug",
+    "type": "tab",
+    "label": "IAES: Sparkplug B Bridge",
+    "disabled": false,
+    "info": "Demonstrates bridging Sparkplug B device data to IAES events.\n\nThe inject node simulates a Sparkplug B DDATA payload with multiple metrics.\nThe iaes sparkplug node converts each numeric metric to an IAES asset.measurement event.\n\nIn production, replace the inject node with an MQTT input subscribed to:\nspBv1.0/+/DDATA/+/+"
+  },
+  {
+    "id": "inject-spk",
+    "type": "inject",
+    "z": "iaes-example-sparkplug",
+    "name": "Simulate Sparkplug DDATA",
+    "props": [
+      { "p": "payload" },
+      { "p": "topic", "v": "spBv1.0/PlantA/DDATA/GW-100/MOTOR-001", "vt": "str" }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"timestamp\":1709989200000,\"metrics\":[{\"name\":\"Temperature\",\"value\":72.5,\"type\":\"Float\",\"timestamp\":1709989200000},{\"name\":\"Vibration/Velocity\",\"value\":4.2,\"type\":\"Float\",\"timestamp\":1709989200000,\"properties\":{\"engUnit\":{\"value\":\"mm/s\"}}},{\"name\":\"Current\",\"value\":12.8,\"type\":\"Float\",\"timestamp\":1709989200000},{\"name\":\"Power Factor\",\"value\":0.89,\"type\":\"Float\",\"timestamp\":1709989200000},{\"name\":\"Running\",\"value\":true,\"type\":\"Boolean\",\"timestamp\":1709989200000}]}",
+    "payloadType": "json",
+    "x": 180,
+    "y": 100,
+    "wires": [["sparkplug-node"]]
+  },
+  {
+    "id": "sparkplug-node",
+    "type": "iaes-sparkplug",
+    "z": "iaes-example-sparkplug",
+    "name": "",
+    "assetIdSource": "device_id",
+    "customAssetId": "",
+    "source": "",
+    "metricFilter": "",
+    "outputMode": "per_metric",
+    "assetName": "Motor Bomba P-101",
+    "plant": "",
+    "area": "Turbinas",
+    "x": 440,
+    "y": 100,
+    "wires": [["debug-spk-ok"], ["debug-spk-err"]]
+  },
+  {
+    "id": "debug-spk-ok",
+    "type": "debug",
+    "z": "iaes-example-sparkplug",
+    "name": "IAES Events (1 per metric)",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": true,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "payload.data.measurement_type",
+    "statusType": "auto",
+    "x": 710,
+    "y": 80,
+    "wires": []
+  },
+  {
+    "id": "debug-spk-err",
+    "type": "debug",
+    "z": "iaes-example-sparkplug",
+    "name": "Errors / Skipped",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "true",
+    "targetType": "full",
+    "x": 690,
+    "y": 140,
+    "wires": []
+  }
+]
