@@ -23,6 +23,46 @@ npm install @iaes/sdk                 # TypeScript / Node.js
 npm install node-red-contrib-iaes     # Node-RED
 ```
 
+## Publish Events
+
+The SDK includes a `Client` that sends IAES events to any compliant endpoint via HTTPS.
+
+**Python:**
+
+```python
+from iaes import Client, AssetMeasurement
+
+client = Client("https://your-endpoint.example.com", api_key="your-key")
+event = AssetMeasurement(
+    asset_id="MOTOR-001",
+    measurement_type="vibration_velocity",
+    value=4.2,
+    unit="mm/s",
+    source="acme.sensors.plant1",
+)
+result = client.publish(event)
+```
+
+**TypeScript:**
+
+```ts
+import { IaesClient, AssetMeasurement } from "@iaes/sdk";
+
+const client = new IaesClient("https://your-endpoint.example.com", {
+  apiKey: "your-key",
+});
+const event = new AssetMeasurement({
+  asset_id: "MOTOR-001",
+  measurement_type: "vibration_velocity",
+  value: 4.2,
+  unit: "mm/s",
+  source: "acme.sensors.plant1",
+});
+const result = await client.publish(event);
+```
+
+The endpoint URL is any IAES-compliant receiver — your own backend, a cloud broker, or a third-party integration.
+
 ## Examples
 
 ### Vibration measurement
@@ -247,6 +287,24 @@ The core SDK uses only standard library. No runtime dependencies.
 
 Both SDKs produce identical wire format and identical `content_hash` for the same data. Events created in Python validate in TypeScript and vice versa. This is tested on every commit.
 
+## Node-RED
+
+[`node-red-contrib-iaes`](https://flows.nodered.org/node/node-red-contrib-iaes) provides 7 nodes for visual IAES workflows:
+
+| Node | Purpose |
+|------|---------|
+| **iaes-measurement** | Create `asset.measurement` events from sensor inputs |
+| **iaes-health** | Create `asset.health` events from AI models or expert rules |
+| **iaes-work-order** | Create `maintenance.work_order_intent` events |
+| **iaes-validate** | Validate any IAES envelope against JSON Schema |
+| **iaes-sparkplug** | Bridge Sparkplug B payloads to/from IAES format |
+| **iaes-publish** | Publish IAES events to any compliant HTTP endpoint |
+| **iaes-route** | Route events by type, severity, or custom expressions |
+
+```bash
+npm install node-red-contrib-iaes
+```
+
 ## Resources
 
 - **[IAES_SPEC.md](IAES_SPEC.md)** — Full specification
@@ -271,7 +329,7 @@ Both SDKs produce identical wire format and identical `content_hash` for the sam
 | Odoo | maintenance.request |
 | MaintainX | User Variables |
 | Fracttal | Custom fields + OT |
-| Node-RED | [`node-red-contrib-iaes`](https://flows.nodered.org/node/node-red-contrib-iaes) — 4 nodes |
+| Node-RED | [`node-red-contrib-iaes`](https://flows.nodered.org/node/node-red-contrib-iaes) — 7 nodes |
 | MQTT / Kafka | JSON payload on any topic |
 
 ## License
