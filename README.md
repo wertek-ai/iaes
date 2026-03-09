@@ -4,6 +4,7 @@
 
 [![PyPI](https://img.shields.io/pypi/v/iaes)](https://pypi.org/project/iaes/)
 [![npm](https://img.shields.io/npm/v/@iaes/sdk)](https://www.npmjs.com/package/@iaes/sdk)
+[![Node-RED](https://img.shields.io/npm/v/node-red-contrib-iaes?label=node-red)](https://flows.nodered.org/node/node-red-contrib-iaes)
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
 Industrial systems speak different languages. A vibration sensor outputs raw waveforms. An AI model outputs health scores. SAP expects maintenance notifications. PI System expects tag values. MaintainX expects user variables.
@@ -17,8 +18,9 @@ Sensors --> Intelligence --> IAES --> Connectors --> Enterprise Systems
 ## Install
 
 ```bash
-pip install iaes            # Python
-npm install @iaes/sdk            # TypeScript / Node.js
+pip install iaes                      # Python
+npm install @iaes/sdk                 # TypeScript / Node.js
+npm install node-red-contrib-iaes     # Node-RED
 ```
 
 ## Examples
@@ -269,7 +271,7 @@ Both SDKs produce identical wire format and identical `content_hash` for the sam
 | Odoo | maintenance.request |
 | MaintainX | User Variables |
 | Fracttal | Custom fields + OT |
-| Node-RED | `node-red-contrib-iaes` (coming soon) |
+| Node-RED | [`node-red-contrib-iaes`](https://flows.nodered.org/node/node-red-contrib-iaes) — 4 nodes |
 | MQTT / Kafka | JSON payload on any topic |
 
 ## License
