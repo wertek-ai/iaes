@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "iaes"
-version = "0.2.0"
+version = "0.2.1"
 description = "Industrial Asset Event Standard — vendor-neutral event models for industrial asset intelligence"
 readme = "README.md"
 license = "CC-BY-4.0"

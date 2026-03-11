@@ -429,4 +429,4 @@ class TestVersion:
         assert SPEC_VERSION == "1.3"
 
     def test_package_version(self):
-        assert iaes.__version__ == "0.2.0"
+        assert iaes.__version__ == "0.2.1"
