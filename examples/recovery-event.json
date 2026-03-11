@@ -1,0 +1,75 @@
+[
+  {
+    "_comment": "Step 1: Onset — Power factor drops below threshold (first violation)",
+    "spec_version": "1.3",
+    "event_type": "asset.health",
+    "event_id": "f1a2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c",
+    "correlation_id": "7a8b9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d",
+    "timestamp": "2026-03-10T08:00:00Z",
+    "source": "wertek.energy.cdr_rules",
+    "content_hash": "a1b2c3d4e5f6a7b8",
+    "asset": {
+      "asset_id": "METER-AEL-001",
+      "asset_name": "Medidor principal AEL",
+      "plant": "AEL Monterrey",
+      "area": "Subestacion"
+    },
+    "data": {
+      "health_index": 0.65,
+      "severity": "medium",
+      "condition_trend": "worsening",
+      "iso_13374_status": "unsatisfactory",
+      "failure_mode": "low_power_factor",
+      "recommended_action": "Verificar banco de capacitores. Factor de potencia 0.92 (umbral >= 0.95)."
+    }
+  },
+  {
+    "_comment": "Step 2: Escalation — Power factor worsens further",
+    "spec_version": "1.3",
+    "event_type": "asset.health",
+    "event_id": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+    "correlation_id": "7a8b9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d",
+    "source_event_id": "f1a2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c",
+    "timestamp": "2026-03-12T08:00:00Z",
+    "source": "wertek.energy.cdr_rules",
+    "content_hash": "c3d4e5f6a7b8c9d0",
+    "asset": {
+      "asset_id": "METER-AEL-001",
+      "asset_name": "Medidor principal AEL",
+      "plant": "AEL Monterrey",
+      "area": "Subestacion"
+    },
+    "data": {
+      "health_index": 0.35,
+      "severity": "high",
+      "condition_trend": "worsening",
+      "iso_13374_status": "unacceptable",
+      "failure_mode": "low_power_factor",
+      "recommended_action": "Intervencion urgente. Factor de potencia 0.88 (umbral >= 0.95). Riesgo de penalizacion CdR."
+    }
+  },
+  {
+    "_comment": "Step 3: Recovery — Capacitor bank repaired, power factor returns to normal",
+    "spec_version": "1.3",
+    "event_type": "asset.health",
+    "event_id": "d4e5f6a7-b8c9-0d1e-2f3a-4b5c6d7e8f9a",
+    "correlation_id": "7a8b9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d",
+    "source_event_id": "f1a2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c",
+    "timestamp": "2026-03-13T10:00:00Z",
+    "source": "wertek.energy.cdr_rules",
+    "content_hash": "e5f6a7b8c9d0e1f2",
+    "asset": {
+      "asset_id": "METER-AEL-001",
+      "asset_name": "Medidor principal AEL",
+      "plant": "AEL Monterrey",
+      "area": "Subestacion"
+    },
+    "data": {
+      "health_index": 0.95,
+      "severity": "info",
+      "condition_trend": "improving",
+      "iso_13374_status": "normal",
+      "recommended_action": "Condition returned to normal. Power factor 0.97. Continue routine monitoring."
+    }
+  }
+]
