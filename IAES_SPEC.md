@@ -1,4 +1,4 @@
-# IAES — Industrial Asset Event Standard v1.2
+# IAES — Industrial Asset Event Standard v1.3
 
 > A vendor-neutral event format for industrial asset intelligence.
 
@@ -144,6 +144,7 @@ AI diagnosis / health state change. Includes recommended action.
 | `rul_days` | integer | no | Remaining Useful Life in days |
 | `recommended_action` | string | no | Human-readable action suggestion |
 | `estimated_downtime_hours` | float | no | Estimated repair duration |
+| `condition_trend` | string | no | Temporal trend of the condition: `worsening`, `stable`, `improving`. Indicates whether the assessed condition is deteriorating, holding steady, or getting better compared to the previous assessment. Based on ISO 13374-4 §5.3 presentation states. (v1.3) |
 | `iso_13374_status` | string | no | ISO 13374-2 health status: `unknown`, `normal`, `satisfactory`, `unsatisfactory`, `unacceptable`, `imminent_failure`, `failed` (v1.2, see Appendix C) |
 | `iso_14224` | object | no | ISO 14224 failure classification codes (v1.2, see Appendix B) |
 
@@ -450,6 +451,27 @@ maintenance.spare_part_usage ─── [0-N parts consumed]
 
 All events in the chain share the same `correlation_id`. Each references its predecessor via `source_event_id`.
 
+### Recovery Events
+
+An `asset.health` event MAY represent recovery — when a previously abnormal condition returns to acceptable parameters. A recovery event uses the existing fields with values indicating normal operation:
+
+```json
+{
+  "event_type": "asset.health",
+  "data": {
+    "health_index": 0.95,
+    "severity": "info",
+    "iso_13374_status": "normal",
+    "condition_trend": "improving",
+    "recommended_action": "Condition returned to normal. Continue routine monitoring."
+  }
+}
+```
+
+Recovery events SHOULD reference the original onset event via `source_event_id` and share the same `correlation_id`. This enables consumers to compute Mean Time To Recovery (MTTR) and close open alerts automatically.
+
+> See `IAES_ARCHITECTURE.md` § State Transition Guidance for detailed emission guidance and integration implications.
+
 ## System Compatibility
 
 | System | IAES Mapping |
@@ -480,6 +502,7 @@ IAES uses semantic versioning for the specification itself:
 | 1.0 | March 2026 | Initial release. 3 event types, common envelope, JSON Schema. |
 | 1.1 | March 2026 | 4 new event types (maintenance.completion, asset.hierarchy, sensor.registration, maintenance.spare_part_usage), batch_id envelope field, failure mode taxonomy (Appendix A). |
 | 1.2 | March 2026 | ISO alignment: `units_qualifier`, `sampling_rate_hz`, `acquisition_duration_s` on asset.measurement (ISO 17359); `iso_13374_status` on asset.health (ISO 13374); `iso_14224` object on asset.health + maintenance.completion (ISO 14224). All new fields optional — full backward compatibility. Appendix B (ISO 14224 codes), Appendix C (ISO 13374 mapping). |
+| 1.3 | March 2026 | State transition model: `condition_trend` field on asset.health (`worsening`, `stable`, `improving`) based on ISO 13374-4 §5.3. Formalized recovery event pattern. State Transition Guidance in Architecture Guide (ISO 13374-4, ISO 17359, ISO 14224, ISO 55000). Recovery event example. All new fields optional — full backward compatibility. |
 
 ## Appendix A: Failure Mode Taxonomy
 
@@ -643,6 +666,6 @@ IAES is an open specification licensed under [CC BY 4.0](https://creativecommons
 
 ---
 
-*IAES v1.2 — March 2026*
+*IAES v1.3 — March 2026*
 *Created by the [Wertek AI](https://wertek.ai) team.*
 *Reference implementation: [Wertek Integration Framework](https://github.com/wertek-ai/wertek-integrations)*
