@@ -1,0 +1,59 @@
+{
+  "name": "n8n-nodes-iaes",
+  "version": "0.1.0",
+  "description": "IAES Industrial Asset Event Standard nodes for n8n — emit, validate, and track lifecycle of industrial asset events",
+  "keywords": [
+    "n8n-community-node-package",
+    "iaes",
+    "industrial",
+    "asset",
+    "iot",
+    "iiot",
+    "maintenance",
+    "condition-monitoring",
+    "predictive",
+    "cmms",
+    "scada"
+  ],
+  "author": "Wertek AI <engineering@wertek.ai>",
+  "license": "CC-BY-4.0",
+  "homepage": "https://iaes.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wertek-ai/iaes.git",
+    "directory": "n8n-nodes"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "lint": "tsc --noEmit"
+  },
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "nodes": [
+      "dist/nodes/IaesEmit/IaesEmit.node.js",
+      "dist/nodes/IaesValidate/IaesValidate.node.js",
+      "dist/nodes/IaesLifecycle/IaesLifecycle.node.js"
+    ],
+    "credentials": [
+      "dist/credentials/IaesApi.credentials.js"
+    ]
+  },
+  "files": [
+    "dist/"
+  ],
+  "dependencies": {
+    "@iaes/sdk": "^0.2.1"
+  },
+  "devDependencies": {
+    "n8n-workflow": "^1.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": ">=1.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
