@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-iaes",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "IAES Industrial Asset Event Standard nodes for n8n — emit, validate, and track lifecycle of industrial asset events",
   "keywords": [
     "n8n-community-node-package",
@@ -25,7 +25,8 @@
   },
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run copy-icons",
+    "copy-icons": "node -e \"const fs=require('fs');const p=require('path');['IaesEmit','IaesValidate','IaesLifecycle'].forEach(n=>{const s=p.join('nodes',n,'iaes.svg');const d=p.join('dist','nodes',n,'iaes.svg');fs.mkdirSync(p.dirname(d),{recursive:true});fs.copyFileSync(s,d)})\"",
     "prepublishOnly": "npm run build",
     "lint": "tsc --noEmit"
   },

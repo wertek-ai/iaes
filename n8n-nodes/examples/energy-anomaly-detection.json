@@ -1,0 +1,170 @@
+{
+  "name": "IAES Energy Anomaly Detection",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "minutes", "minutesInterval": 5 }]
+        }
+      },
+      "id": "schedule-1",
+      "name": "Every 5 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $credentials.iaesApi?.httpEndpoint || 'https://api.wertek.ai/api/v1/energy/readings/latest' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "http-1",
+      "name": "Read Energy Meter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "" },
+          "conditions": [
+            {
+              "id": "pf-low",
+              "leftValue": "={{ $json.power_factor }}",
+              "rightValue": 0.95,
+              "operator": { "type": "number", "operation": "lt" }
+            }
+          ],
+          "combinator": "or"
+        }
+      },
+      "id": "if-1",
+      "name": "PF < 0.95?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "eventType": "asset.health",
+        "assetId": "={{ $json.meter_id || 'METER-001' }}",
+        "source": "n8n.energy_monitor",
+        "healthIndex": "={{ Math.max(0, Math.min(1, $json.power_factor || 0.5)) }}",
+        "severity": "={{ $json.power_factor < 0.90 ? 'critical' : $json.power_factor < 0.92 ? 'high' : 'medium' }}",
+        "conditionTrend": "worsening",
+        "failureMode": "low_power_factor",
+        "recommendedAction": "Check capacitor bank and harmonic filters",
+        "iso13374Status": "={{ $json.power_factor < 0.90 ? 'unacceptable' : 'unsatisfactory' }}",
+        "assetName": "={{ $json.meter_name || 'Energy Meter' }}",
+        "plant": "={{ $json.plant || '' }}",
+        "outputMode": "envelope"
+      },
+      "id": "emit-violation",
+      "name": "IAES Health (Violation)",
+      "type": "n8n-nodes-iaes.iaesEmit",
+      "typeVersion": 1,
+      "position": [660, -80]
+    },
+    {
+      "parameters": {
+        "eventType": "asset.health",
+        "assetId": "={{ $json.meter_id || 'METER-001' }}",
+        "source": "n8n.energy_monitor",
+        "healthIndex": 1,
+        "severity": "info",
+        "conditionTrend": "",
+        "failureMode": "low_power_factor",
+        "assetName": "={{ $json.meter_name || 'Energy Meter' }}",
+        "outputMode": "envelope"
+      },
+      "id": "emit-ok",
+      "name": "IAES Health (OK)",
+      "type": "n8n-nodes-iaes.iaesEmit",
+      "typeVersion": 1,
+      "position": [660, 120]
+    },
+    {
+      "parameters": {
+        "inputField": "",
+        "ruleKeyField": "data.failure_mode",
+        "okSeverity": "info",
+        "recoveryCount": 5,
+        "emitSustained": false
+      },
+      "id": "lifecycle-1",
+      "name": "IAES Lifecycle",
+      "type": "n8n-nodes-iaes.iaesLifecycle",
+      "typeVersion": 1,
+      "position": [880, 0]
+    },
+    {
+      "parameters": {
+        "channel": "#alerts-energy",
+        "text": "=⚠️ *IAES {{ $json.iaes_lifecycle.phase | uppercase }}*\n\nAsset: `{{ $json.asset.asset_id }}`\nSeverity: *{{ $json.data.severity }}*\nPower Factor: {{ $json.data.health_index }}\nAction: {{ $json.data.recommended_action }}\nCorrelation: `{{ $json.iaes_lifecycle.correlation_id }}`",
+        "otherOptions": {}
+      },
+      "id": "slack-onset",
+      "name": "Slack Alert (Onset)",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [1100, -80],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "channel": "#alerts-energy",
+        "text": "=✅ *IAES RECOVERY*\n\nAsset: `{{ $json.iaes_lifecycle.asset_id }}`\nPeak severity was: *{{ $json.iaes_lifecycle.peak_severity }}*\nDuration: {{ $json.iaes_lifecycle.onset_timestamp }} → {{ $json.iaes_lifecycle.recovery_timestamp }}\nCorrelation: `{{ $json.iaes_lifecycle.correlation_id }}`",
+        "otherOptions": {}
+      },
+      "id": "slack-recovery",
+      "name": "Slack Alert (Recovery)",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [1100, 120],
+      "disabled": true
+    }
+  ],
+  "connections": {
+    "Every 5 Minutes": {
+      "main": [[{ "node": "Read Energy Meter", "type": "main", "index": 0 }]]
+    },
+    "Read Energy Meter": {
+      "main": [[{ "node": "PF < 0.95?", "type": "main", "index": 0 }]]
+    },
+    "PF < 0.95?": {
+      "main": [
+        [{ "node": "IAES Health (Violation)", "type": "main", "index": 0 }],
+        [{ "node": "IAES Health (OK)", "type": "main", "index": 0 }]
+      ]
+    },
+    "IAES Health (Violation)": {
+      "main": [[{ "node": "IAES Lifecycle", "type": "main", "index": 0 }]]
+    },
+    "IAES Health (OK)": {
+      "main": [[{ "node": "IAES Lifecycle", "type": "main", "index": 0 }]]
+    },
+    "IAES Lifecycle": {
+      "main": [
+        [{ "node": "Slack Alert (Onset)", "type": "main", "index": 0 }],
+        [{ "node": "Slack Alert (Recovery)", "type": "main", "index": 0 }],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateId": "iaes-energy-anomaly",
+    "instanceId": "iaes-template"
+  },
+  "tags": [
+    { "name": "IAES" },
+    { "name": "Energy" },
+    { "name": "Anomaly Detection" }
+  ]
+}
