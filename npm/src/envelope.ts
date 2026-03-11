@@ -2,7 +2,7 @@
 
 import { createHash, randomUUID } from "crypto";
 
-export const SPEC_VERSION = "1.2";
+export const SPEC_VERSION = "1.3";
 
 /** Recursively sort object keys to match Python's json.dumps(sort_keys=True). */
 function sortKeys(obj: unknown): unknown {

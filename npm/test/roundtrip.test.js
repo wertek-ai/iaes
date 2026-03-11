@@ -23,7 +23,7 @@ const {
 
 describe("IAES TypeScript SDK", () => {
   it("spec version is 1.2", () => {
-    assert.equal(SPEC_VERSION, "1.2");
+    assert.equal(SPEC_VERSION, "1.3");
   });
 
   it("AssetMeasurement roundtrip", () => {
@@ -39,7 +39,7 @@ describe("IAES TypeScript SDK", () => {
     const wire = event.toJSON();
 
     assert.equal(wire.event_type, "asset.measurement");
-    assert.equal(wire.spec_version, "1.2");
+    assert.equal(wire.spec_version, "1.3");
     assert.equal(wire.asset.asset_id, "MOTOR-001");
     assert.equal(wire.data.measurement_type, "vibration_velocity");
     assert.equal(wire.data.value, 4.2);
@@ -74,6 +74,25 @@ describe("IAES TypeScript SDK", () => {
     const event2 = AssetHealth.fromJSON(wire);
     assert.equal(event2.failure_mode, "bearing_inner_race");
     assert.equal(event2.rul_days, 5);
+  });
+
+  it("AssetHealth condition_trend (v1.3)", () => {
+    const event = new AssetHealth({
+      asset_id: "PUMP-003",
+      health_index: 0.4,
+      severity: "high",
+      condition_trend: "worsening",
+    });
+    const wire = event.toJSON();
+    assert.equal(wire.data.condition_trend, "worsening");
+    const event2 = AssetHealth.fromJSON(wire);
+    assert.equal(event2.condition_trend, "worsening");
+  });
+
+  it("AssetHealth condition_trend optional", () => {
+    const event = new AssetHealth({ asset_id: "M-001" });
+    const wire = event.toJSON();
+    assert.ok(!("condition_trend" in wire.data));
   });
 
   it("WorkOrderIntent roundtrip", () => {

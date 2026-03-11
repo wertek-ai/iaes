@@ -4,7 +4,7 @@ import hashlib
 import json
 from typing import Any, Dict
 
-SPEC_VERSION = "1.2"
+SPEC_VERSION = "1.3"
 
 
 def _normalize_for_hash(obj: Any) -> Any:

@@ -14,6 +14,7 @@
       anomalyScore: { value: "0.0" },
       faultConfidence: { value: "0.0" },
       iso13374Status: { value: "" },
+      conditionTrend: { value: "" },
       assetName: { value: "" },
       plant: { value: "" },
       area: { value: "" },
@@ -80,6 +81,15 @@
     </select>
   </div>
   <div class="form-row">
+    <label for="node-input-conditionTrend"><i class="fa fa-line-chart"></i> Trend</label>
+    <select id="node-input-conditionTrend">
+      <option value="">(none)</option>
+      <option value="worsening">Worsening</option>
+      <option value="stable">Stable</option>
+      <option value="improving">Improving</option>
+    </select>
+  </div>
+  <div class="form-row">
     <label for="node-input-assetName"><i class="fa fa-industry"></i> Asset Name</label>
     <input type="text" id="node-input-assetName" placeholder="(optional)" />
   </div>
@@ -112,6 +122,6 @@
   </dl>
   <h3>Details</h3>
   <p>Use this node to emit AI diagnosis results, rule engine outputs, or manual expert
-  assessments as standard IAES health events. Supports ISO 13374 condition status and
-  ISO 14224 failure codes.</p>
+  assessments as standard IAES health events. Supports ISO 13374 condition status,
+  ISO 14224 failure codes, and v1.3 condition trend (worsening/stable/improving).</p>
 </script>

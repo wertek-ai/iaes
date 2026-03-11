@@ -16,6 +16,7 @@ from iaes import (
     MeasurementType,
     UnitsQualifier,
     ISO13374Status,
+    ConditionTrend,
     WorkOrderPriority,
     CompletionStatus,
     HierarchyLevel,
@@ -137,6 +138,31 @@ class TestAssetHealth:
         )
         d = e.to_dict()
         assert d["data"]["severity"] == "high"
+
+    def test_condition_trend(self):
+        e = AssetHealth(
+            asset_id="M-001",
+            health_index=0.4,
+            severity="high",
+            condition_trend=ConditionTrend.WORSENING,
+        )
+        d = e.to_dict()
+        assert d["data"]["condition_trend"] == "worsening"
+        e2 = AssetHealth.from_dict(d)
+        assert e2.condition_trend == "worsening"
+
+    def test_condition_trend_string(self):
+        e = AssetHealth(
+            asset_id="M-001",
+            condition_trend="improving",
+        )
+        d = e.to_dict()
+        assert d["data"]["condition_trend"] == "improving"
+
+    def test_condition_trend_optional(self):
+        e = AssetHealth(asset_id="M-001")
+        d = e.to_dict()
+        assert "condition_trend" not in d["data"]
 
     def test_iso_alignment(self):
         e = AssetHealth(
@@ -400,7 +426,7 @@ class TestContentHash:
 
 class TestVersion:
     def test_spec_version(self):
-        assert SPEC_VERSION == "1.2"
+        assert SPEC_VERSION == "1.3"
 
     def test_package_version(self):
         assert iaes.__version__ == "0.2.0"

@@ -53,6 +53,14 @@ export const ISO13374Status = {
 export type ISO13374Status =
   (typeof ISO13374Status)[keyof typeof ISO13374Status];
 
+export const ConditionTrend = {
+  WORSENING: "worsening",
+  STABLE: "stable",
+  IMPROVING: "improving",
+} as const;
+export type ConditionTrend =
+  (typeof ConditionTrend)[keyof typeof ConditionTrend];
+
 export const WorkOrderPriority = {
   LOW: "low",
   MEDIUM: "medium",

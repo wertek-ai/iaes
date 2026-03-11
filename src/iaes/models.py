@@ -1,4 +1,4 @@
-"""IAES event models — 7 vendor-neutral dataclasses for the IAES v1.2 spec.
+"""IAES event models — 7 vendor-neutral dataclasses for the IAES v1.3 spec.
 
 Each model produces a spec-compliant IAES envelope via ``to_dict()``.
 All fields are spec-only — no vendor-specific extensions.
@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Union
 from .envelope import SPEC_VERSION, compute_content_hash
 from .enums import (
     CompletionStatus,
+    ConditionTrend,
     HierarchyLevel,
     ISO13374Status,
     MeasurementType,
@@ -201,6 +202,9 @@ class AssetHealth:
     iso_13374_status: Optional[Union[str, ISO13374Status]] = None
     iso_14224: Optional[Dict[str, Any]] = None
 
+    # State transition intelligence (v1.3)
+    condition_trend: Optional[Union[str, ConditionTrend]] = None
+
     # Asset identity
     asset_name: Optional[str] = None
     plant: Optional[str] = None
@@ -227,6 +231,7 @@ class AssetHealth:
             "estimated_downtime_hours": self.estimated_downtime_hours,
             "iso_13374_status": _enum_val(self.iso_13374_status) if self.iso_13374_status else None,
             "iso_14224": self.iso_14224,
+            "condition_trend": _enum_val(self.condition_trend) if self.condition_trend else None,
         }
         return _build_envelope(
             "asset.health",
@@ -261,6 +266,7 @@ class AssetHealth:
             estimated_downtime_hours=data.get("estimated_downtime_hours"),
             iso_13374_status=data.get("iso_13374_status"),
             iso_14224=data.get("iso_14224"),
+            condition_trend=data.get("condition_trend"),
             asset_name=asset.get("asset_name"),
             plant=asset.get("plant"),
             area=asset.get("area"),

@@ -57,6 +57,14 @@ class ISO13374Status(str, Enum):
     FAILED = "failed"
 
 
+class ConditionTrend(str, Enum):
+    """ISO 13374-4 §5.3 condition trend — stable vs worsening distinction (v1.3)."""
+
+    WORSENING = "worsening"
+    STABLE = "stable"
+    IMPROVING = "improving"
+
+
 class WorkOrderPriority(str, Enum):
     """Work order priority levels."""
 

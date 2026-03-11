@@ -1,7 +1,7 @@
 """IAES — Industrial Asset Event Standard.
 
 A vendor-neutral Python SDK for creating, serializing, and validating
-industrial asset events per the IAES v1.2 specification.
+industrial asset events per the IAES v1.3 specification.
 
 Usage::
 
@@ -27,6 +27,7 @@ Usage::
 from .envelope import SPEC_VERSION, compute_content_hash
 from .enums import (
     CompletionStatus,
+    ConditionTrend,
     HierarchyLevel,
     ISO13374Status,
     MeasurementType,
@@ -78,6 +79,7 @@ __all__ = [
     "MeasurementType",
     "UnitsQualifier",
     "ISO13374Status",
+    "ConditionTrend",
     "WorkOrderPriority",
     "CompletionStatus",
     "HierarchyLevel",

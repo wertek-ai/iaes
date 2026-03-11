@@ -29,6 +29,7 @@ module.exports = function (RED) {
           anomaly_score: fields.anomaly_score != null ? fields.anomaly_score : (config.anomalyScore ? parseFloat(config.anomalyScore) : 0.0),
           fault_confidence: fields.fault_confidence != null ? fields.fault_confidence : (config.faultConfidence ? parseFloat(config.faultConfidence) : 0.0),
           iso_13374_status: fields.iso_13374_status || msg.iso_13374_status || config.iso13374Status || undefined,
+          condition_trend: fields.condition_trend || msg.condition_trend || config.conditionTrend || undefined,
           asset_name: msg.asset_name || config.assetName || undefined,
           plant: msg.plant || config.plant || undefined,
           area: msg.area || config.area || undefined,

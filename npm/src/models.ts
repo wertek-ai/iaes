@@ -1,5 +1,5 @@
 /**
- * IAES event models — 7 vendor-neutral classes for the IAES v1.2 spec.
+ * IAES event models — 7 vendor-neutral classes for the IAES v1.3 spec.
  *
  * Each model produces a spec-compliant IAES envelope via `toJSON()`.
  * All fields are spec-only — no vendor-specific extensions.
@@ -16,6 +16,7 @@ import type {
   MeasurementType,
   UnitsQualifier,
   ISO13374Status,
+  ConditionTrend,
   WorkOrderPriority,
   CompletionStatus,
   HierarchyLevel,
@@ -167,6 +168,7 @@ export interface AssetHealthInit extends BaseFields {
   estimated_downtime_hours?: number | null;
   iso_13374_status?: ISO13374Status | string | null;
   iso_14224?: Record<string, unknown> | null;
+  condition_trend?: ConditionTrend | string | null;
 }
 
 export class AssetHealth {
@@ -182,6 +184,7 @@ export class AssetHealth {
   readonly estimated_downtime_hours?: number | null;
   readonly iso_13374_status?: string | null;
   readonly iso_14224?: Record<string, unknown> | null;
+  readonly condition_trend?: string | null;
   readonly asset_name?: string | null;
   readonly plant?: string | null;
   readonly area?: string | null;
@@ -205,6 +208,7 @@ export class AssetHealth {
     this.estimated_downtime_hours = init.estimated_downtime_hours;
     this.iso_13374_status = init.iso_13374_status;
     this.iso_14224 = init.iso_14224;
+    this.condition_trend = init.condition_trend;
     this.asset_name = init.asset_name;
     this.plant = init.plant;
     this.area = init.area;
@@ -242,6 +246,7 @@ export class AssetHealth {
         estimated_downtime_hours: this.estimated_downtime_hours,
         iso_13374_status: this.iso_13374_status,
         iso_14224: this.iso_14224,
+        condition_trend: this.condition_trend,
       },
     });
   }
@@ -263,6 +268,7 @@ export class AssetHealth {
         | undefined,
       iso_13374_status: data.iso_13374_status as string | undefined,
       iso_14224: data.iso_14224 as Record<string, unknown> | undefined,
+      condition_trend: data.condition_trend as string | undefined,
       asset_name: asset.asset_name,
       plant: asset.plant,
       area: asset.area,
