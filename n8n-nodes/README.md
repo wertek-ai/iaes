@@ -57,7 +57,41 @@ Configure **IAES API** credentials with:
 
 ## Example Workflows
 
-### Predictive Maintenance
+### PLC → MQTT → n8n → IAES (Quickstart)
+
+Most integrators start here: **"Where does my PLC fit?"**
+
+```
+┌─────────┐  MQTT   ┌──────────────┐        ┌───────────┐        ┌──────────┐
+│  PLC /  │───────→│ MQTT Trigger │──────→│ IAES Emit │──────→│ HTTP Req │
+│  SCADA  │ topic:  │ (n8n built-in)│  JSON  │ (this pkg)│  POST  │ your API │
+└─────────┘ plc/    └──────────────┘        └───────────┘        └──────────┘
+            data
+```
+
+Your PLC publishes raw readings to an MQTT topic. n8n picks them up and wraps them in a standards-compliant IAES envelope:
+
+```
+MQTT topic: site-01/plc/compressor-04/vibration
+Payload:    { "value": 4.2, "unit": "mm/s" }
+```
+
+In the **IAES Emit** node, map the PLC fields:
+
+| IAES Emit Field | n8n Expression |
+|-----------------|----------------|
+| Event Type | `asset.measurement` |
+| Asset ID | `={{ $json.topic.split('/')[2] }}` — e.g. `compressor-04` |
+| Source | `plc.site-01` |
+| Measurement Type | `vibration_velocity` |
+| Value | `={{ $json.message.value }}` — e.g. `4.2` |
+| Unit | `={{ $json.message.unit }}` — e.g. `mm/s` |
+
+The output is a full IAES v1.3 envelope ready to POST to any CMMS, data lake, or Wertek.
+
+> **Works with:** Allen-Bradley, Siemens S7 (via MQTT gateway), Modbus TCP (via Node-RED bridge), OPC-UA publishers, any device that can write to MQTT.
+
+### Predictive Maintenance Pipeline
 
 ```
 Webhook → IAES Validate → IAES Lifecycle → IF Onset → IAES Emit (Work Order Intent)
@@ -66,7 +100,7 @@ Webhook → IAES Validate → IAES Lifecycle → IF Onset → IAES Emit (Work Or
 ### Energy Anomaly Detection
 
 ```
-Schedule → HTTP Request (meter API) → IAES Emit (Measurement) → IAES Lifecycle → Slack Alert
+Schedule → HTTP Request (meter API) → IAES Emit (Health) → IAES Lifecycle → Slack Alert
 ```
 
 ### Multi-CMMS Fan-out
