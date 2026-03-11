@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://iaes.dev">
+    <img src="../assets/iaes-logo.svg" alt="IAES" width="64" height="64">
+  </a>
+</p>
+
 # @iaes/sdk
 
 > TypeScript/JavaScript SDK for the Industrial Asset Event Standard.

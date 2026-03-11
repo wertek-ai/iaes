@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://iaes.dev">
+    <img src="assets/iaes-logo.svg" alt="IAES" width="80" height="80">
+  </a>
+</p>
+
 # IAES — Industrial Asset Event Standard
 
 > A vendor-neutral event format for industrial asset measurements, diagnoses, and maintenance intents.

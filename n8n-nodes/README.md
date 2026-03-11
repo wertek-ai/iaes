@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://iaes.dev">
+    <img src="../assets/iaes-logo.svg" alt="IAES" width="64" height="64">
+  </a>
+</p>
+
 # n8n-nodes-iaes
 
 IAES Industrial Asset Event Standard nodes for [n8n](https://n8n.io) — emit, validate, and track lifecycle of industrial asset events.

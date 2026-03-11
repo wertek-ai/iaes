@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://iaes.dev">
+    <img src="../assets/iaes-logo.svg" alt="IAES" width="64" height="64">
+  </a>
+</p>
+
 # node-red-contrib-iaes
 
 > IAES Industrial Asset Event Standard nodes for Node-RED.

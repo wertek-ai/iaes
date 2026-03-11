@@ -1,15 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" fill="none">
-  <!-- Background -->
+  <defs>
+    <linearGradient id="g" x1="9" y1="8" x2="51" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#0EA5E9"/>
+    </linearGradient>
+  </defs>
+  <!-- Dark background -->
   <rect width="60" height="60" rx="12" fill="#0f172a"/>
-  <!-- Signal pulse line -->
-  <polyline points="6,35 14,35 18,18 22,42 26,28 30,32 34,14 38,38 42,25 46,35 54,35" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  <!-- Gear accent (small) -->
-  <circle cx="47" cy="13" r="7" stroke="#f59e0b" stroke-width="2" fill="none"/>
-  <circle cx="47" cy="13" r="2.5" fill="#f59e0b"/>
-  <line x1="47" y1="5" x2="47" y2="7" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
-  <line x1="47" y1="19" x2="47" y2="21" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
-  <line x1="39" y1="13" x2="41" y2="13" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
-  <line x1="53" y1="13" x2="55" y2="13" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
-  <!-- IAES text -->
-  <text x="30" y="53" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="9" fill="#94a3b8" letter-spacing="1.5">IAES</text>
+  <!-- Frame: rounded rect open on right -->
+  <path d="M 39 10 L 22 10 Q 14 10 14 17.4 L 14 42.6 Q 14 50 22 50 L 39 50 Q 45.6 50 45.6 44 L 45.6 38.4 M 45.6 21.6 L 45.6 17.4 Q 45.6 10 39 10" stroke="url(#g)" stroke-width="4.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Waveform: heartbeat pulse -->
+  <path d="M 9 30 L 19.5 30 L 24.9 17.8 L 32.4 41.7 L 37.6 30 L 51 30" stroke="url(#g)" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Data point -->
+  <circle cx="51" cy="30" r="3.3" fill="#0EA5E9"/>
 </svg>
