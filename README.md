@@ -8,6 +8,7 @@
 
 > A vendor-neutral event format for industrial asset measurements, diagnoses, and maintenance intents.
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18973217.svg)](https://doi.org/10.5281/zenodo.18973217)
 [![PyPI](https://img.shields.io/pypi/v/iaes)](https://pypi.org/project/iaes/)
 [![npm](https://img.shields.io/npm/v/@iaes/sdk)](https://www.npmjs.com/package/@iaes/sdk)
 [![Node-RED](https://img.shields.io/npm/v/node-red-contrib-iaes?label=node-red)](https://flows.nodered.org/node/node-red-contrib-iaes)
