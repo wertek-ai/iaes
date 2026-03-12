@@ -313,9 +313,10 @@ npm install node-red-contrib-iaes
 
 ## Resources
 
+- **[IAES-RFC-001](rfc/IAES-RFC-001.md)** — Formal RFC specification
 - **[IAES_SPEC.md](IAES_SPEC.md)** — Full specification
 - **[schema/](schema/)** — 8 JSON Schema files
-- **[examples/](examples/)** — 10 JSON examples
+- **[examples/](examples/)** — 11 JSON examples
 - **[iaes.dev](https://iaes.dev)** — Website
 
 ## Design Principles
@@ -344,4 +345,4 @@ IAES is an open specification. The specification text and JSON schemas are licen
 
 ---
 
-*IAES v1.2 — March 2026*
+*IAES v1.3 — March 2026*
