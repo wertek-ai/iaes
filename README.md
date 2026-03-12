@@ -312,7 +312,10 @@ Both SDKs produce identical wire format and identical `content_hash` for the sam
 npm install node-red-contrib-iaes
 ```
 
-## Resources
+## Official Specification
+
+> **IAES-RFC-001** — Industrial Asset Event Model
+> DOI: [10.5281/zenodo.18973217](https://doi.org/10.5281/zenodo.18973217)
 
 - **[IAES-RFC-001](rfc/IAES-RFC-001.md)** — Formal RFC specification
 - **[IAES_SPEC.md](IAES_SPEC.md)** — Full specification
@@ -339,6 +342,31 @@ npm install node-red-contrib-iaes
 | Fracttal | Custom fields + OT |
 | Node-RED | [`node-red-contrib-iaes`](https://flows.nodered.org/node/node-red-contrib-iaes) — 7 nodes |
 | MQTT / Kafka | JSON payload on any topic |
+
+## How to Cite IAES
+
+If you use IAES in research or industrial systems, please cite:
+
+```
+Garza, G. (2026).
+Industrial Asset Event Standard (IAES) v1.3.
+Zenodo.
+https://doi.org/10.5281/zenodo.18973217
+```
+
+BibTeX:
+
+```bibtex
+@software{garza_iaes_2026,
+  author       = {Garza, Gilberto},
+  title        = {Industrial Asset Event Standard (IAES)},
+  version      = {v1.3.0},
+  year         = {2026},
+  publisher    = {Zenodo},
+  doi          = {10.5281/zenodo.18973217},
+  url          = {https://doi.org/10.5281/zenodo.18973217}
+}
+```
 
 ## License
 
