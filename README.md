@@ -206,7 +206,7 @@ event = from_dict(wire)  # AssetMeasurement, AssetHealth, etc.
 print(event.asset_id, event.value)
 ```
 
-## Event Types (v1.2)
+## Event Types (v1.3)
 
 | Event Type | Python | TypeScript | Purpose |
 |------------|--------|------------|---------|
@@ -245,7 +245,7 @@ Every event serializes to the same envelope structure:
 
 ```json
 {
-  "spec_version": "1.2",
+  "spec_version": "1.3",
   "event_type": "asset.measurement",
   "event_id": "a9e3c4b2-...",
   "correlation_id": "3b2f9d8c-...",

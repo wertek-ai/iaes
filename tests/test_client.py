@@ -223,7 +223,7 @@ class TestClient(TestCase):
 
     def test_publish_health_event(self):
         client = Client(self.base_url)
-        event = AssetHealth(asset_id="M-1", health_index=0.42, source="test", severity="warning")
+        event = AssetHealth(asset_id="M-1", health_index=0.42, source="test", severity="high")
         result = client.publish(event)
         self.assertEqual(MockHandler.last_request_body["event_type"], "asset.health")
 
