@@ -13,6 +13,8 @@
 [![npm](https://img.shields.io/npm/v/@iaes/sdk)](https://www.npmjs.com/package/@iaes/sdk)
 [![Node-RED](https://img.shields.io/npm/v/node-red-contrib-iaes?label=node-red)](https://flows.nodered.org/node/node-red-contrib-iaes)
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
+[![ResearchGate Preprint](https://img.shields.io/badge/ResearchGate-Preprint-00CCBB?logo=researchgate)](https://www.researchgate.net/publication/402029169)
+[![ResearchGate Dataset](https://img.shields.io/badge/ResearchGate-Dataset-00CCBB?logo=researchgate)](https://www.researchgate.net/publication/402029656)
 
 Industrial systems speak different languages. A vibration sensor outputs raw waveforms. An AI model outputs health scores. SAP expects maintenance notifications. PI System expects tag values. MaintainX expects user variables.
 
@@ -367,6 +369,11 @@ BibTeX:
   url          = {https://doi.org/10.5281/zenodo.18973217}
 }
 ```
+
+### ResearchGate
+
+- **Preprint:** [IAES: An Open, ISO-Aligned Event Standard for Industrial Asset Intelligence](https://www.researchgate.net/publication/402029169)
+- **Dataset:** [IAES JSON Schemas & Examples v1.3](https://www.researchgate.net/publication/402029656)
 
 ## License
 
