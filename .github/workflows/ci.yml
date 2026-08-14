@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  sdk-ts:
+    name: "@iaes/sdk (TypeScript)"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: npm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm run build
+      - run: npm test
+
+  node-red:
+    name: node-red-contrib-iaes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # The nodes depend on @iaes/sdk. Build the local copy and point the
+      # package at it, so CI tests the code in THIS commit instead of whatever
+      # version happens to be on the registry.
+      - name: Build the local SDK
+        run: npm ci && npm run build
+        working-directory: npm
+      - name: Install nodes against the local SDK
+        run: |
+          npm ci
+          npm install --no-save ../npm
+        working-directory: node-red
+      - run: npm test
+        working-directory: node-red
+
+  n8n:
+    name: n8n-nodes-iaes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build the local SDK
+        run: npm ci && npm run build
+        working-directory: npm
+      - name: Type-check and build
+        run: |
+          npm ci
+          npm install --no-save ../npm
+          npm run build
+        working-directory: n8n-nodes
+
+  sdk-python:
+    name: iaes (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # test_cross_language.py shells out to the TypeScript SDK to prove both
+      # languages produce the same content_hash. Without dist/ it fails with an
+      # empty hash, which reads as a mismatch rather than a missing build.
+      - name: Build the TypeScript SDK for the cross-language tests
+        run: npm ci && npm run build
+        working-directory: npm
+      - run: pip install pytest
+      - run: PYTHONPATH=src python -m pytest tests/ -q

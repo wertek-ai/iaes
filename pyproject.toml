@@ -45,5 +45,19 @@ Documentation = "https://iaes.dev"
 Repository = "https://github.com/wertek-ai/iaes"
 Changelog = "https://github.com/wertek-ai/iaes/blob/main/IAES_SPEC.md#version-history"
 
+[tool.hatch.build.targets.sdist]
+# El paquete de Python vive en src/iaes. Sin esta lista, hatchling barre el
+# monorepo completo — incluido n8n-nodes/node_modules, que son 2,627 archivos
+# y 6.8 MB de un paquete que pesa 26 KB.
+include = [
+    "/src/iaes",
+    "/tests",
+    "/README.md",
+    "/LICENSE",
+    "/IAES_SPEC.md",
+    "/CHANGELOG.md",
+    "/pyproject.toml",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/iaes"]

@@ -31,6 +31,46 @@ with the correct values as defaults.
 
 ---
 
+## n8n-nodes-iaes 0.2.0
+
+### Fixed
+
+- **La credencial `IAES API` entregaba el endpoint equivocado, ya pre-llenado.** Su
+  `httpEndpoint` traía por defecto `https://api.wertek.ai/api/v1/iaes/ingest` — una ruta
+  que ningún servidor implementa — y describía la llave como *"Bearer token"* cuando el
+  ingest autentica con `X-API-Key`. `IaesEmit` sólo construye el envelope y no envía por
+  sí mismo, así que **ese valor es el que el usuario copia a su nodo HTTP Request**: la
+  URL rota se propagaba a mano. Llevaba así desde 0.1.1.
+
+  > ⚠️ **Arreglar el default no arregla las credenciales ya guardadas.** Si configuraste
+  > esta credencial antes de 0.2.0, corrige la URL a mano.
+
+### Added
+
+- La credencial ahora **inyecta `X-API-Key`** automáticamente (`authenticate: generic`)
+  al usarse en un nodo HTTP Request, en vez de dejar el header al criterio de cada quien.
+
+### Changed
+
+- Depende de `@iaes/sdk@^0.3.0`.
+
+---
+
+## Empaquetado
+
+- 🔴 **El sdist de Python pesaba 6.8 MB contra 26 KB del wheel.** `hatchling` barría el
+  monorepo entero porque `.gitignore` cubría `npm/node_modules/` y
+  `node-red/node_modules/` pero **no** `n8n-nodes/node_modules/`: **2,627 de 2,738
+  archivos** del paquete eran dependencias de Node. Corregido declarando el contenido del
+  sdist de forma explícita —así no depende de que el `.gitignore` esté completo— y
+  cerrando el hueco del `.gitignore`. Ahora son **40 KB y 30 archivos**.
+- **CI y publicación por OIDC.** `ci.yml` corre las cuatro suites en cada PR;
+  `release.yml` publica por tag (`sdk-v*`, `nodered-v*`, `n8n-v*`, `py-v*`) usando
+  Trusted Publishing de npm y PyPI — **sin tokens almacenados**, y comprobando que el tag
+  y la versión del paquete coincidan antes de publicar.
+
+---
+
 ## node-red-contrib-iaes 0.4.0
 
 ### Fixed

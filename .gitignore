@@ -16,3 +16,5 @@ npm/dist/
 .idea/
 *.swp
 node-red/node_modules/
+n8n-nodes/node_modules/
+n8n-nodes/dist/
