@@ -99,7 +99,8 @@ jobs:
             exit 1
           fi
 
-      - run: pip install build pytest
+      - run: pip install build
+      - run: pip install -e ".[dev]"
       - run: PYTHONPATH=src python -m pytest tests/ -q -k "not cross_language"
       - run: python -m build
       - uses: pypa/gh-action-pypi-publish@release/v1
