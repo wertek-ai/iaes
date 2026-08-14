@@ -142,7 +142,7 @@ import { IaesClient } from "@iaes/sdk";
 const client = new IaesClient("https://your-endpoint.example.com", {
   apiKey: "your-api-key",
   timeout: 15000,       // ms, default 30000
-  ingestPath: "/api/v1/iaes/ingest", // default
+  ingestPath: "/iaes/ingest",       // default
 });
 
 // Single event

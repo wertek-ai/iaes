@@ -1,5 +1,7 @@
 const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
+// Anchored to the SDK so the suite cannot go stale against the spec again.
+const { SPEC_VERSION } = require("@iaes/sdk");
 
 // --- Mock RED (same pattern as iaes-nodes.test.js) ---
 
@@ -49,7 +51,7 @@ function sendInput(node, msg) {
 
 function makeEnvelope(eventType, assetId) {
   return {
-    spec_version: "1.2",
+    spec_version: SPEC_VERSION,
     event_type: eventType,
     event_id: "test-" + Date.now(),
     timestamp: new Date().toISOString(),
@@ -183,19 +185,32 @@ describe("iaes-publish node", () => {
     assert.ok(r2.outputs[0][1].payload.error.includes("No URL"));
   });
 
-  it("should clean up on close", () => {
+  // Closing used to drop the buffer outright: any event still waiting for the
+  // batch to fill was lost on every redeploy, and its message never completed.
+  it("should flush buffered events on close instead of dropping them", async () => {
     const node = createNode(RED, "iaes-publish", {
-      url: "https://example.com",
-      batchSize: 10,
-      batchTimeout: 5,
+      url: "",           // settles synchronously — keeps the test off the network
+      batchSize: 10,     // high enough that one event stays buffered
+      batchTimeout: 60,
     });
 
-    // Send an event to start the timer
-    sendInput(node, { payload: makeEnvelope("asset.measurement") });
+    const sent = [];
+    let completed = 0;
+    node._handlers.input(
+      { payload: makeEnvelope("asset.measurement") },
+      function (out) { sent.push(out); },
+      function () { completed += 1; }
+    );
 
-    // Close should not throw
+    // Still buffered: nothing sent, nothing completed.
+    assert.equal(sent.length, 0);
+    assert.equal(completed, 0);
+
     assert.ok(node._handlers.close);
-    node._handlers.close();
+    await new Promise(function (resolve) { node._handlers.close(resolve); });
+
+    assert.equal(completed, 1, "buffered message was never completed");
+    assert.equal(sent.length, 1, "buffered event was dropped on close");
   });
 });
 

@@ -5,6 +5,8 @@
     defaults: {
       name: { value: "" },
       url: { value: "" },
+      path: { value: "/iaes/ingest" },
+      authScheme: { value: "apikey" },
       batchSize: { value: 1 },
       batchTimeout: { value: 5 },
     },
@@ -32,12 +34,23 @@
     <input type="text" id="node-input-url" placeholder="https://api.wertek.ai" />
   </div>
   <div class="form-row">
+    <label for="node-input-path"><i class="fa fa-link"></i> Ingest Path</label>
+    <input type="text" id="node-input-path" placeholder="/iaes/ingest" />
+  </div>
+  <div class="form-row">
     <label for="node-input-apiKey"><i class="fa fa-key"></i> API Key</label>
     <input type="password" id="node-input-apiKey" placeholder="(optional)" />
   </div>
   <div class="form-row">
+    <label for="node-input-authScheme"><i class="fa fa-lock"></i> Auth Header</label>
+    <select id="node-input-authScheme">
+      <option value="apikey">X-API-Key (IAES default)</option>
+      <option value="bearer">Authorization: Bearer</option>
+    </select>
+  </div>
+  <div class="form-row">
     <label for="node-input-batchSize"><i class="fa fa-layer-group"></i> Batch Size</label>
-    <input type="number" id="node-input-batchSize" min="1" placeholder="1" />
+    <input type="number" id="node-input-batchSize" min="1" max="100" placeholder="1" />
   </div>
   <div class="form-row">
     <label for="node-input-batchTimeout"><i class="fa fa-clock-o"></i> Batch Timeout (s)</label>
@@ -70,11 +83,15 @@
   <h3>Configuration</h3>
   <dl>
     <dt>URL</dt>
-    <dd>Base URL of the IAES-compatible endpoint. The node appends <code>/api/v1/iaes/ingest</code> automatically.</dd>
+    <dd>Base URL of the IAES-compatible server, e.g. <code>https://api.wertek.ai</code>.</dd>
+    <dt>Ingest Path</dt>
+    <dd>Path appended to the base URL. Defaults to <code>/iaes/ingest</code>, which is the IAES ingest route.</dd>
     <dt>API Key</dt>
-    <dd>Optional Bearer token for authentication. Stored securely as a credential.</dd>
+    <dd>Sent as the <code>X-API-Key</code> header. Stored securely as a credential. The key needs the <code>iaes.ingest</code> scope.</dd>
+    <dt>Auth Header</dt>
+    <dd>Which header carries the key. <code>X-API-Key</code> is the IAES default; choose Bearer only if your server fronts the ingest with a JWT gateway.</dd>
     <dt>Batch Size</dt>
-    <dd>Number of events to buffer before sending (default: 1 = immediate). Set to a higher number to batch events into a single HTTP POST.</dd>
+    <dd>Number of events to buffer before sending (default: 1 = immediate; maximum 100, the IAES batch limit). Set higher to batch events into a single HTTP POST.</dd>
     <dt>Batch Timeout</dt>
     <dd>Maximum seconds to wait before flushing an incomplete batch (default: 5).</dd>
   </dl>
@@ -85,5 +102,12 @@
   <p>When <strong>Batch Size</strong> is 1 (default), each event is sent immediately.
   When greater than 1, events are buffered and sent as a JSON array when the buffer reaches
   the batch size or the timeout expires — whichever comes first.</p>
-  <p>The node status indicator shows green with accepted count on success, or red on error.</p>
+  <p>The node status indicator shows green with the accepted count on success, and red on error.</p>
+  <p><strong>Cadence.</strong> An IAES server may refuse events that arrive faster than the
+  asset's registered interval, answering <code>{"status":"dropped","reason":"cadence_gate"}</code>
+  per event. That is backpressure, not a failure: the node shows it in <strong>yellow</strong>
+  and reports <code>cadence_dropped</code> on the error output rather than a generic HTTP error.
+  Enforcement lives on the server — the node never decides its own rate limit.</p>
+  <p><strong>On redeploy</strong> the node flushes whatever is still buffered before shutting
+  down, so batched events are not lost.</p>
 </script>

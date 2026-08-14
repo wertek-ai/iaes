@@ -27,7 +27,7 @@ Or via the Node-RED palette manager: search for `node-red-contrib-iaes`.
 | **iaes measurement** | Create `asset.measurement` events (vibration, temperature, pressure, power factor, THD...) |
 | **iaes health** | Create `asset.health` events (AI diagnosis, health index, fault classification, RUL) |
 | **iaes work order** | Create `maintenance.work_order_intent` events |
-| **iaes validate** | Validate any IAES event against the JSON schema |
+| **iaes validate** | Validate an IAES envelope: required fields, formats, and the required `data` fields per event type |
 | **iaes sparkplug** | Bridge Sparkplug B metrics to IAES events (Ignition, Cirrus Link, DXM) |
 | **iaes publish** | POST IAES events to any IAES-compatible HTTP endpoint (batching, auth) |
 | **iaes route** | Route IAES events by `event_type` to 7 typed outputs |
@@ -60,7 +60,9 @@ All nodes accept values from `msg` properties. Leave a field empty in the config
                 +--> [debug] (invalid events)
 ```
 
-The **iaes validate** node has two outputs: valid events on output 1, invalid events on output 2.
+The **iaes validate** node has two outputs: valid events on output 1, invalid
+events on output 2. Every problem found is listed in `msg.iaes_errors`, and the
+first one in `msg.iaes_error`.
 
 ### Sparkplug B to IAES bridge
 
@@ -109,7 +111,15 @@ cd ~/.node-red && npm install sparkplug-payload
                             +--> [debug] (errors)
 ```
 
-Configure the **iaes publish** node with the base URL of your IAES-compatible server and an optional API key. The node appends `/api/v1/iaes/ingest` automatically. Set **Batch Size** > 1 to buffer events and send them as a single HTTP POST.
+Configure the **iaes publish** node with the base URL of your IAES-compatible
+server and an API key. The node appends **`/iaes/ingest`** (configurable) and sends
+the key as **`X-API-Key`** — the key needs the `iaes.ingest` scope. Set
+**Batch Size** > 1 to buffer events and send them as a single HTTP POST, up to the
+server limit of 100.
+
+If the server refuses events for arriving faster than the asset's registered
+cadence, the node reports that as backpressure (yellow status, `cadence_dropped`)
+rather than as an error. Rate limiting is enforced by the server, never by the node.
 
 ### Route events by type
 

@@ -1,6 +1,20 @@
 module.exports = function (RED) {
   const { AssetHealth } = require("@iaes/sdk");
 
+  /** Parse a config field that may legitimately be 0. */
+  function numberOr(raw, fallback) {
+    if (raw === "" || raw === null || raw === undefined) return fallback;
+    const n = parseFloat(raw);
+    return isNaN(n) ? fallback : n;
+  }
+
+  /** Same, for whole numbers, where "absent" means undefined. */
+  function intOrUndefined(raw) {
+    if (raw === "" || raw === null || raw === undefined) return undefined;
+    const n = parseInt(raw, 10);
+    return isNaN(n) ? undefined : n;
+  }
+
   function IaesHealthNode(config) {
     RED.nodes.createNode(this, config);
     const node = this;
@@ -20,14 +34,19 @@ module.exports = function (RED) {
 
         const event = new AssetHealth({
           asset_id: msg.asset_id || config.assetId,
-          health_index: fields.health_index != null ? fields.health_index : parseFloat(config.healthIndex) || 1.0,
+          // `parseFloat(x) || 1.0` turned a configured 0 — the worst possible
+          // condition — into 1.0, a perfectly healthy asset. Check for an
+          // actual number instead of relying on truthiness.
+          health_index: fields.health_index != null
+            ? fields.health_index
+            : numberOr(config.healthIndex, 1.0),
           severity: fields.severity || msg.severity || config.severity || "info",
           source: msg.source || config.source || "node_red",
           failure_mode: fields.failure_mode || msg.failure_mode || config.failureMode || undefined,
-          rul_days: fields.rul_days != null ? fields.rul_days : (config.rulDays ? parseInt(config.rulDays) : undefined),
+          rul_days: fields.rul_days != null ? fields.rul_days : intOrUndefined(config.rulDays),
           recommended_action: fields.recommended_action || msg.recommended_action || config.recommendedAction || undefined,
-          anomaly_score: fields.anomaly_score != null ? fields.anomaly_score : (config.anomalyScore ? parseFloat(config.anomalyScore) : 0.0),
-          fault_confidence: fields.fault_confidence != null ? fields.fault_confidence : (config.faultConfidence ? parseFloat(config.faultConfidence) : 0.0),
+          anomaly_score: fields.anomaly_score != null ? fields.anomaly_score : numberOr(config.anomalyScore, 0.0),
+          fault_confidence: fields.fault_confidence != null ? fields.fault_confidence : numberOr(config.faultConfidence, 0.0),
           iso_13374_status: fields.iso_13374_status || msg.iso_13374_status || config.iso13374Status || undefined,
           condition_trend: fields.condition_trend || msg.condition_trend || config.conditionTrend || undefined,
           asset_name: msg.asset_name || config.assetName || undefined,

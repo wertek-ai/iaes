@@ -49,17 +49,33 @@ module.exports = function (RED) {
     "level": "level",
   };
 
+  // Real gateway tags are namespaced — "Line3/Motor1/Vibration_Acceleration",
+  // not "vibration_acceleration". A plain substring scan in map order made the
+  // general key win over the specific one ("vibration" matched before
+  // "vibration_acceleration"), so an accelerometer was published as velocity,
+  // in mm/s instead of g, silently.
+  //
+  // Match on contiguous TOKEN windows instead, widest first. That is
+  // deterministic regardless of map order, and it cannot match across a word
+  // boundary — "pf" no longer hits inside an unrelated word.
   function inferMeasurementType(metricName) {
     if (!metricName) return "custom";
-    // Normalize: lowercase, replace spaces/dashes/dots with underscore
-    const normalized = metricName.toLowerCase().replace(/[\s\-./]+/g, "_");
 
-    // Direct match
-    if (METRIC_TYPE_MAP[normalized]) return METRIC_TYPE_MAP[normalized];
+    // Normalize: lowercase, split on any separator run
+    const tokens = metricName
+      .toLowerCase()
+      .split(/[\s\-./_]+/)
+      .filter(Boolean);
 
-    // Partial match — check if any known key is contained in the metric name
-    for (const [key, type] of Object.entries(METRIC_TYPE_MAP)) {
-      if (normalized.includes(key)) return type;
+    if (tokens.length === 0) return "custom";
+
+    for (let width = tokens.length; width >= 1; width--) {
+      for (let start = 0; start + width <= tokens.length; start++) {
+        const candidate = tokens.slice(start, start + width).join("_");
+        if (Object.prototype.hasOwnProperty.call(METRIC_TYPE_MAP, candidate)) {
+          return METRIC_TYPE_MAP[candidate];
+        }
+      }
     }
 
     return "custom";
@@ -70,7 +86,8 @@ module.exports = function (RED) {
     "vibration_velocity": "mm/s",
     "vibration_acceleration": "g",
     "vibration_displacement": "um",
-    "temperature": "°C",
+    // "C", not "°C" — matches the unit spelling used across the IAES schemas.
+    "temperature": "C",
     "current": "A",
     "voltage": "V",
     "power": "kW",
@@ -86,23 +103,35 @@ module.exports = function (RED) {
     "level": "m",
   };
 
-  function decodeSparkplugPayload(buf) {
-    // Try sparkplug-payload library first (protobuf)
+  function loadProtobufDecoder() {
     try {
-      const sparkplug = require("sparkplug-payload");
-      const decoder = sparkplug.get("spBv1.0");
-      return decoder.decodePayload(buf);
+      return require("sparkplug-payload").get("spBv1.0");
     } catch (_e) {
-      // Fallback: try JSON (some gateways send JSON on Sparkplug topics)
-      if (Buffer.isBuffer(buf)) {
-        return JSON.parse(buf.toString("utf8"));
-      }
-      if (typeof buf === "string") {
-        return JSON.parse(buf);
-      }
-      // Already an object
-      return buf;
+      // Optional dependency not installed — JSON payloads still work.
+      return null;
     }
+  }
+
+  function decodeSparkplugPayload(buf) {
+    // The library-missing case and the payload-corrupt case used to share one
+    // try/catch, so a bad protobuf fell through to JSON.parse and surfaced as
+    // "Unexpected token" — pointing the integrator at the wrong problem.
+    // Resolve the decoder first, then decode, and let a real decode failure
+    // report itself.
+    const decoder = Buffer.isBuffer(buf) ? loadProtobufDecoder() : null;
+    if (decoder) {
+      return decoder.decodePayload(buf);
+    }
+
+    // JSON — some gateways publish JSON on Sparkplug topics.
+    if (Buffer.isBuffer(buf)) {
+      return JSON.parse(buf.toString("utf8"));
+    }
+    if (typeof buf === "string") {
+      return JSON.parse(buf);
+    }
+    // Already an object
+    return buf;
   }
 
   function IaesSparkplugNode(config) {

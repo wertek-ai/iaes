@@ -35,6 +35,15 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 
+#: The IAES ingest route. Servers mount it at the root - the earlier
+#: "/api/v1" prefix came from stale docstrings and produced a 404 against
+#: every real IAES server.
+DEFAULT_INGEST_PATH = "/iaes/ingest"
+
+#: Maximum envelopes a server accepts in one POST.
+MAX_BATCH_SIZE = 100
+
+
 class IaesClientError(Exception):
     """Raised when the IAES endpoint returns an error."""
 
@@ -51,11 +60,11 @@ class Client:
 
     Args:
         url: Base URL of the IAES-compliant endpoint (e.g. "https://api.example.com").
-             The client appends ``/api/v1/iaes/ingest`` automatically.
+             The client appends ``/iaes/ingest`` automatically.
         api_key: API key for authentication (sent as ``X-API-Key`` header).
         timeout: Request timeout in seconds (default 30).
         headers: Additional headers to include in every request.
-        ingest_path: Override the default ingest path (default "/api/v1/iaes/ingest").
+        ingest_path: Override the default ingest path (default "/iaes/ingest").
     """
 
     def __init__(
@@ -64,7 +73,7 @@ class Client:
         api_key: str = "",
         timeout: int = 30,
         headers: Optional[Dict[str, str]] = None,
-        ingest_path: str = "/api/v1/iaes/ingest",
+        ingest_path: str = DEFAULT_INGEST_PATH,
     ):
         self.base_url = url.rstrip("/")
         self.api_key = api_key
@@ -115,6 +124,12 @@ class Client:
         Raises:
             IaesClientError: If the endpoint returns a non-2xx status.
         """
+        if len(events) > MAX_BATCH_SIZE:
+            raise IaesClientError(
+                "Batch size %d exceeds the maximum of %d"
+                % (len(events), MAX_BATCH_SIZE),
+                422,
+            )
         envelopes = [
             e.to_dict() if hasattr(e, "to_dict") else e
             for e in events
@@ -164,7 +179,7 @@ try:
             api_key: str = "",
             timeout: int = 30,
             headers: Optional[Dict[str, str]] = None,
-            ingest_path: str = "/api/v1/iaes/ingest",
+            ingest_path: str = DEFAULT_INGEST_PATH,
         ):
             self.base_url = url.rstrip("/")
             self.api_key = api_key
@@ -193,6 +208,12 @@ try:
 
         async def publish_batch(self, events: Sequence[Any]) -> Dict[str, Any]:
             """Publish a batch of IAES events asynchronously."""
+            if len(events) > MAX_BATCH_SIZE:
+                raise IaesClientError(
+                    "Batch size %d exceeds the maximum of %d"
+                    % (len(events), MAX_BATCH_SIZE),
+                    422,
+                )
             envelopes = [
                 e.to_dict() if hasattr(e, "to_dict") else e
                 for e in events
