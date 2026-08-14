@@ -46,7 +46,10 @@ module.exports = function (RED) {
         if (index >= 0 && index < 6) {
           outputs[index] = msg;
         } else {
-          // maintenance.spare_part_usage (index 6) or unknown → output 7 (index 6)
+          // maintenance.spare_part_usage (index 6) or unknown → output 7 (index 6).
+          // Output 7 carries both, so flag the unknown case — otherwise a typo
+          // in event_type is indistinguishable from a valid spare-part event.
+          if (index < 0) msg.iaes_unknown_event_type = true;
           outputs[6] = msg;
         }
 

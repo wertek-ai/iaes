@@ -1,5 +1,7 @@
 const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
+// Anchored to the SDK so the suite cannot go stale against the spec again.
+const { SPEC_VERSION } = require("@iaes/sdk");
 
 // --- Mock RED ---
 
@@ -14,6 +16,7 @@ function createMockRED() {
         node.warn = (msg) => { node._warnings = node._warnings || []; node._warnings.push(msg); };
         node.error = (err, msg) => { node._errors = node._errors || []; node._errors.push({ err, msg }); };
         node.send = (msg) => { node._sent = node._sent || []; node._sent.push(msg); };
+        node.status = (s) => { node._status = s; };
       },
       registerType(name, constructor) {
         types[name] = constructor;
@@ -68,7 +71,7 @@ describe("iaes-measurement node", () => {
     assert.equal(errors.length, 0);
     assert.equal(outputs.length, 1);
     const iaes = outputs[0].payload; // send(msg) → msg
-    assert.equal(iaes.spec_version, "1.2");
+    assert.equal(iaes.spec_version, SPEC_VERSION);
     assert.equal(iaes.event_type, "asset.measurement");
     assert.equal(iaes.asset.asset_id, "MOTOR-001");
     assert.equal(iaes.data.measurement_type, "vibration_velocity");
@@ -225,7 +228,9 @@ describe("iaes-validate node", () => {
     });
 
     assert.equal(outputs[0][0], null); // valid is null
-    assert.equal(outputs[0][1].iaes_error, "Missing event_type field");
+    assert.ok(
+      outputs[0][1].iaes_errors.includes("Missing required field: event_type")
+    );
   });
 
   it("should reject events missing asset.asset_id", () => {
@@ -236,7 +241,73 @@ describe("iaes-validate node", () => {
     });
 
     assert.equal(outputs[0][0], null);
-    assert.ok(outputs[0][1].iaes_error.includes("asset"));
+    assert.ok(
+      outputs[0][1].iaes_errors.includes("Missing required field: asset")
+    );
+  });
+
+  // The old node checked event_type, asset.asset_id and data — nothing else —
+  // while its documentation promised validation against the JSON schema. These
+  // envelopes all passed as valid.
+  it("should reject an envelope missing the required envelope fields", () => {
+    const node = createNode(RED, "iaes-validate", {});
+
+    const { outputs } = sendInput(node, {
+      payload: {
+        event_type: "asset.measurement",
+        asset: { asset_id: "M-1" },
+        data: { measurement_type: "temperature", value: 50, unit: "C" },
+      },
+    });
+
+    assert.equal(outputs[0][0], null);
+    const errors = outputs[0][1].iaes_errors;
+    for (const field of ["spec_version", "event_id", "correlation_id", "timestamp", "source"]) {
+      assert.ok(
+        errors.includes("Missing required field: " + field),
+        "expected a complaint about " + field
+      );
+    }
+  });
+
+  it("should reject a malformed source, timestamp and content_hash", () => {
+    const node = createNode(RED, "iaes-validate", {});
+
+    const { outputs } = sendInput(node, {
+      payload: {
+        spec_version: "1.3",
+        event_type: "asset.measurement",
+        event_id: "11111111-2222-3333-4444-555555555555",
+        correlation_id: "11111111-2222-3333-4444-555555555555",
+        timestamp: "last tuesday",
+        source: "Node RED",
+        content_hash: "tooshort",
+        asset: { asset_id: "M-1" },
+        data: { measurement_type: "temperature", value: 50, unit: "C" },
+      },
+    });
+
+    assert.equal(outputs[0][0], null);
+    const errors = outputs[0][1].iaes_errors.join(" | ");
+    assert.ok(errors.includes("timestamp"), "timestamp not flagged");
+    assert.ok(errors.includes("source"), "source not flagged");
+    assert.ok(errors.includes("content_hash"), "content_hash not flagged");
+  });
+
+  it("should reject a measurement missing its required data fields", () => {
+    const node = createNode(RED, "iaes-validate", {});
+
+    const measNode = createNode(RED, "iaes-measurement", {
+      assetId: "M-1", measurementType: "temperature", unit: "C", source: "test",
+    });
+    const { outputs: measOut } = sendInput(measNode, { payload: 50 });
+    const envelope = measOut[0].payload;
+    delete envelope.data.unit;
+
+    const { outputs } = sendInput(node, { payload: envelope });
+
+    assert.equal(outputs[0][0], null);
+    assert.ok(outputs[0][1].iaes_errors.includes("Missing required data field: unit"));
   });
 
   it("should accept JSON string payloads", () => {

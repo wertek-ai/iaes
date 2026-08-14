@@ -1,5 +1,7 @@
 const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
+// Anchored to the SDK so the suite cannot go stale against the spec again.
+const { SPEC_VERSION } = require("@iaes/sdk");
 
 // --- Mock RED ---
 
@@ -135,6 +137,17 @@ describe("iaes-sparkplug node", () => {
       { name: "Bearing Pressure", expected: "pressure" },
       { name: "Coolant Flow", expected: "flow" },
       { name: "UnknownMetric123", expected: "custom" },
+
+      // Regression — real gateway tags are namespaced, and the old substring
+      // scan let the general key win over the specific one. Every case below
+      // resolved to the WRONG type (and therefore the wrong unit) before the
+      // token-window matcher.
+      { name: "Motor1_Vibration_Acceleration", expected: "vibration_acceleration" },
+      { name: "Line3/Motor1/Vibration_Displacement", expected: "vibration_displacement" },
+      { name: "Motor_Power_Factor", expected: "power_factor" },
+      { name: "Panel_THD_Current", expected: "thd_current" },
+      { name: "Pump_Reactive_Power", expected: "reactive_power" },
+      { name: "Plant/Line3/Bus_THD_Voltage", expected: "thd_voltage" },
     ];
 
     for (const tc of testCases) {
@@ -269,7 +282,7 @@ describe("iaes-sparkplug node", () => {
       const iaes = outputs[0][0].payload;
 
       // Envelope fields
-      assert.equal(iaes.spec_version, "1.2");
+      assert.equal(iaes.spec_version, SPEC_VERSION);
       assert.equal(iaes.event_type, "asset.measurement");
       assert.ok(iaes.event_id);
       assert.ok(iaes.timestamp);

@@ -24,6 +24,18 @@
  * ```
  */
 
+/**
+ * The IAES ingest route. Servers mount it at the root — the earlier
+ * "/api/v1" prefix came from stale docstrings and produced a 404 against
+ * every real IAES server.
+ */
+export const DEFAULT_INGEST_PATH = "/iaes/ingest";
+
+/** Maximum envelopes a server accepts in one POST. */
+export const MAX_BATCH_SIZE = 100;
+
+const SDK_VERSION = "0.3.0";
+
 /** Options for the IAES client. */
 export interface IaesClientOptions {
   /** API key for authentication (sent as X-API-Key header). */
@@ -32,7 +44,7 @@ export interface IaesClientOptions {
   timeout?: number;
   /** Additional headers to include in every request. */
   headers?: Record<string, string>;
-  /** Override the default ingest path (default "/api/v1/iaes/ingest"). */
+  /** Override the default ingest path (default "/iaes/ingest"). */
   ingestPath?: string;
 }
 
@@ -42,8 +54,10 @@ export interface IngestResponse {
   rejected: number;
   results: Array<{
     event_id: string;
-    status: "stored" | "duplicate" | "error";
+    status: "stored" | "duplicate" | "dropped" | "error";
     routed_to?: string;
+    /** Why the server refused the event, e.g. "cadence_gate". */
+    reason?: string;
     error?: string;
   }>;
 }
@@ -80,7 +94,7 @@ export class IaesClient {
 
   constructor(url: string, options: IaesClientOptions = {}) {
     const baseUrl = url.replace(/\/+$/, "");
-    const ingestPath = options.ingestPath || "/api/v1/iaes/ingest";
+    const ingestPath = options.ingestPath || DEFAULT_INGEST_PATH;
     this.endpoint = baseUrl + ingestPath;
     this.apiKey = options.apiKey || "";
     this.timeout = options.timeout || 30000;
@@ -107,6 +121,14 @@ export class IaesClient {
    * @returns Response from the endpoint.
    */
   async publishBatch(events: Array<Publishable | Record<string, unknown>>): Promise<IngestResponse> {
+    // Over the limit the server rejects the WHOLE batch with 422, so failing
+    // here names the real problem instead of losing every event in it.
+    if (events.length > MAX_BATCH_SIZE) {
+      throw new IaesClientError(
+        `Batch size ${events.length} exceeds the maximum of ${MAX_BATCH_SIZE}`,
+        422
+      );
+    }
     const envelopes = events.map((e) =>
       "toJSON" in e && typeof e.toJSON === "function" ? e.toJSON() : e
     );
@@ -116,7 +138,7 @@ export class IaesClient {
   private async _send(payload: unknown): Promise<IngestResponse> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      "User-Agent": "iaes-ts-sdk/0.2.0",
+      "User-Agent": `iaes-ts-sdk/${SDK_VERSION}`,
       ...this.extraHeaders,
     };
     if (this.apiKey) {
