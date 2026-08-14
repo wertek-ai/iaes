@@ -1,4 +1,5 @@
 import type {
+	IAuthenticateGeneric,
 	ICredentialType,
 	INodeProperties,
 } from 'n8n-workflow';
@@ -23,9 +24,13 @@ export class IaesApi implements ICredentialType {
 			displayName: 'HTTP Endpoint',
 			name: 'httpEndpoint',
 			type: 'string',
-			default: 'https://api.wertek.ai/api/v1/iaes/ingest',
+			// IAES servers mount the ingest at the root. The earlier default
+			// carried an "/api/v1" prefix that no server implements, so every
+			// request built from it returned 404.
+			default: 'https://api.wertek.ai/iaes/ingest',
 			placeholder: 'https://your-api.com/iaes/ingest',
-			description: 'IAES ingest endpoint URL',
+			description:
+				'IAES ingest endpoint URL. The path is /iaes/ingest — there is no /api/v1 prefix. If you saved this credential before v0.2.0, correct the value by hand: changing the default does not update credentials already stored.',
 			displayOptions: {
 				show: { transport: ['http'] },
 			},
@@ -36,7 +41,8 @@ export class IaesApi implements ICredentialType {
 			type: 'string',
 			typeOptions: { password: true },
 			default: '',
-			description: 'Bearer token for authentication',
+			description:
+				'Sent as the X-API-Key header (not a Bearer token). The key needs the iaes.ingest scope.',
 			displayOptions: {
 				show: { transport: ['http'] },
 			},
@@ -89,4 +95,16 @@ export class IaesApi implements ICredentialType {
 			description: 'Your organization identifier (used in MQTT topics and event metadata)',
 		},
 	];
+
+	// Injects the correct header when this credential is selected on an HTTP
+	// Request node. Without it the key had to be wired by hand, and the old
+	// description said "Bearer token" — which the ingest rejects with 401.
+	authenticate: IAuthenticateGeneric = {
+		type: 'generic',
+		properties: {
+			headers: {
+				'X-API-Key': '={{$credentials.apiKey}}',
+			},
+		},
+	};
 }
