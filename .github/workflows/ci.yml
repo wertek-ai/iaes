@@ -79,5 +79,8 @@ jobs:
       - name: Build the TypeScript SDK for the cross-language tests
         run: npm ci && npm run build
         working-directory: npm
-      - run: pip install pytest
+      # El paquete declara sus dependencias de prueba en el extra "dev"
+      # (pytest, jsonschema, referencing, httpx). Instalar solo pytest
+      # pasaba en una maquina que ya tuviera jsonschema y fallaba en CI.
+      - run: pip install -e ".[dev]"
       - run: PYTHONPATH=src python -m pytest tests/ -q
