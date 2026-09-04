@@ -319,6 +319,7 @@ npm install node-red-contrib-iaes
 > **IAES-RFC-001** — Industrial Asset Event Model
 > DOI: [10.5281/zenodo.18973217](https://doi.org/10.5281/zenodo.18973217)
 
+- **[GOVERNANCE.md](GOVERNANCE.md)** — **Normative.** Stewardship, compatibility policy, schema identity, and how the standard changes
 - **[IAES-RFC-001](rfc/IAES-RFC-001.md)** — Formal RFC specification
 - **[IAES_SPEC.md](IAES_SPEC.md)** — Full specification
 - **[schema/](schema/)** — 8 JSON Schema files
