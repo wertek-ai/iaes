@@ -38,8 +38,13 @@ jobs:
         working-directory: npm
       - name: Install nodes against the local SDK
         run: |
-          npm ci
-          npm install --no-save ../npm
+          # The declared range is what consumers will resolve from the
+          # registry. CI must test THIS commit, so the dependency is
+          # redirected to the local build BEFORE resolving — otherwise a
+          # version bump can never pass CI until it is published, and
+          # publishing before CI is exactly backwards.
+          npm pkg set dependencies.@iaes/sdk=file:../npm
+          npm install --no-package-lock
         working-directory: node-red
       - run: npm test
         working-directory: node-red
@@ -57,8 +62,9 @@ jobs:
         working-directory: npm
       - name: Type-check and build
         run: |
-          npm ci
-          npm install --no-save ../npm
+          # Same reason as the node-red job above.
+          npm pkg set dependencies.@iaes/sdk=file:../npm
+          npm install --no-package-lock
           npm run build
         working-directory: n8n-nodes
 
