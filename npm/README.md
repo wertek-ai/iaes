@@ -239,4 +239,4 @@ Both Python and TypeScript SDKs produce identical wire format and identical `con
 
 ---
 
-*IAES v1.4 — March 2026*
+*IAES v1.4 — September 2026*
