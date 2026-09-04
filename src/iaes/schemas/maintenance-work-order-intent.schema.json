@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://iaes.wertek.ai/schema/v1/maintenance.work_order_intent",
+  "$id": "https://iaes.dev/schema/v1/maintenance.work_order_intent",
   "title": "IAES maintenance.work_order_intent",
   "description": "Declares the intent to create a maintenance work order. The consumer decides whether and how to act.",
   "allOf": [

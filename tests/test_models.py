@@ -424,6 +424,102 @@ class TestContentHash:
         assert e1.to_dict()["content_hash"] != e2.to_dict()["content_hash"]
 
 
+class TestPublishedReadmesDeclareTheFamily:
+    """GOVERNANCE.md §3.2 — every package page states the family and the spec.
+
+    The rule is normative because it rots otherwise, and it had: the SDK's npm
+    page advertised **IAES v1.2**, two versions behind, while two other pages
+    said v1.3. A version claim is the first thing an integrator reads and the
+    last thing anybody remembers to update.
+
+    ⚠️ Note what this deliberately does NOT check: the mere presence of an old
+    version string. The root README cites the Zenodo deposit, which really is
+    v1.3 until v1.4 is deposited — a naive rule would force falsifying a
+    citation. What is checked is that the CURRENT spec is declared, not that
+    older ones are absent.
+    """
+
+    READMES = ["README.md", "npm/README.md", "node-red/README.md", "n8n-nodes/README.md"]
+    PACKAGES = ["@iaes/sdk", "pip install iaes", "node-red-contrib-iaes", "n8n-nodes-iaes"]
+
+    def _read(self, rel):
+        """Read a README with whitespace normalised.
+
+        A guard that depends on where a line happens to wrap breaks the first
+        time somebody reformats the file — the same failure as anchoring to a
+        byte window. It should assert about the prose, not the layout.
+        """
+        import pathlib
+        import re
+        root = pathlib.Path(__file__).resolve().parents[1]
+        return re.sub(r"\s+", " ", (root / rel).read_text(encoding="utf-8"))
+
+    def test_each_page_lists_all_four_packages(self):
+        for rel in self.READMES:
+            text = self._read(rel)
+            for pkg in self.PACKAGES:
+                assert pkg in text, (
+                    f"{rel} does not mention {pkg!r} — somebody landing there "
+                    "has no way to learn the other runtimes exist"
+                )
+
+    def test_each_page_declares_the_current_spec_version(self):
+        for rel in self.READMES:
+            text = self._read(rel)
+            assert f"IAES {SPEC_VERSION}" in text or f"IAES v{SPEC_VERSION}" in text, (
+                f"{rel} never states which specification it implements "
+                f"(expected {SPEC_VERSION})"
+            )
+
+    def test_each_page_explains_that_the_version_carries_the_spec(self):
+        for rel in self.READMES:
+            assert "first two numbers" in self._read(rel), (
+                f"{rel} does not explain the version scheme (GOVERNANCE.md §3.1)"
+            )
+
+
+class TestBundledSchemasMatchTheCanonicalOnes:
+    """The schemas live in four copies and two of them are PUBLISHED.
+
+    `npm/schemas/` ships inside @iaes/sdk and `src/iaes/schemas/` ships inside
+    the PyPI wheel — and the Python validator reads its copy at runtime. When
+    the $id was corrected in v1.4, two surfaces were synced and these two were
+    not: they kept pointing at a host that never resolved, and tagging would
+    have installed the defect on every user.
+
+    Four copies nobody watches drift again. This is the watch.
+    """
+
+    def _paths(self):
+        import pathlib
+        root = pathlib.Path(__file__).resolve().parents[1]
+        return root / "schema", [root / "npm" / "schemas", root / "src" / "iaes" / "schemas"]
+
+    def test_every_bundled_copy_is_byte_identical(self):
+        canonical, bundled = self._paths()
+        originals = sorted(canonical.glob("*.schema.json"))
+        assert len(originals) == 8, "expected 8 canonical schemas"
+
+        for copy_dir in bundled:
+            for original in originals:
+                mirror = copy_dir / original.name
+                assert mirror.exists(), f"{mirror} is missing — it ships to users"
+                assert mirror.read_bytes() == original.read_bytes(), (
+                    f"{mirror} differs from the canonical schema. This copy is "
+                    "published; a stale one installs the wrong contract."
+                )
+
+    def test_the_validator_reads_a_current_copy(self):
+        """The runtime copy must carry what v1.4 added, or the SDK validates
+        against a contract the specification no longer describes."""
+        import json
+        _, bundled = self._paths()
+        envelope = json.loads((bundled[1] / "iaes-envelope.schema.json").read_text(encoding="utf-8"))
+        assert envelope["$id"].startswith("https://iaes.dev/"), "stale $id in the shipped copy"
+        assert "dataschema" in envelope["properties"]
+        assert "enum" not in envelope["properties"]["event_type"]
+
+
 class TestEventTypeIsOpen:
     """v1.4 — event_type was a closed enumeration while the specification
     ordered consumers to tolerate values they do not recognise. Nobody could
@@ -496,7 +592,20 @@ class TestVersion:
         assert SPEC_VERSION == "1.4"
 
     def test_package_version(self):
-        assert iaes.__version__ == "0.3.0"
+        assert iaes.__version__ == "1.4.0"
+
+    def test_the_package_version_declares_the_spec_it_implements(self):
+        """GOVERNANCE.md §3.1 — the first two numbers ARE the specification.
+
+        A reader should be able to tell what a package is compatible with by
+        looking at its version, without opening anything. That only holds if
+        something enforces it, so this is the something.
+        """
+        major_minor = ".".join(iaes.__version__.split(".")[:2])
+        assert major_minor == SPEC_VERSION, (
+            "package version %s claims spec %s but the SDK implements %s"
+            % (iaes.__version__, major_minor, SPEC_VERSION)
+        )
 
     def test_reported_version_matches_the_published_one(self):
         """__version__ and pyproject must agree.

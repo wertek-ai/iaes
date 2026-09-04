@@ -11,7 +11,22 @@
 [![npm](https://img.shields.io/npm/v/@iaes/sdk)](https://www.npmjs.com/package/@iaes/sdk)
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
-Create, serialize, validate, and publish industrial asset events using the [IAES v1.2 specification](https://iaes.dev).
+Create, serialize, validate, and publish industrial asset events using the [IAES v1.4 specification](https://iaes.dev).
+
+## Part of IAES
+
+The standard ships as four packages that version together. **The first two
+numbers of a package version are the specification it implements** — `1.4.x`
+implements IAES 1.4.
+
+| Runtime | Package | Install |
+|---|---|---|
+| TypeScript / JavaScript | `@iaes/sdk` | `npm install @iaes/sdk` |
+| Python | `iaes` | `pip install iaes` |
+| Node-RED | `node-red-contrib-iaes` | `npm install node-red-contrib-iaes` |
+| n8n | `n8n-nodes-iaes` | `npm install n8n-nodes-iaes` |
+
+Specification, JSON Schemas and governance: **[iaes.dev](https://iaes.dev)**.
 
 ## Install
 
@@ -224,4 +239,4 @@ Both Python and TypeScript SDKs produce identical wire format and identical `con
 
 ---
 
-*IAES v1.2 — March 2026*
+*IAES v1.4 — March 2026*

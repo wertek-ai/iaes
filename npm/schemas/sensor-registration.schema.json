@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://iaes.wertek.ai/schema/v1/sensor.registration",
+  "$id": "https://iaes.dev/schema/v1/sensor.registration",
   "title": "IAES sensor.registration",
   "description": "Sensor discovery, onboarding, and lifecycle events",
   "allOf": [

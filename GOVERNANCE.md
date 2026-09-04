@@ -63,6 +63,54 @@ IAES versions are `MAJOR.MINOR.PATCH`.
 Every release is published with its own DOI. The **concept DOI** always resolves
 to the latest version.
 
+### 3.1 Package versions carry the specification they implement
+
+The four published packages — `@iaes/sdk`, `node-red-contrib-iaes`,
+`n8n-nodes-iaes` (npm) and `iaes` (PyPI) — version in **lockstep**, and their
+number is read as:
+
+```
+     1  .  4  .  2
+     ▲     ▲     ▲
+     └─────┘     └── platform release: fixes and additions to the packages
+     the SPECIFICATION they implement
+```
+
+**The first two numbers are the specification version.** A package numbered
+`1.4.x` implements IAES 1.4. The third number counts releases of the packages
+themselves, and moves without the specification moving.
+
+Two consequences, and both are deliberate:
+
+- A package cannot make a breaking API change without the specification
+  advancing. These packages are wrappers around the standard; they have no
+  independent life, and pretending otherwise is what produced four unrelated
+  version numbers in the first place.
+- All four move together, even when only one changed. A reader comparing two
+  packages should never have to ask whether their numbers mean the same thing.
+
+Build metadata after a `+` was considered for the platform counter and does not
+work: SemVer §10 requires it to be **ignored in precedence**, so npm treats
+`1.4.0+1` and `1.4.0+2` as the same version, and PEP 440 makes it a **local
+version**, which PyPI refuses to accept. The third number carries it instead.
+
+### 3.2 Every published package declares the family and the specification
+
+Each package's README — the page a reader lands on at npm, PyPI or the Node-RED
+Flow Library — **MUST** state:
+
+1. **The four packages and how to install each one.** Somebody who finds the
+   Python package has no way to learn the Node-RED nodes exist unless the page
+   says so.
+2. **The specification version it implements**, and that the first two numbers
+   of the package version carry it (§3.1).
+
+This is normative because it rots otherwise, and it did: at the time this rule
+was written the SDK's page advertised **IAES v1.2**, two versions behind, and
+two other pages advertised v1.3. A version claim on a package page is the first
+thing an integrator reads and the last thing anybody remembers to update, so it
+is checked by CI rather than by discipline.
+
 ## 4. Compatibility policy
 
 **Default mode: BACKWARD.** A consumer built for version *N* can read events

@@ -24,6 +24,21 @@ IAES provides the **neutral layer in between** — one event format that any pro
 Sensors --> Intelligence --> IAES --> Connectors --> Enterprise Systems
 ```
 
+## Part of IAES
+
+The standard ships as four packages that version together. **The first two
+numbers of a package version are the specification it implements** — `1.4.x`
+implements IAES 1.4.
+
+| Runtime | Package | Install |
+|---|---|---|
+| TypeScript / JavaScript | `@iaes/sdk` | `npm install @iaes/sdk` |
+| Python | `iaes` | `pip install iaes` |
+| Node-RED | `node-red-contrib-iaes` | `npm install node-red-contrib-iaes` |
+| n8n | `n8n-nodes-iaes` | `npm install n8n-nodes-iaes` |
+
+Specification, JSON Schemas and governance: **[iaes.dev](https://iaes.dev)**.
+
 ## Install
 
 ```bash
@@ -208,7 +223,7 @@ event = from_dict(wire)  # AssetMeasurement, AssetHealth, etc.
 print(event.asset_id, event.value)
 ```
 
-## Event Types (v1.3)
+## Event Types (v1.4)
 
 | Event Type | Python | TypeScript | Purpose |
 |------------|--------|------------|---------|
@@ -247,7 +262,7 @@ Every event serializes to the same envelope structure:
 
 ```json
 {
-  "spec_version": "1.3",
+  "spec_version": "1.4",
   "event_type": "asset.measurement",
   "event_id": "a9e3c4b2-...",
   "correlation_id": "3b2f9d8c-...",
@@ -382,4 +397,4 @@ IAES is an open specification. The specification text and JSON schemas are licen
 
 ---
 
-*IAES v1.3 — March 2026*
+*IAES v1.4 — March 2026*
