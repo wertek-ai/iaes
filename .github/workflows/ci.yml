@@ -84,3 +84,28 @@ jobs:
       # pasaba en una maquina que ya tuviera jsonschema y fallaba en CI.
       - run: pip install -e ".[dev]"
       - run: PYTHONPATH=src python -m pytest tests/ -q
+
+  schema-compat:
+    name: "schema compatibility (GOVERNANCE.md §4)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The guard compares the tree against a baseline, so it needs history.
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Resolve the baseline
+        id: base
+        run: |
+          # A pull request is judged against its target branch; a push to main
+          # against the previous commit. Either way the question is the same:
+          # does this change break a consumer that was reading the old schemas?
+          if [ -n "${{ github.base_ref }}" ]; then
+            echo "ref=origin/${{ github.base_ref }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=HEAD~1" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Check for breaking schema changes
+        run: python tools/check_schema_compat.py --baseline "${{ steps.base.outputs.ref }}"
