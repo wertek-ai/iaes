@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://iaes.wertek.ai/schema/v1/envelope",
+  "$id": "https://iaes.dev/schema/v1/envelope",
   "title": "IAES Common Envelope",
   "description": "Base envelope shared by all IAES v1 events",
   "type": "object",

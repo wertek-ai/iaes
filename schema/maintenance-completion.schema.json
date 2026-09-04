@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://iaes.wertek.ai/schema/v1/maintenance.completion",
+  "$id": "https://iaes.dev/schema/v1/maintenance.completion",
   "title": "IAES maintenance.completion",
   "description": "Work order completion acknowledgment with outcome details",
   "allOf": [
