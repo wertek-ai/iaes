@@ -24,6 +24,7 @@ is installed, and a guard that needs a toolchain is a guard that gets skipped.
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -140,10 +141,22 @@ def check_property(old, new, where, breaks):
 
     # A pattern added, or replaced by a different one.
     if new.get("pattern") and not old.get("pattern"):
-        breaks.append((
-            where, "pattern added", new["pattern"],
-            "strings that used to be free now have to match",
-        ))
+        # Adding a pattern normally narrows. There is one case where it does
+        # not: a field that used to be a closed enumeration and is being opened
+        # into a shape. Then the question is not "was a pattern added?" but
+        # "does everything that used to validate still validate?" — and that is
+        # measurable, so it gets measured instead of assumed.
+        opened = old_enum is not None and new_enum is None
+        still_valid = opened and all(
+            isinstance(v, str) and re.match(new["pattern"], v) for v in old_enum
+        )
+        if not still_valid:
+            breaks.append((
+                where, "pattern added", new["pattern"],
+                "strings that used to be free now have to match"
+                + ("; and not every value of the enumeration it replaces matches it"
+                   if opened else ""),
+            ))
     elif old.get("pattern") and new.get("pattern") and old["pattern"] != new["pattern"]:
         breaks.append((
             where, "pattern changed", "%s -> %s" % (old["pattern"], new["pattern"]),

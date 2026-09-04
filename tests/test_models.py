@@ -424,6 +424,44 @@ class TestContentHash:
         assert e1.to_dict()["content_hash"] != e2.to_dict()["content_hash"]
 
 
+class TestEventTypeIsOpen:
+    """v1.4 — event_type was a closed enumeration while the specification
+    ordered consumers to tolerate values they do not recognise. Nobody could
+    produce one. It is now a shape."""
+
+    PATTERN = r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_.]*$"
+
+    def _envelope_schema(self):
+        import json
+        import pathlib
+        root = pathlib.Path(__file__).resolve().parents[1]
+        return json.loads((root / "schema" / "iaes-envelope.schema.json").read_text(encoding="utf-8"))
+
+    def test_the_enumeration_is_gone(self):
+        et = self._envelope_schema()["properties"]["event_type"]
+        assert "enum" not in et, "a closed enum makes an unknown type impossible to produce"
+        assert et["pattern"] == self.PATTERN
+        assert len(et["examples"]) == 7, "the published types survive as examples"
+
+    def test_every_published_type_still_validates(self):
+        """Widening only counts if nothing that used to pass now fails."""
+        import re
+        et = self._envelope_schema()["properties"]["event_type"]
+        for t in et["examples"]:
+            assert re.match(et["pattern"], t), t
+
+    def test_a_producer_can_define_its_own(self):
+        import re
+        for t in ("acme.press_stroke", "vendor.line_state", "plant_a.batch_end"):
+            assert re.match(self.PATTERN, t), t
+
+    def test_it_still_has_to_look_like_an_event_type(self):
+        """Open is not shapeless: a namespace is still required."""
+        import re
+        for bad in ("NotAType", "measurement", "Asset.Measurement", ".leading", "1.numeric"):
+            assert not re.match(self.PATTERN, bad), bad
+
+
 class TestDataschema:
     """v1.4 — every message carries the URI of its own contract."""
 

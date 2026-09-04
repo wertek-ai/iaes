@@ -62,7 +62,7 @@ Every IAES event shares this envelope:
 |-------|------|----------|-------------|
 | `spec_version` | string | yes | IAES spec version (`"1.0"` through `"1.4"`) |
 | `dataschema` | URI | no | Canonical URI of the schema the `data` payload was written against (v1.4) |
-| `event_type` | string | yes | Dot-notation event type |
+| `event_type` | string | yes | Dot-notation event type, matching `^[a-z][a-z0-9_]*\.[a-z][a-z0-9_.]*$`. Open: a producer MAY define its own (v1.4) |
 | `event_id` | UUID | yes | Unique identifier for this event |
 | `correlation_id` | UUID | yes | Groups related events in a single flow |
 | `source_event_id` | UUID | no | References the originating event |
@@ -386,9 +386,11 @@ Systems that emit IAES events MUST follow these rules:
 
 2. **Set `source_event_id` for causal chains.** When an event is caused by another event (e.g. a health assessment caused by a measurement), set `source_event_id` to the `event_id` of the cause.
 
-3. **Set `dataschema` to the schema the payload was written against.** Producers SHOULD include it. The schema for a published event type is always `https://iaes.dev/schema/v1/<event_type>`, so an SDK can derive it rather than ask for it. A producer using a custom `event_type` with no published schema MUST omit the field rather than point at a URI that does not resolve.
+3. **A custom `event_type` is allowed, and must look like one.** The published types are the interoperability defaults, not the limit: a producer MAY emit its own, provided it matches the dot-notation shape. Use a namespace you control (`acme.press_stroke`, not `asset.something`), and omit `dataschema`, since no schema is published for it.
 
-4. **Compute `content_hash` for deduplication.** Producers SHOULD compute `content_hash` as the first 16 characters of the SHA-256 hex digest of the serialized `data` payload (canonical JSON, sorted keys).
+4. **Set `dataschema` to the schema the payload was written against.** Producers SHOULD include it. The schema for a published event type is always `https://iaes.dev/schema/v1/<event_type>`, so an SDK can derive it rather than ask for it. A producer using a custom `event_type` with no published schema MUST omit the field rather than point at a URI that does not resolve.
+
+5. **Compute `content_hash` for deduplication.** Producers SHOULD compute `content_hash` as the first 16 characters of the SHA-256 hex digest of the serialized `data` payload (canonical JSON, sorted keys).
 
 4. **Include `asset_name`, `plant`, and `area` when available.** These fields are optional but significantly improve human readability in logs, dashboards, and audit trails.
 
@@ -402,7 +404,7 @@ Systems that receive IAES events MUST follow these rules:
 
 1. **Tolerate unknown fields.** Consumers MUST ignore fields in `data` that they do not recognize. Never reject an event because it contains extra fields. This is essential for forward compatibility.
 
-3. **Tolerate unknown `event_type` values.** If a consumer receives an event with an `event_type` it does not support (e.g. a future `asset.hierarchy`), it MUST NOT error. It MAY log the event and skip processing.
+3. **Tolerate unknown `event_type` values.** If a consumer receives an event with an `event_type` it does not support — a type published after it was built, or a producer's own — it MUST NOT error. It MAY log the event and skip processing.
 
 3. **Validate `spec_version`.** Consumers SHOULD check `spec_version` and MAY reject events from unsupported major versions.
 
@@ -530,7 +532,7 @@ IAES uses semantic versioning for the specification itself:
 | 1.0 | March 2026 | Initial release. 3 event types, common envelope, JSON Schema. |
 | 1.1 | March 2026 | 4 new event types (maintenance.completion, asset.hierarchy, sensor.registration, maintenance.spare_part_usage), batch_id envelope field, failure mode taxonomy (Appendix A). |
 | 1.2 | March 2026 | ISO alignment: `units_qualifier`, `sampling_rate_hz`, `acquisition_duration_s` on asset.measurement (ISO 17359); `iso_13374_status` on asset.health (ISO 13374); `iso_14224` object on asset.health + maintenance.completion (ISO 14224). All new fields optional — full backward compatibility. Appendix B (ISO 14224 codes), Appendix C (ISO 13374 mapping). |
-| 1.4 | September 2026 | **Governance and compatibility policy become normative** ([GOVERNANCE.md](GOVERNANCE.md)): stated stewardship, BACKWARD compatibility as the default mode, a 24-month support window, canonical and resolvable `$id` versioned by URI, and an RFC-based change process. Scope boundaries made explicit: IAES defines no asset hierarchy, no equipment catalog, and no commercial terms. **No schema changed in this release.** **Schema identity corrected** under GOVERNANCE.md §5.1: the eight schemas declared `$id` under `https://iaes.wertek.ai/schema/v1/`, a host that has never resolved (verified 2026-09-03: no DNS answer). They now declare `https://iaes.dev/schema/v1/`, which is served. The old base is permanently reserved and will not be reassigned. Schema content is otherwise unchanged. **New optional envelope field `dataschema`**: the canonical URI of the schema the payload was written against, following the CloudEvents attribute of the same name. Derivable from `event_type`, so both SDKs set it automatically for published event types and omit it otherwise. Optional and additive: fully backward compatible. |
+| 1.4 | September 2026 | **Governance and compatibility policy become normative** ([GOVERNANCE.md](GOVERNANCE.md)): stated stewardship, BACKWARD compatibility as the default mode, a 24-month support window, canonical and resolvable `$id` versioned by URI, and an RFC-based change process. Scope boundaries made explicit: IAES defines no asset hierarchy, no equipment catalog, and no commercial terms. **No schema changed in this release.** **Schema identity corrected** under GOVERNANCE.md §5.1: the eight schemas declared `$id` under `https://iaes.wertek.ai/schema/v1/`, a host that has never resolved (verified 2026-09-03: no DNS answer). They now declare `https://iaes.dev/schema/v1/`, which is served. The old base is permanently reserved and will not be reassigned. Schema content is otherwise unchanged. **New optional envelope field `dataschema`**: the canonical URI of the schema the payload was written against, following the CloudEvents attribute of the same name. Derivable from `event_type`, so both SDKs set it automatically for published event types and omit it otherwise. Optional and additive: fully backward compatible. **`event_type` opened**: it was a closed enumeration of seven values while this same document ordered consumers to tolerate values they do not recognise — a contradiction that made unknown types impossible to produce. It is now a dot-notation pattern with the published types as examples. Widening, therefore backward compatible: every previously valid value still validates, and the compatibility guard verifies that rather than assuming it. |
 | 1.3 | March 2026 | State transition model: `condition_trend` field on asset.health (`worsening`, `stable`, `improving`) based on ISO 13374-4 §5.3. Formalized recovery event pattern. State Transition Guidance in Architecture Guide (ISO 13374-4, ISO 17359, ISO 14224, ISO 55000). Recovery event example. All new fields optional — full backward compatibility. |
 
 ## Appendix A: Failure Mode Taxonomy
