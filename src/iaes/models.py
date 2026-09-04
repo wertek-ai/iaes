@@ -9,7 +9,7 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Union
 
-from .envelope import SPEC_VERSION, compute_content_hash
+from .envelope import SPEC_VERSION, compute_content_hash, schema_uri_for
 from .enums import (
     CompletionStatus,
     ConditionTrend,
@@ -80,6 +80,13 @@ def _build_envelope(
         },
         "data": clean_data,
     }
+    # The event type determines the contract, so the producer gets this for
+    # free — and only for published types, because a URI that does not resolve
+    # is worse than an absent field.
+    _schema = schema_uri_for(event_type)
+    if _schema is not None:
+        envelope["dataschema"] = _schema
+
     if source_event_id is not None:
         envelope["source_event_id"] = source_event_id
     if batch_id is not None:

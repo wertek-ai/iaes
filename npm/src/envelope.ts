@@ -2,7 +2,35 @@
 
 import { createHash, randomUUID } from "crypto";
 
-export const SPEC_VERSION = "1.3";
+export const SPEC_VERSION = "1.4";
+
+/**
+ * Canonical base for schema identity. Every schema is served at
+ * `SCHEMA_BASE + <event_type>`, which is why `dataschema` can be derived
+ * instead of asked for: the event type already determines the contract.
+ * See GOVERNANCE.md §5.
+ */
+export const SCHEMA_BASE = "https://iaes.dev/schema/v1/";
+
+/**
+ * Event types whose schema is published. `dataschema` is only emitted for
+ * these: pointing at a URI that does not resolve is worse than omitting the
+ * field, and is the exact defect v1.4 corrected.
+ */
+export const PUBLISHED_EVENT_TYPES = new Set([
+  "asset.measurement",
+  "asset.health",
+  "asset.hierarchy",
+  "sensor.registration",
+  "maintenance.work_order_intent",
+  "maintenance.completion",
+  "maintenance.spare_part_usage",
+]);
+
+/** The schema URI for an event type, or undefined if none is published. */
+export function schemaUriFor(eventType: string): string | undefined {
+  return PUBLISHED_EVENT_TYPES.has(eventType) ? SCHEMA_BASE + eventType : undefined;
+}
 
 /** Recursively sort object keys to match Python's json.dumps(sort_keys=True). */
 function sortKeys(obj: unknown): unknown {
@@ -34,6 +62,8 @@ export interface AssetIdentity {
 
 export interface IAESEnvelope {
   spec_version: string;
+  /** Canonical URI of the schema `data` was written against (v1.4). */
+  dataschema?: string;
   event_type: string;
   event_id: string;
   correlation_id: string;
@@ -56,6 +86,8 @@ export function buildEnvelope(opts: {
   source: string;
   asset: AssetIdentity;
   data: Record<string, unknown>;
+  /** Override the derived schema URI. Pass null to omit it entirely. */
+  dataschema?: string | null;
 }): IAESEnvelope {
   // Remove null/undefined values from data
   const cleanData: Record<string, unknown> = {};
@@ -74,6 +106,13 @@ export function buildEnvelope(opts: {
     asset: opts.asset,
     data: cleanData,
   };
+
+  // The event type determines the contract, so the producer gets this for
+  // free. `dataschema: null` opts out; anything else overrides the derivation.
+  const derived = opts.dataschema === undefined ? schemaUriFor(opts.eventType) : opts.dataschema;
+  if (derived != null) {
+    envelope.dataschema = derived;
+  }
 
   if (opts.sourceEventId != null) {
     envelope.source_event_id = opts.sourceEventId;
