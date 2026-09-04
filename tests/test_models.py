@@ -538,7 +538,20 @@ class TestVersion:
         assert SPEC_VERSION == "1.4"
 
     def test_package_version(self):
-        assert iaes.__version__ == "0.4.0"
+        assert iaes.__version__ == "1.4.0"
+
+    def test_the_package_version_declares_the_spec_it_implements(self):
+        """GOVERNANCE.md §3.1 — the first two numbers ARE the specification.
+
+        A reader should be able to tell what a package is compatible with by
+        looking at its version, without opening anything. That only holds if
+        something enforces it, so this is the something.
+        """
+        major_minor = ".".join(iaes.__version__.split(".")[:2])
+        assert major_minor == SPEC_VERSION, (
+            "package version %s claims spec %s but the SDK implements %s"
+            % (iaes.__version__, major_minor, SPEC_VERSION)
+        )
 
     def test_reported_version_matches_the_published_one(self):
         """__version__ and pyproject must agree.

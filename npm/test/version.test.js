@@ -31,6 +31,21 @@ describe("version", () => {
     );
   });
 
+  it("the first two numbers of the package version ARE the spec version", () => {
+    // GOVERNANCE.md §3.1. A reader should be able to tell what a package is
+    // compatible with from its version alone — which only holds if something
+    // enforces it.
+    const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+    const { SPEC_VERSION } = require("../dist/index.js");
+    const majorMinor = pkg.version.split(".").slice(0, 2).join(".");
+
+    assert.equal(
+      majorMinor,
+      SPEC_VERSION,
+      `package version ${pkg.version} claims spec ${majorMinor} but the SDK implements ${SPEC_VERSION}`,
+    );
+  });
+
   it("the SDK targets the spec version it implements", () => {
     const { SPEC_VERSION } = require("../dist/index.js");
     const spec = fs.readFileSync(path.join(root, "..", "IAES_SPEC.md"), "utf8");
