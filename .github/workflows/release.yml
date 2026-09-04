@@ -62,8 +62,12 @@ jobs:
           fi
         working-directory: ${{ steps.pick.outputs.dir }}
 
-      - name: Build the local SDK
-        if: steps.pick.outputs.dir != 'npm'
+      # Every test file requires ../dist, and dist is not committed. The SDK's
+      # own build used to be skipped here because the step was framed as
+      # "build the DEPENDENCY" — so when the package being published WAS the
+      # SDK, nothing built it and its tests could not even load. prepublishOnly
+      # builds, but that runs after the tests, which is too late to be tested.
+      - name: Build the SDK
         run: npm ci && npm run build
         working-directory: npm
 
