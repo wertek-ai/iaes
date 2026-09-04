@@ -263,6 +263,7 @@ Every event serializes to the same envelope structure:
 ```json
 {
   "spec_version": "1.4",
+  "dataschema": "https://iaes.dev/schema/v1/asset.measurement",
   "event_type": "asset.measurement",
   "event_id": "a9e3c4b2-...",
   "correlation_id": "3b2f9d8c-...",
@@ -284,6 +285,8 @@ Every event serializes to the same envelope structure:
   }
 }
 ```
+
+`dataschema` is the canonical URI of the schema the payload was written against — the SDKs derive it from `event_type` and omit it for a custom type that has no published schema.
 
 `content_hash` is a 16-char SHA-256 prefix of the `data` payload, computed identically in Python and TypeScript for cross-language idempotency.
 
@@ -397,4 +400,4 @@ IAES is an open specification. The specification text and JSON schemas are licen
 
 ---
 
-*IAES v1.4 — March 2026*
+*IAES v1.4 — September 2026*

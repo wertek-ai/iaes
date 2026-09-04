@@ -592,7 +592,7 @@ class TestVersion:
         assert SPEC_VERSION == "1.4"
 
     def test_package_version(self):
-        assert iaes.__version__ == "1.4.0"
+        assert iaes.__version__ == "1.4.1"
 
     def test_the_package_version_declares_the_spec_it_implements(self):
         """GOVERNANCE.md §3.1 — the first two numbers ARE the specification.
