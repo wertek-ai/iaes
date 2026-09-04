@@ -10,6 +10,21 @@
 
 Create, validate, route, and bridge Sparkplug B industrial asset events — no code required.
 
+## Part of IAES
+
+The standard ships as four packages that version together. **The first two
+numbers of a package version are the specification it implements** — `1.4.x`
+implements IAES 1.4.
+
+| Runtime | Package | Install |
+|---|---|---|
+| TypeScript / JavaScript | `@iaes/sdk` | `npm install @iaes/sdk` |
+| Python | `iaes` | `pip install iaes` |
+| Node-RED | `node-red-contrib-iaes` | `npm install node-red-contrib-iaes` |
+| n8n | `n8n-nodes-iaes` | `npm install n8n-nodes-iaes` |
+
+Specification, JSON Schemas and governance: **[iaes.dev](https://iaes.dev)**.
+
 ## Install
 
 In your Node-RED directory:

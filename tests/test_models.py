@@ -424,6 +424,60 @@ class TestContentHash:
         assert e1.to_dict()["content_hash"] != e2.to_dict()["content_hash"]
 
 
+class TestPublishedReadmesDeclareTheFamily:
+    """GOVERNANCE.md §3.2 — every package page states the family and the spec.
+
+    The rule is normative because it rots otherwise, and it had: the SDK's npm
+    page advertised **IAES v1.2**, two versions behind, while two other pages
+    said v1.3. A version claim is the first thing an integrator reads and the
+    last thing anybody remembers to update.
+
+    ⚠️ Note what this deliberately does NOT check: the mere presence of an old
+    version string. The root README cites the Zenodo deposit, which really is
+    v1.3 until v1.4 is deposited — a naive rule would force falsifying a
+    citation. What is checked is that the CURRENT spec is declared, not that
+    older ones are absent.
+    """
+
+    READMES = ["README.md", "npm/README.md", "node-red/README.md", "n8n-nodes/README.md"]
+    PACKAGES = ["@iaes/sdk", "pip install iaes", "node-red-contrib-iaes", "n8n-nodes-iaes"]
+
+    def _read(self, rel):
+        """Read a README with whitespace normalised.
+
+        A guard that depends on where a line happens to wrap breaks the first
+        time somebody reformats the file — the same failure as anchoring to a
+        byte window. It should assert about the prose, not the layout.
+        """
+        import pathlib
+        import re
+        root = pathlib.Path(__file__).resolve().parents[1]
+        return re.sub(r"\s+", " ", (root / rel).read_text(encoding="utf-8"))
+
+    def test_each_page_lists_all_four_packages(self):
+        for rel in self.READMES:
+            text = self._read(rel)
+            for pkg in self.PACKAGES:
+                assert pkg in text, (
+                    f"{rel} does not mention {pkg!r} — somebody landing there "
+                    "has no way to learn the other runtimes exist"
+                )
+
+    def test_each_page_declares_the_current_spec_version(self):
+        for rel in self.READMES:
+            text = self._read(rel)
+            assert f"IAES {SPEC_VERSION}" in text or f"IAES v{SPEC_VERSION}" in text, (
+                f"{rel} never states which specification it implements "
+                f"(expected {SPEC_VERSION})"
+            )
+
+    def test_each_page_explains_that_the_version_carries_the_spec(self):
+        for rel in self.READMES:
+            assert "first two numbers" in self._read(rel), (
+                f"{rel} does not explain the version scheme (GOVERNANCE.md §3.1)"
+            )
+
+
 class TestBundledSchemasMatchTheCanonicalOnes:
     """The schemas live in four copies and two of them are PUBLISHED.
 

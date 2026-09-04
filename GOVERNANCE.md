@@ -94,6 +94,23 @@ work: SemVer §10 requires it to be **ignored in precedence**, so npm treats
 `1.4.0+1` and `1.4.0+2` as the same version, and PEP 440 makes it a **local
 version**, which PyPI refuses to accept. The third number carries it instead.
 
+### 3.2 Every published package declares the family and the specification
+
+Each package's README — the page a reader lands on at npm, PyPI or the Node-RED
+Flow Library — **MUST** state:
+
+1. **The four packages and how to install each one.** Somebody who finds the
+   Python package has no way to learn the Node-RED nodes exist unless the page
+   says so.
+2. **The specification version it implements**, and that the first two numbers
+   of the package version carry it (§3.1).
+
+This is normative because it rots otherwise, and it did: at the time this rule
+was written the SDK's page advertised **IAES v1.2**, two versions behind, and
+two other pages advertised v1.3. A version claim on a package page is the first
+thing an integrator reads and the last thing anybody remembers to update, so it
+is checked by CI rather than by discipline.
+
 ## 4. Compatibility policy
 
 **Default mode: BACKWARD.** A consumer built for version *N* can read events
