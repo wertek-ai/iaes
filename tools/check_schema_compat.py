@@ -29,6 +29,7 @@ import subprocess
 import sys
 
 SCHEMA_DIR = "schema"
+SPEC_FILE = "IAES_SPEC.md"
 
 
 # --------------------------------------------------------------------------- #
@@ -58,25 +59,50 @@ def fail_hard(msg):
 # The checks. One function per rule in GOVERNANCE.md §4.2.
 # --------------------------------------------------------------------------- #
 
-def walk(old, new, path, breaks):
-    """Recursively compare two schema fragments and collect breaking changes."""
+def walk(old, new, path, breaks, declared=""):
+    """Recursively compare two schema fragments and collect breaking changes.
+
+    `declared` is the specification text, used to check whether a §5.1
+    exception was actually claimed in writing.
+    """
     if not isinstance(old, dict) or not isinstance(new, dict):
         return
 
     here = path or "(root)"
 
     # §4.2 — Changing the canonical $id of a schema.
-    # The §5.1 exception (an identity that never resolved) is deliberately NOT
-    # automated: it requires evidence that the old URI never resolved, and that
-    # judgement belongs to a human, recorded in the version history.
+    #
+    # §5.1 allows correcting an identity that NEVER resolved, as a defect
+    # correction. Three of its four conditions are human judgement and stay
+    # that way. The second one is not: "the correction is announced in the
+    # version history, naming the old and the new URI" — that is a fact about
+    # the document, so the guard checks it instead of taking somebody's word.
+    #
+    # An exception nobody can claim is the same as no exception: it would leave
+    # the pull request that applies it permanently red, and teach people to
+    # reach for --allow-major, which silences everything.
     if old.get("$id") and new.get("$id") and old["$id"] != new["$id"]:
-        breaks.append((
-            here,
-            "canonical $id changed",
-            "%s -> %s" % (old["$id"], new["$id"]),
-            "MAJOR, unless GOVERNANCE.md 5.1 applies (identity that never "
-            "resolved) — that exception is claimed by hand, in the version history",
-        ))
+        # One base change applied to eight files is announced once, as a base
+        # change. Requiring the full per-schema URI would demand eight
+        # near-identical lines and teach people to pad the history.
+        def _announced(a, b):
+            if a in declared and b in declared:
+                return True
+            a_base, _, a_slug = a.rpartition("/")
+            b_base, _, b_slug = b.rpartition("/")
+            same_schema = a_slug == b_slug and a_slug != ""
+            return same_schema and (a_base + "/") in declared and (b_base + "/") in declared
+
+        announced = _announced(old["$id"], new["$id"])
+        if not announced:
+            breaks.append((
+                here,
+                "canonical $id changed",
+                "%s -> %s" % (old["$id"], new["$id"]),
+                "MAJOR. If GOVERNANCE.md 5.1 applies (an identity that never "
+                "resolved), announce it in the version history naming BOTH "
+                "URIs — the other three conditions of 5.1 are yours to judge",
+            ))
 
     # §4.2 — Making an optional field required.
     old_req = set(old.get("required") or [])
@@ -101,7 +127,7 @@ def walk(old, new, path, breaks):
         o, n = old_props[field], new_props[field]
         if isinstance(o, dict) and isinstance(n, dict):
             check_property(o, n, "%s.%s" % (here, field), breaks)
-            walk(o, n, "%s.%s" % (here, field), breaks)
+            walk(o, n, "%s.%s" % (here, field), breaks, declared)
 
     # Nested subschemas that are not properties.
     for key in ("items", "additionalProperties", "$defs", "definitions"):
@@ -110,14 +136,14 @@ def walk(old, new, path, breaks):
             if key in ("$defs", "definitions"):
                 for name in sorted(set(o) & set(n)):
                     if isinstance(o[name], dict) and isinstance(n[name], dict):
-                        walk(o[name], n[name], "%s.%s.%s" % (here, key, name), breaks)
+                        walk(o[name], n[name], "%s.%s.%s" % (here, key, name), breaks, declared)
                 for name in sorted(set(o) - set(n)):
                     breaks.append((
                         here, "definition removed", "%s.%s" % (key, name),
                         "anything that referenced it can no longer resolve",
                     ))
             else:
-                walk(o, n, "%s.%s" % (here, key), breaks)
+                walk(o, n, "%s.%s" % (here, key), breaks, declared)
 
 
 def check_property(old, new, where, breaks):
@@ -216,6 +242,14 @@ def main():
     if not files:
         fail_hard("no schemas found in ./%s" % SCHEMA_DIR)
 
+    # The specification text, so a §5.1 exception can be verified rather than
+    # asserted. Absent file means no claim can be made — which is the safe way
+    # round.
+    declared = ""
+    if os.path.exists(SPEC_FILE):
+        with open(SPEC_FILE, encoding="utf-8") as fh:
+            declared = fh.read()
+
     breaks, checked, added = [], 0, []
     for name in files:
         path = os.path.join(SCHEMA_DIR, name).replace(os.sep, "/")
@@ -227,7 +261,7 @@ def main():
             new = json.load(fh)
         checked += 1
         found = []
-        walk(old, new, "", found)
+        walk(old, new, "", found, declared)
         breaks.extend((name,) + b for b in found)
 
     print("IAES compatibility check — GOVERNANCE.md 4 (mode: BACKWARD)")
