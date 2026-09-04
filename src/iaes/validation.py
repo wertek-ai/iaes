@@ -72,6 +72,22 @@ def load_envelope_schema() -> Dict[str, Any]:
     return schema
 
 
+def _validate_envelope_only(event: Dict[str, Any], envelope_schema: Dict[str, Any]) -> None:
+    """Validate the envelope of an event whose payload has no published schema.
+
+    Used for a custom ``event_type``. Everything the standard governs is still
+    checked — identifiers, timestamp, source, asset, the dot-notation shape of
+    the type itself — and only ``data`` is left unjudged, because there is
+    nothing to judge it against.
+    """
+    import jsonschema
+
+    try:
+        jsonschema.validate(instance=event, schema=envelope_schema)
+    except jsonschema.ValidationError as e:
+        raise ValidationError(f"Envelope validation failed: {e.message}")
+
+
 def validate(event: Dict[str, Any]) -> None:
     """Validate an IAES event dict against its JSON schema.
 
@@ -102,8 +118,14 @@ def validate(event: Dict[str, Any]) -> None:
     envelope_schema = load_envelope_schema()
     try:
         event_schema = load_schema(event_type)
-    except ValueError as e:
-        raise ValidationError(str(e))
+    except ValueError:
+        # v1.4 opened `event_type`: a producer MAY define its own, and the
+        # specification tells consumers they MUST NOT error on one they do not
+        # recognise. An unknown type is not an invalid event — it is an event
+        # whose payload we cannot judge. So the envelope is still validated in
+        # full, and the payload is left alone.
+        _validate_envelope_only(event, envelope_schema)
+        return
 
     # Build a registry so $ref resolution works.
     # Event schemas use relative $ref "iaes-envelope.schema.json" which

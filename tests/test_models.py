@@ -424,6 +424,48 @@ class TestContentHash:
         assert e1.to_dict()["content_hash"] != e2.to_dict()["content_hash"]
 
 
+class TestBundledSchemasMatchTheCanonicalOnes:
+    """The schemas live in four copies and two of them are PUBLISHED.
+
+    `npm/schemas/` ships inside @iaes/sdk and `src/iaes/schemas/` ships inside
+    the PyPI wheel — and the Python validator reads its copy at runtime. When
+    the $id was corrected in v1.4, two surfaces were synced and these two were
+    not: they kept pointing at a host that never resolved, and tagging would
+    have installed the defect on every user.
+
+    Four copies nobody watches drift again. This is the watch.
+    """
+
+    def _paths(self):
+        import pathlib
+        root = pathlib.Path(__file__).resolve().parents[1]
+        return root / "schema", [root / "npm" / "schemas", root / "src" / "iaes" / "schemas"]
+
+    def test_every_bundled_copy_is_byte_identical(self):
+        canonical, bundled = self._paths()
+        originals = sorted(canonical.glob("*.schema.json"))
+        assert len(originals) == 8, "expected 8 canonical schemas"
+
+        for copy_dir in bundled:
+            for original in originals:
+                mirror = copy_dir / original.name
+                assert mirror.exists(), f"{mirror} is missing — it ships to users"
+                assert mirror.read_bytes() == original.read_bytes(), (
+                    f"{mirror} differs from the canonical schema. This copy is "
+                    "published; a stale one installs the wrong contract."
+                )
+
+    def test_the_validator_reads_a_current_copy(self):
+        """The runtime copy must carry what v1.4 added, or the SDK validates
+        against a contract the specification no longer describes."""
+        import json
+        _, bundled = self._paths()
+        envelope = json.loads((bundled[1] / "iaes-envelope.schema.json").read_text(encoding="utf-8"))
+        assert envelope["$id"].startswith("https://iaes.dev/"), "stale $id in the shipped copy"
+        assert "dataschema" in envelope["properties"]
+        assert "enum" not in envelope["properties"]["event_type"]
+
+
 class TestEventTypeIsOpen:
     """v1.4 — event_type was a closed enumeration while the specification
     ordered consumers to tolerate values they do not recognise. Nobody could
@@ -496,7 +538,7 @@ class TestVersion:
         assert SPEC_VERSION == "1.4"
 
     def test_package_version(self):
-        assert iaes.__version__ == "0.3.0"
+        assert iaes.__version__ == "0.4.0"
 
     def test_reported_version_matches_the_published_one(self):
         """__version__ and pyproject must agree.
