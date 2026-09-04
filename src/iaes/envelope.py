@@ -4,7 +4,31 @@ import hashlib
 import json
 from typing import Any, Dict
 
-SPEC_VERSION = "1.3"
+SPEC_VERSION = "1.4"
+
+#: Canonical base for schema identity. Every schema is served at
+#: ``SCHEMA_BASE + <event_type>``, which is why ``dataschema`` can be derived
+#: instead of asked for: the event type already determines the contract.
+#: See GOVERNANCE.md section 5.
+SCHEMA_BASE = "https://iaes.dev/schema/v1/"
+
+#: Event types whose schema is published. ``dataschema`` is only emitted for
+#: these: pointing at a URI that does not resolve is worse than omitting the
+#: field, and is the exact defect v1.4 corrected.
+PUBLISHED_EVENT_TYPES = frozenset({
+    "asset.measurement",
+    "asset.health",
+    "asset.hierarchy",
+    "sensor.registration",
+    "maintenance.work_order_intent",
+    "maintenance.completion",
+    "maintenance.spare_part_usage",
+})
+
+
+def schema_uri_for(event_type: str):
+    """The schema URI for an event type, or ``None`` if none is published."""
+    return SCHEMA_BASE + event_type if event_type in PUBLISHED_EVENT_TYPES else None
 
 
 def _normalize_for_hash(obj: Any) -> Any:

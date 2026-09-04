@@ -21,7 +21,13 @@
  * ```
  */
 
-export { SPEC_VERSION, computeContentHash } from "./envelope";
+export {
+  SPEC_VERSION,
+  SCHEMA_BASE,
+  PUBLISHED_EVENT_TYPES,
+  schemaUriFor,
+  computeContentHash,
+} from "./envelope";
 export type { IAESEnvelope, AssetIdentity } from "./envelope";
 
 export {

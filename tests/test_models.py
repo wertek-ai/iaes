@@ -424,9 +424,96 @@ class TestContentHash:
         assert e1.to_dict()["content_hash"] != e2.to_dict()["content_hash"]
 
 
+class TestEventTypeIsOpen:
+    """v1.4 — event_type was a closed enumeration while the specification
+    ordered consumers to tolerate values they do not recognise. Nobody could
+    produce one. It is now a shape."""
+
+    PATTERN = r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_.]*$"
+
+    def _envelope_schema(self):
+        import json
+        import pathlib
+        root = pathlib.Path(__file__).resolve().parents[1]
+        return json.loads((root / "schema" / "iaes-envelope.schema.json").read_text(encoding="utf-8"))
+
+    def test_the_enumeration_is_gone(self):
+        et = self._envelope_schema()["properties"]["event_type"]
+        assert "enum" not in et, "a closed enum makes an unknown type impossible to produce"
+        assert et["pattern"] == self.PATTERN
+        assert len(et["examples"]) == 7, "the published types survive as examples"
+
+    def test_every_published_type_still_validates(self):
+        """Widening only counts if nothing that used to pass now fails."""
+        import re
+        et = self._envelope_schema()["properties"]["event_type"]
+        for t in et["examples"]:
+            assert re.match(et["pattern"], t), t
+
+    def test_a_producer_can_define_its_own(self):
+        import re
+        for t in ("acme.press_stroke", "vendor.line_state", "plant_a.batch_end"):
+            assert re.match(self.PATTERN, t), t
+
+    def test_it_still_has_to_look_like_an_event_type(self):
+        """Open is not shapeless: a namespace is still required."""
+        import re
+        for bad in ("NotAType", "measurement", "Asset.Measurement", ".leading", "1.numeric"):
+            assert not re.match(self.PATTERN, bad), bad
+
+
+class TestDataschema:
+    """v1.4 — every message carries the URI of its own contract."""
+
+    def test_published_event_type_gets_its_schema_uri(self):
+        e = AssetMeasurement(
+            asset_id="MOTOR-001",
+            measurement_type="vibration_velocity",
+            value=4.2,
+            unit="mm/s",
+        ).to_dict()
+        assert e["dataschema"] == "https://iaes.dev/schema/v1/asset.measurement"
+
+    def test_the_uri_is_the_event_type(self):
+        """The slug of every published schema is its event_type, which is why
+        the field can be derived instead of asked for."""
+        from iaes.envelope import SCHEMA_BASE, schema_uri_for
+
+        for event_type in ("asset.health", "sensor.registration",
+                           "maintenance.work_order_intent"):
+            assert schema_uri_for(event_type) == SCHEMA_BASE + event_type
+
+    def test_an_unpublished_event_type_gets_nothing(self):
+        """A URI that does not resolve is worse than an absent field — that was
+        the defect v1.4 corrected in the schemas themselves."""
+        from iaes.envelope import schema_uri_for
+
+        assert schema_uri_for("vendor.custom_event") is None
+
+
 class TestVersion:
     def test_spec_version(self):
-        assert SPEC_VERSION == "1.3"
+        assert SPEC_VERSION == "1.4"
 
     def test_package_version(self):
-        assert iaes.__version__ == "0.2.1"
+        assert iaes.__version__ == "0.3.0"
+
+    def test_reported_version_matches_the_published_one(self):
+        """__version__ and pyproject must agree.
+
+        They did not: pyproject and PyPI said 0.3.0 while the package reported
+        0.2.1 at runtime, and the pinned test above protected the drift instead
+        of catching it. A literal in two files always drifts; this makes the
+        drift fail the build.
+        """
+        import pathlib
+        import re
+
+        pyproject = pathlib.Path(__file__).resolve().parents[1] / "pyproject.toml"
+        text = pyproject.read_text(encoding="utf-8")
+        match = re.search(r'^version\s*=\s*"([^"]+)"', text, re.M)
+        assert match, "no version in pyproject.toml"
+        assert iaes.__version__ == match.group(1), (
+            "iaes.__version__ is %s but pyproject.toml publishes %s"
+            % (iaes.__version__, match.group(1))
+        )

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://iaes.wertek.ai/schema/v1/asset.measurement",
+  "$id": "https://iaes.dev/schema/v1/asset.measurement",
   "title": "IAES asset.measurement",
   "description": "Physical sensor reading from an industrial asset",
   "allOf": [
