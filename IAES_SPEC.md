@@ -25,7 +25,7 @@ IAES is NOT a product. It is a data contract. Any system — sensor platform, AI
 | **Consumer** | Any system that receives and acts on IAES events — CMMS, historians, dashboards, digital twin platforms. |
 | **Envelope** | The common wrapper fields shared by all IAES events (spec_version, event_type, event_id, etc.). |
 | **Correlation** | A group of related events sharing the same `correlation_id`, representing a single observation-to-action flow. |
-| **Source** | A dot-notation string identifying the producer of an event (e.g. `wertek.ai.vibration`, `operator.field_assessment`). |
+| **Source** | A dot-notation string identifying the producer of an event (e.g. `vendor.vibration`, `operator.field_assessment`). |
 | **Intent** | A declaration that an action should be considered, without prescribing how the consumer should act. Used in `maintenance.work_order_intent`. |
 | **Health Index** | A normalized 0-1 score representing asset condition (0 = failed, 1 = healthy). |
 | **RUL** | Remaining Useful Life — estimated days until the asset requires intervention. |
@@ -67,7 +67,7 @@ Every IAES event shares this envelope:
 | `correlation_id` | UUID | yes | Groups related events in a single flow |
 | `source_event_id` | UUID | no | References the originating event |
 | `timestamp` | ISO 8601 | yes | When the event occurred |
-| `source` | string | yes | Dot-notation producer identity (e.g. `wertek.ai.diagnosis`, `operator.manual_inspection`) |
+| `source` | string | yes | Dot-notation producer identity (e.g. `vendor.diagnosis`, `operator.manual_inspection`) |
 | `batch_id` | string | no | Groups events from a single batch operation (e.g. gateway poll, bulk sync) |
 | `content_hash` | string | no | SHA-256 prefix (16 chars) of `data` payload for dedup |
 | `asset` | object | yes | Asset identity (see Asset Identity) |
@@ -336,12 +336,12 @@ A PLC, sensor, or gateway knows `vibration_rms = 4.6`. That is telemetry, not a 
 
 | Source | Example `source` value | Typical events |
 |--------|----------------------|----------------|
-| AI diagnosis engine | `wertek.ai.vibration` | `asset.health` |
+| AI diagnosis engine | `vendor.vibration` | `asset.health` |
 | Rule/threshold engine | `acme.rule_engine` | `asset.health` |
 | Manual inspection | `operator.manual_inspection` | `asset.health`, `asset.measurement` |
 | Technician assessment | `operator.field_assessment` | `asset.health` |
 | Lab analysis | `lab.oil_analysis` | `asset.measurement` |
-| Maintenance application | `wertek.ai.cmms` | `maintenance.work_order_intent` |
+| Maintenance application | `vendor.cmms` | `maintenance.work_order_intent` |
 
 ### Signal sources (upstream of IAES)
 
@@ -374,7 +374,7 @@ Systems that emit IAES events MUST follow these rules:
 
 2. **Generate unique `event_id` values.** Each event MUST have a globally unique `event_id` (UUID v4 recommended). Never reuse an `event_id` across events.
 
-3. **Use dot-notation for `source`.** The `source` field MUST follow the pattern `vendor.system[.subsystem]`. Examples: `wertek.ai.vibration`, `banner.dxm100`, `operator.manual_inspection`. Use lowercase, alphanumeric characters, dots, and underscores only.
+3. **Use dot-notation for `source`.** The `source` field MUST follow the pattern `vendor.system[.subsystem]`. Examples: `vendor.vibration`, `banner.dxm100`, `operator.manual_inspection`. Use lowercase, alphanumeric characters, dots, and underscores only.
 
 4. **Use ISO 8601 for timestamps.** The `timestamp` field MUST be in UTC with timezone designator (e.g. `2026-03-06T17:50:17Z`).
 
@@ -627,7 +627,7 @@ All fields are optional. Producers MAY include any subset.
 | Code | Method | Typical IAES `source` |
 |------|--------|-----------------------|
 | 1 | Periodic maintenance | `operator.manual_inspection` |
-| 2 | Condition monitoring | `wertek.ai.vibration`, `wertek.ai.diagnosis` |
+| 2 | Condition monitoring | `vendor.vibration`, `vendor.diagnosis` |
 | 3 | Functional testing | `operator.field_assessment` |
 | 4 | Casual observation | `operator.manual_inspection` |
 | 5 | On demand / Breakdown | — (reactive) |
