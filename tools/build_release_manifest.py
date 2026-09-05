@@ -25,6 +25,7 @@ import argparse
 import hashlib
 import json
 import re
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -114,8 +115,31 @@ def rationale_files() -> list:
     return files
 
 
-def digest(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+def digest(path: Path, ref: str = "HEAD") -> str:
+    """SHA-256 of the file's content *in the repository*, not on this disk.
+
+    Hashing the working tree made the manifest depend on the checkout: a Windows
+    clone stores CRLF where a Linux clone stores LF, so the same tag produced
+    twelve different digests on the two machines. The first manifest attached to
+    spec-v1.4 was built on Windows and recorded digests nobody else could
+    reproduce -- which defeats the only thing a manifest is for.
+
+    A release is defined by its tag, so the digest comes from the objects that
+    tag identifies. Normalizing line endings would have fixed the symptom and
+    left the cause: the answer would still have come from the checkout.
+    """
+    rel = str(path.relative_to(ROOT)).replace("\\", "/")
+    try:
+        content = subprocess.run(
+            ["git", "show", f"{ref}:{rel}"],
+            cwd=ROOT, check=True, capture_output=True,
+        ).stdout
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        raise SystemExit(
+            f"cannot read {rel} from {ref}: {e}. The manifest describes a release, "
+            f"so every file in it must be committed."
+        )
+    return hashlib.sha256(content).hexdigest()
 
 
 def check(tag: str | None) -> str:
@@ -165,15 +189,18 @@ def check(tag: str | None) -> str:
 def build(tag: str | None, out: Path | None) -> dict:
     version = check(tag)
     files = normative_files()
+    # The tag when there is one, so the manifest describes the release rather
+    # than whatever happens to be checked out.
+    ref = tag if tag else "HEAD"
     manifest = {
         "specification_version": version,
         "tag": tag,
         "built_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "normative": {
-            str(f.relative_to(ROOT)).replace("\\", "/"): digest(f) for f in files
+            str(f.relative_to(ROOT)).replace("\\", "/"): digest(f, ref) for f in files
         },
         "rationale": {
-            str(f.relative_to(ROOT)).replace("\\", "/"): digest(f)
+            str(f.relative_to(ROOT)).replace("\\", "/"): digest(f, ref)
             for f in rationale_files()
         },
         "implementations": {
@@ -181,7 +208,7 @@ def build(tag: str | None, out: Path | None) -> dict:
             for rel, v in package_versions().items()
         },
         "note": (
-            "A specification release is these files under this tag; `normative` "
+            "Digests are SHA-256 of the content in the repository at this tag, not of ""the files as they appear in a checkout -- line endings differ by platform ""and the digest must not. ""A specification release is these files under this tag; `normative` "
             "governs behaviour and `rationale` records why. "
             "The implementations listed here declare which specification they "
             "implement; they are released separately and carry no specification "
