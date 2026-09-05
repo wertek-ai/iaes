@@ -206,10 +206,13 @@ def main() -> None:
         return
 
     manifest = build(args.tag, args.out)
+    # Worded so the second number cannot be read as a second kind of normative
+    # file: the RFCs travel in the release and carry a digest, but they do not
+    # govern behaviour.
     print(
         f"IAES {manifest['specification_version']} — "
-        f"{len(manifest['normative'])} normative files, "
-        f"{len(manifest['rationale'])} rationale"
+        f"{len(manifest['normative'])} normative files "
+        f"+ {len(manifest['rationale'])} RFCs (rationale)"
     )
 
 
