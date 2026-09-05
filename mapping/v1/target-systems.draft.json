@@ -1,0 +1,173 @@
+{
+  "$comment": "DRAFT. Deliberately has no $id: a canonical URI is only declared once something serves it. The first version of this file declared https://iaes.dev/mapping/v1/target-systems.draft.json, which returns 404 — repeating the exact defect v1.4 was cut to fix.",
+  "iaes_spec_version": "1.4",
+
+  "status": {
+    "state": "draft",
+    "normative": false,
+    "binding": false,
+    "rfc": null,
+
+    "notice": "These are SUGGESTIONS, not rules. IAES says what an event means; it never decides what it becomes in your system. Every value here is a starting point the integrator is expected to override — a plant with its own priority scale is not violating anything, and a consumer must never be rejected for mapping differently.",
+
+    "provenance": "Two kinds of content, and they are marked per entry. `spec` means transcribed from IAES_SPEC.md, where it has been published as prose since v1.0 — the System Compatibility table and the severity mapping in Consumer Guidelines. `drafted` means it is NOT in the spec and was written here for the first time. An earlier version of this file claimed to be pure transcription while adding drafted content; that was false and is corrected by this field.",
+
+    "verification": "Per target, in each target's `verified` block. No entry has been exercised against a running instance of its system. Nothing here is verified.",
+
+    "known_gaps": [
+      "No identity binding. Every target needs `asset.asset_id` resolved to its own key — an SAP equipment number or functional location, an Odoo database id, a PI point or AF element path. IAES declines to define hierarchy, which is correct, and that makes this file the only place the binding could live. It has no slot for it yet. This is the first wall every integration hits.",
+      "No field-level mapping. This file names the destination object, not which IAES field lands in which target field, and not the length limits that truncate them.",
+      "No unit mapping. `unit` is a free string in IAES; SAP, PI and SDS each require a unit that exists in their own table."
+    ]
+  },
+
+  "severity_scale": ["info", "low", "medium", "high", "critical"],
+
+  "unmapped_required_fields": {
+    "$comment": "Two fields are REQUIRED by their event and have no target mapping anywhere in this file. Named here rather than left silent.",
+    "maintenance.work_order_intent.priority": {
+      "values": ["low", "medium", "high", "emergency"],
+      "note": "A different scale from severity, on purpose: severity describes the condition, priority describes urgency of response. `emergency` has no severity equivalent. This is the field that matters most, because it rides on the one event that actually causes work to be created."
+    },
+    "maintenance.completion.status": {
+      "values": ["completed", "partially_completed", "cancelled", "deferred"],
+      "note": "Most target systems express only the first two as a completion. `cancelled` and `deferred` are usually a status change on the order, not a completion record."
+    }
+  },
+
+  "iso_14224_codes": {
+    "$comment": "The strongest raw material IAES carries for a CMMS, and the most underused. `asset.health` and `maintenance.completion` both carry an `iso_14224` object.",
+    "fields": ["mechanism_code", "mechanism_label", "cause_code", "cause_label", "detection_method", "detection_label"],
+    "why_it_matters": "These are the natural source for a CMMS's damage and cause catalogs — SAP's catalogs B, C and 5, for instance. The ISO-to-plant-catalog correspondence is plant-specific and cannot be published here, but an integrator who ignores these fields is retyping information the event already carried."
+  },
+
+  "targets": {
+    "sap_pm": {
+      "name": "SAP Plant Maintenance",
+      "kind": "cmms",
+      "verified": { "verified": false, "version": null, "date": null, "api": null },
+      "identity": "Needs an equipment number (EQUNR) or a functional location (TPLNR) plus a maintenance plant. `asset_id` is a free string and does not supply it.",
+      "events": {
+        "asset.health": { "object": "Maintenance Notification", "source": "spec", "note": "The spec says 'Notification / Order'. A notification is the right half: an Order is the planned, costed object a planner creates downstream, and routing a sensor reading straight into one would create cost objects from telemetry." },
+        "maintenance.work_order_intent": { "object": "Maintenance Notification (maintenance request); a planner converts it to an Order", "source": "spec", "note": "Stated this way so it does not collide with asset.health above. A consumer that switches on the mapped object must still be able to tell the two events apart." },
+        "maintenance.completion": { "object": "Order confirmation", "source": "drafted", "requires": ["an existing order to confirm against"], "note": "Expresses `completed` and `partially_completed`. `cancelled` and `deferred` are status changes, not confirmations." },
+        "maintenance.spare_part_usage": { "object": "Goods issue against the order", "source": "drafted", "requires": ["stock-managed material with a valid plant and storage location"], "note": "Non-stock parts are consumed through a purchase requisition on the order operation, not a goods movement." },
+        "asset.measurement": { "object": "Measurement document", "source": "drafted", "requires": ["a measuring point that already exists, is attached to the equipment, and whose characteristic dimension matches `unit`", "`unit` must exist in SAP's unit table"], "note": "This prerequisite stops integrators on day one. IAES carries measurement_type, unit and location — none of which is a measuring point id, so the integrator must build that correspondence themselves." }
+      },
+      "severity": { "info": null, "low": "Priority 4", "medium": "Priority 3", "high": "Priority 2", "critical": "Priority 1", "source": "spec" },
+      "notes": "`info` maps to nothing on purpose: an informational event opening a notification would flood the planner's worklist. Priority is not cosmetic — the priority type carries date offsets, so setting it also sets the notification's required start and end dates. Priorities are customised per plant more often than not."
+    },
+
+    "maintainx": {
+      "name": "MaintainX",
+      "kind": "cmms",
+      "verified": { "verified": false, "version": null, "date": null, "api": null },
+      "identity": "Needs a MaintainX asset id.",
+      "events": {
+        "asset.health": { "object": "User Variables", "source": "spec", "confidence": "questioned", "note": "Taken from the spec, and questioned in review: 'User Variables' may not be a MaintainX object type. A Work Order Request is the closer fit, since a request is exactly 'something proposes work and a human approves it'. UNVERIFIED — do not rely on either until checked against a live tenant." }
+      },
+      "severity": { "info": null, "low": "LOW", "medium": "MEDIUM", "high": "HIGH", "critical": "HIGH", "source": "spec" },
+      "notes": "high and critical collapse onto HIGH. A consumer that needs to tell them apart should carry the IAES severity in a separate custom field rather than invent a fourth priority. Whether an explicit 'None' priority exists — which would be the right home for `info` — is unverified."
+    },
+
+    "odoo": {
+      "name": "Odoo Maintenance",
+      "kind": "cmms",
+      "verified": { "verified": false, "version": null, "date": null, "api": null },
+      "identity": "Needs a maintenance.equipment database id.",
+      "events": {
+        "asset.health": { "object": "maintenance.request", "source": "spec" },
+        "maintenance.work_order_intent": { "object": "maintenance.request", "source": "spec", "note": "Not mrp.workorder, which belongs to Manufacturing and is a different model with a similar name." }
+      },
+      "severity": { "info": null, "low": "0", "medium": "1", "high": "2", "critical": "3", "source": "spec", "confidence": "questioned" },
+      "notes": "Priority is stored as a string selection key, not an integer: writing the number fails. The labels published in the spec do not match Odoo's own selection labels, and review suggests the whole scale may be shifted by one — leaving `high` on 'Normal'. UNVERIFIED and version-dependent. A completion is not a literal stage value: stage_id is a many2one to a user-configurable maintenance.stage, so the integrator must look up the stage whose done flag is set."
+    },
+
+    "fracttal": {
+      "name": "Fracttal",
+      "kind": "cmms",
+      "verified": { "verified": false, "version": null, "date": null, "api": null },
+      "events": {
+        "asset.health": { "object": "Custom fields", "source": "spec" },
+        "maintenance.work_order_intent": { "object": "OT (orden de trabajo)", "source": "spec" }
+      },
+      "severity": "unknown",
+      "notes": "`unknown`, not null: a commercial CMMS almost certainly has a work-order priority — the spec simply does not publish one, and nobody here has checked. Null would claim the system has no scale, which is a different and probably false statement."
+    },
+
+    "pi_system": {
+      "name": "OSIsoft / AVEVA PI System",
+      "kind": "historian",
+      "verified": { "verified": false, "version": null, "date": null, "api": null },
+      "identity": "Needs a PI point name or an AF element path.",
+      "events": {
+        "asset.measurement": { "object": "PI Point value write", "source": "spec", "requires": ["the point must already exist, with a point type and a unit"], "note": "'Tag' is the legacy word; PI Point is current." },
+        "asset.health": { "object": "AF Event Frame", "source": "drafted", "confidence": "questioned", "note": "The spec implies a tag write. Review argues an Event Frame is the right home, because a health assessment has a start, an end (the spec's own recovery pattern) and a bundle of attributes — and Event Frames are queryable by time span and asset, which a string tag is not. UNVERIFIED but the reasoning is sound." }
+      },
+      "severity": "unknown",
+      "notes": "An earlier draft said a historian has no notion of priority. That is too strong: PI is more than a historian, and its asset framework and notifications do carry severity and priority."
+    },
+
+    "aveva_data_hub": {
+      "name": "AVEVA Data Hub",
+      "kind": "historian",
+      "verified": { "verified": false, "version": null, "date": null, "api": null },
+      "events": {
+        "asset.measurement": { "object": "SDS stream write", "source": "spec", "requires": ["a stream type must be defined before any write"] },
+        "asset.health": { "object": "SDS stream write", "source": "drafted", "requires": ["a stream type whose properties match the health payload"], "note": "Materially harder than a measurement, whose type is a timestamp and a value. Arbitrary JSON cannot be posted." }
+      },
+      "severity": "unknown",
+      "notes": "Product naming is in flux as AVEVA folds Data Hub into its wider platform; a published mapping that names a renamed product ages badly."
+    },
+
+    "grafana": {
+      "name": "Grafana",
+      "kind": "visualization",
+      "verified": { "verified": false, "version": null, "date": null, "api": null },
+      "events": {},
+      "severity": "unknown",
+      "not_a_write_target": true,
+      "notes": "Listed in the spec beside SAP and PI, which is misleading: Grafana stores nothing and has no metric ingest. An IAES event does not become a dashboard metric — it becomes a row in a datasource that Grafana then queries. Write to the datasource; this entry exists so an integrator stops looking for an endpoint that does not exist. Grafana Alerting does route on a severity label, so severity is not irrelevant here, only downstream."
+    },
+
+    "generic": {
+      "name": "Generic / unspecified consumer",
+      "kind": "generic",
+      "verified": { "verified": false, "version": null, "date": null, "api": null },
+      "events": {},
+      "severity": { "info": null, "low": "Low", "medium": "Medium", "high": "High", "critical": "Critical", "source": "spec" },
+      "notes": "The fallback when the target is not listed, and the template for adding one."
+    }
+  },
+
+  "transports": {
+    "$comment": "Not targets. A transport carries the event unchanged, so there is nothing to map. Kept separate so 'no mapping needed' stays distinguishable from 'mapping unknown' — and so this file does not imply that IAES defines a transport binding, which it does not.",
+    "mqtt": { "note": "The event travels as its JSON payload. IAES publishes no MQTT binding: no topic structure, no QoS or retain semantics, no delivery contract." }
+  },
+
+  "typical_consumers": {
+    "$comment": "From the spec's Event Type Usage Guide, 'Typical Consumer' column. Useful for deciding whether an event is worth routing at all — but see do_not_use_when, which is the column that actually decides it.",
+    "asset.measurement": ["AI/ML engine", "rule engine", "data lake", "digital twin"],
+    "asset.health": ["CMMS (work order creation)", "dashboard (KPIs)", "alert engine", "incident tracker"],
+    "maintenance.work_order_intent": ["CMMS", "dispatcher", "approval workflow"],
+    "maintenance.completion": ["AI model (retraining feedback)", "historian (close loop)", "dashboard"],
+    "asset.hierarchy": ["digital twin", "dashboard", "graph database"],
+    "sensor.registration": ["asset register", "provisioning system", "monitoring dashboard"],
+    "maintenance.spare_part_usage": ["inventory system", "cost analytics", "procurement"]
+  },
+
+  "do_not_use_when": {
+    "$comment": "Also from the Event Type Usage Guide, and the column the first draft dropped. This is what stops a producer flooding a consumer.",
+    "asset.hierarchy": "Routine sync of unchanged hierarchy. Use an idempotent upsert, not repeated events.",
+    "sensor.registration": "Every reading cycle. Emit once per state change, not per reading."
+  },
+
+  "how_to_add_a_target": [
+    "Copy the `generic` entry and rename the key to your system, lowercase with underscores.",
+    "Fill `events` with what each IAES event becomes. Omit the events you do not consume — an absent key means 'not mapped', which is different from null.",
+    "Add `requires` to any event that cannot be written until something exists first. That line is the difference between a mapping that works and one that returns an error, and only someone who has done the integration knows it.",
+    "Fill `severity` only if your system has a priority scale. If it has none, say so. If you do not know, write \"unknown\" — do not write null, which claims there is none.",
+    "Mark each entry `spec` or `drafted` so a reader can tell published semantics from a first draft.",
+    "Fill your `verified` block when you have actually run it, naming the version and the API you used."
+  ]
+}
