@@ -1,0 +1,11 @@
+# Store text with LF, so a clone on any platform sees the same bytes.
+#
+# This is convenience, not a guarantee: the release manifest reads its digests
+# from the git objects a tag identifies, precisely so that no checkout setting
+# can change the answer. If this file disappeared, the manifest would still be
+# reproducible -- it would just be easier for a human to be surprised by a diff.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.svg text eol=lf
