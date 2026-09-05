@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """Assemble — and verify — what a specification release consists of.
 
-A specification release is one indivisible object: the specification, the
-governance document, the schemas and the accepted RFCs, published under one
-tag. An implementation release is a package that declares which specification
-it implements. They were never distinguished because only the second existed,
+A specification release is one indivisible object published under one tag: the
+specification, the governance document and the schemas, which govern behaviour,
+plus the accepted RFCs, which record why. They travel together and each carries
+a digest; only their authority differs.
+
+An implementation release is a package that declares which specification it
+implements. The two were never distinguished because only the second existed,
 and the cost showed: the site served v1.3 while the packages emitted 1.4 and
 nothing reported it.
 
@@ -38,6 +41,14 @@ NORMATIVE = [
 ]
 NORMATIVE_GLOBS = [
     "schema/*.schema.json",
+]
+
+# Accepted RFCs travel in the same release and get the same digest treatment,
+# but they are not authority. RFC-000 settled this: once an RFC is incorporated
+# it answers why a decision was made, not how IAES behaves. Two simultaneous
+# authorities is how RFC-001 and the envelope schema came to disagree about
+# whether correlation_id is required.
+RATIONALE_GLOBS = [
     "rfc/*.md",
 ]
 
@@ -93,6 +104,13 @@ def normative_files() -> list:
     missing = [f for f in files if not f.exists()]
     if missing:
         raise SystemExit(f"normative set is incomplete: {missing}")
+    return files
+
+
+def rationale_files() -> list:
+    files = []
+    for pattern in RATIONALE_GLOBS:
+        files.extend(sorted(ROOT.glob(pattern)))
     return files
 
 
@@ -154,12 +172,17 @@ def build(tag: str | None, out: Path | None) -> dict:
         "normative": {
             str(f.relative_to(ROOT)).replace("\\", "/"): digest(f) for f in files
         },
+        "rationale": {
+            str(f.relative_to(ROOT)).replace("\\", "/"): digest(f)
+            for f in rationale_files()
+        },
         "implementations": {
             rel: {"version": v, "implements": major_minor(v)}
             for rel, v in package_versions().items()
         },
         "note": (
-            "A specification release is this set of files under this tag. "
+            "A specification release is these files under this tag; `normative` "
+            "governs behaviour and `rationale` records why. "
             "The implementations listed here declare which specification they "
             "implement; they are released separately and carry no specification "
             "of their own."
@@ -185,7 +208,8 @@ def main() -> None:
     manifest = build(args.tag, args.out)
     print(
         f"IAES {manifest['specification_version']} — "
-        f"{len(manifest['normative'])} normative files"
+        f"{len(manifest['normative'])} normative files, "
+        f"{len(manifest['rationale'])} rationale"
     )
 
 

@@ -125,5 +125,47 @@ class TestTheTagShapesAreDistinguishable(unittest.TestCase):
             self.assertEqual(3, len(re.sub(r"^[a-z0-9-]+-v", "", tag).split(".")))
 
 
+
+class TestTheManifestKeepsAuthorityStraight(unittest.TestCase):
+    """RFC-000 settled that an incorporated RFC is rationale, not authority.
+
+    The first version of the manifest builder put `rfc/*.md` under `normative`,
+    contradicting the memo it shipped alongside. The tool has to obey the rule
+    it helps publish.
+    """
+
+    def _manifest(self):
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "build_release_manifest", ROOT / "tools" / "build_release_manifest.py"
+        )
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod.build(tag=None, out=None), mod
+
+    def test_no_rfc_appears_under_normative(self):
+        manifest, _ = self._manifest()
+        offenders = [p for p in manifest["normative"] if p.startswith("rfc/")]
+        self.assertEqual(
+            offenders, [],
+            "an accepted RFC is rationale, not normative authority (RFC-000 §4.2)",
+        )
+
+    def test_the_rfcs_are_still_in_the_release(self):
+        # Demoting them must not drop them: they travel in the same release and
+        # carry the same digest treatment.
+        manifest, _ = self._manifest()
+        self.assertTrue(
+            all(p.startswith("rfc/") for p in manifest["rationale"]),
+            "rationale should hold the RFCs and nothing else",
+        )
+        self.assertGreater(len(manifest["rationale"]), 0, "the RFCs vanished from the release")
+
+    def test_the_globs_themselves_cannot_drift(self):
+        _, mod = self._manifest()
+        self.assertNotIn("rfc/*.md", mod.NORMATIVE_GLOBS)
+        self.assertIn("rfc/*.md", mod.RATIONALE_GLOBS)
+
 if __name__ == "__main__":
     unittest.main()
