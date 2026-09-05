@@ -1,0 +1,44 @@
+# A specification release is not a package release.
+#
+# The two were never separated because only one existed. `release.yml` reacts to
+# package tags and publishes to npm and PyPI; there was no way to say "this is
+# IAES 1.4, the document" without also saying "publish something".
+#
+# This workflow gives the specification its own tag namespace and does NOT
+# publish anywhere. It verifies that every surface agrees on the version, then
+# builds the manifest that a specification release consists of.
+#
+# It deliberately does not create a GitHub release. Minting the release — and
+# with it the DOI — is a separate decision, made once, by a person.
+#
+# Tag shape:  spec-v1.4        two components, the specification version
+# Contrast:   sdk-v1.4.1       three components, an implementation version
+name: Specification release
+
+on:
+  push:
+    tags:
+      - "spec-v*"
+
+permissions:
+  contents: read
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: The tag, the specification and the SDKs must agree
+        run: python tools/build_release_manifest.py --check --tag "${GITHUB_REF_NAME}"
+
+      - name: Build the manifest
+        run: python tools/build_release_manifest.py --tag "${GITHUB_REF_NAME}" --out manifest.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iaes-specification-release
+          path: manifest.json
