@@ -1,4 +1,4 @@
-# IAES — Industrial Asset Event Standard v1.3
+# IAES — Industrial Asset Event Standard v1.4
 
 > A vendor-neutral event format for industrial asset intelligence.
 
@@ -42,7 +42,7 @@ Every IAES event shares this envelope:
   "correlation_id": "uuid",
   "source_event_id": "uuid | null",
   "batch_id": "string | null",
-  "dataschema": "https://iaes.dev/schema/v1/asset.measurement",
+  "dataschema": "https://iaes.dev/schema/v1/asset.health",
   "timestamp": "ISO 8601",
   "source": "vendor.system.subsystem",
   "content_hash": "sha256_16char",
@@ -478,7 +478,8 @@ An `asset.health` event MAY represent recovery — when a previously abnormal co
 
 Recovery events SHOULD reference the original onset event via `source_event_id` and share the same `correlation_id`. This enables consumers to compute Mean Time To Recovery (MTTR) and close open alerts automatically.
 
-> See `IAES_ARCHITECTURE.md` § State Transition Guidance for detailed emission guidance and integration implications.
+> Detailed emission and transition guidance is not yet published. Until it is, the rules above
+> are the whole of what this specification says about when to emit.
 
 ## Event Type Usage Guide
 
@@ -532,8 +533,8 @@ IAES uses semantic versioning for the specification itself:
 | 1.0 | March 2026 | Initial release. 3 event types, common envelope, JSON Schema. |
 | 1.1 | March 2026 | 4 new event types (maintenance.completion, asset.hierarchy, sensor.registration, maintenance.spare_part_usage), batch_id envelope field, failure mode taxonomy (Appendix A). |
 | 1.2 | March 2026 | ISO alignment: `units_qualifier`, `sampling_rate_hz`, `acquisition_duration_s` on asset.measurement (ISO 17359); `iso_13374_status` on asset.health (ISO 13374); `iso_14224` object on asset.health + maintenance.completion (ISO 14224). All new fields optional — full backward compatibility. Appendix B (ISO 14224 codes), Appendix C (ISO 13374 mapping). |
-| 1.4 | September 2026 | **Governance and compatibility policy become normative** ([GOVERNANCE.md](GOVERNANCE.md)): stated stewardship, BACKWARD compatibility as the default mode, a 24-month support window, canonical and resolvable `$id` versioned by URI, and an RFC-based change process. Scope boundaries made explicit: IAES defines no asset hierarchy, no equipment catalog, and no commercial terms. **No schema changed in this release.** **Schema identity corrected** under GOVERNANCE.md §5.1: the eight schemas declared `$id` under `https://iaes.wertek.ai/schema/v1/`, a host that has never resolved (verified 2026-09-03: no DNS answer). They now declare `https://iaes.dev/schema/v1/`, which is served. The old base is permanently reserved and will not be reassigned. Schema content is otherwise unchanged. **New optional envelope field `dataschema`**: the canonical URI of the schema the payload was written against, following the CloudEvents attribute of the same name. Derivable from `event_type`, so both SDKs set it automatically for published event types and omit it otherwise. Optional and additive: fully backward compatible. **`event_type` opened**: it was a closed enumeration of seven values while this same document ordered consumers to tolerate values they do not recognise — a contradiction that made unknown types impossible to produce. It is now a dot-notation pattern with the published types as examples. Widening, therefore backward compatible: every previously valid value still validates, and the compatibility guard verifies that rather than assuming it. |
 | 1.3 | March 2026 | State transition model: `condition_trend` field on asset.health (`worsening`, `stable`, `improving`) based on ISO 13374-4 §5.3. Formalized recovery event pattern. State Transition Guidance in Architecture Guide (ISO 13374-4, ISO 17359, ISO 14224, ISO 55000). Recovery event example. All new fields optional — full backward compatibility. |
+| 1.4 | September 2026 | **Governance and compatibility policy become normative** ([GOVERNANCE.md](GOVERNANCE.md)): stated stewardship, BACKWARD compatibility as the default mode, a 24-month support window, canonical and resolvable `$id` versioned by URI, and an RFC-based change process. Scope boundaries made explicit: IAES defines no asset hierarchy, no equipment catalog, and no commercial terms. **No schema changed in this release.** **Schema identity corrected** under GOVERNANCE.md §5.1: the eight schemas declared `$id` under `https://iaes.wertek.ai/schema/v1/`, a host that has never resolved (verified 2026-09-03: no DNS answer). They now declare `https://iaes.dev/schema/v1/`, which is served. The old base is permanently reserved and will not be reassigned. Schema content is otherwise unchanged. **New optional envelope field `dataschema`**: the canonical URI of the schema the payload was written against, following the CloudEvents attribute of the same name. Derivable from `event_type`, so both SDKs set it automatically for published event types and omit it otherwise. Optional and additive: fully backward compatible. **`event_type` opened**: it was a closed enumeration of seven values while this same document ordered consumers to tolerate values they do not recognise — a contradiction that made unknown types impossible to produce. It is now a dot-notation pattern with the published types as examples. Widening, therefore backward compatible: every previously valid value still validates, and the compatibility guard verifies that rather than assuming it. |
 
 ## Appendix A: Failure Mode Taxonomy
 
@@ -689,7 +690,7 @@ IAES events map to the ISO 13374-2 processing blocks:
 | 5 | Prognostic Assessment | `asset.health` (rul_days) |
 | 6 | Advisory Generation | `asset.health` (recommended_action) + `maintenance.work_order_intent` |
 
-IAES is an event standard, not a processing pipeline. The 6-block model describes internal processing stages; IAES captures the outputs of those stages as events. See `skills/iso-13374/SKILL.md` for implementation guidance.
+IAES is an event standard, not a processing pipeline. The 6-block model describes internal processing stages; IAES captures the outputs of those stages as events.
 
 ## License
 
@@ -697,6 +698,6 @@ IAES is an open specification licensed under [CC BY 4.0](https://creativecommons
 
 ---
 
-*IAES v1.3 — March 2026*
+*IAES v1.4 — September 2026*
 *Created by the [Wertek AI](https://wertek.ai) team.*
 *Reference implementation: [Wertek Integration Framework](https://github.com/wertek-ai/wertek-integrations)*
