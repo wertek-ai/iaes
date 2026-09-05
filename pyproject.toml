@@ -37,7 +37,7 @@ classifiers = [
 [project.optional-dependencies]
 validate = ["jsonschema>=4.0", "referencing>=0.30"]
 async = ["httpx>=0.24"]
-dev = ["pytest>=7.0", "jsonschema>=4.0", "referencing>=0.30", "httpx>=0.24"]
+dev = ["pytest>=7.0", "jsonschema>=4.0", "referencing>=0.30", "httpx>=0.24", "pyyaml>=6.0"]
 
 [project.urls]
 Homepage = "https://iaes.dev"

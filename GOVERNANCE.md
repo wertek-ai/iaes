@@ -111,6 +111,34 @@ two other pages advertised v1.3. A version claim on a package page is the first
 thing an integrator reads and the last thing anybody remembers to update, so it
 is checked by CI rather than by discipline.
 
+## 3-bis. Two kinds of release
+
+A **specification release** is the standard itself: the specification, this
+document, the schemas and the accepted RFCs, published together under one tag.
+It is indivisible, and it is what a DOI refers to.
+
+An **implementation release** is a package. It declares which specification it
+implements, and carries neither a specification nor a DOI of its own.
+
+The two use separate tag namespaces, and the separation is enforced rather than
+described: no tag can trigger both release workflows, and a specification tag
+cannot reach the workflow that publishes packages.
+
+| Kind | Tag shape | Example | Publishes |
+|---|---|---|---|
+| Specification | `spec-v<major>.<minor>` | `spec-v1.4` | nothing |
+| Implementation | `<package>-v<major>.<minor>.<patch>` | `sdk-v1.4.1` | npm or PyPI |
+
+The shapes differ as well as the prefixes: a specification version has two
+components, an implementation version has three. That is two signals rather
+than one, and a mistyped tag is rejected rather than acted on.
+
+**The tag for IAES 1.4 is `spec-v1.4`.**
+
+A specification tag verifies that every surface names the same version and
+builds the release manifest. It does not create a release, and it publishes
+nothing: minting the release, and with it the DOI, is a separate decision.
+
 ## 4. Compatibility policy
 
 **Default mode: BACKWARD.** A consumer built for version *N* can read events
