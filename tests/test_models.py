@@ -122,7 +122,7 @@ class TestAssetHealth:
             severity=Severity.CRITICAL,
             failure_mode="bearing_inner_race",
             rul_days=5,
-            source="wertek.ai.vibration",
+            source="acme.vibration",
         )
         d = e.to_dict()
         assert d["event_type"] == "asset.health"

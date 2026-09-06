@@ -163,7 +163,7 @@ and context. The envelope is serialized as a JSON object.
   "source_event_id": "f1a2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c",
   "batch_id": "sync-2026-03-11-001",
   "timestamp": "2026-03-11T14:30:00Z",
-  "source": "wertek.ai.vibration",
+  "source": "acme.vibration",
   "content_hash": "a1b2c3d4e5f6a7b8",
   "asset": {
     "asset_id": "PUMP-001",
@@ -237,7 +237,7 @@ and context. The envelope is serialized as a JSON object.
 
   Type: string
   Format: Dot-notation (vendor.system[.subsystem])
-  Examples: "wertek.ai.vibration", "operator.manual_inspection"
+  Examples: "acme.vibration", "operator.manual_inspection"
 
   Identifies the producing system. Consumers MAY use source for
   routing, filtering, or trust decisions.

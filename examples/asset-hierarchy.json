@@ -6,7 +6,7 @@
     "event_id": "h1a2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c",
     "correlation_id": "aabb1122-3344-5566-7788-99aabbccddee",
     "timestamp": "2026-03-07T10:00:00Z",
-    "source": "wertek.ai.hierarchy",
+    "source": "acme.hierarchy",
     "content_hash": "1a2b3c4d5e6f7a8b",
     "asset": {
       "asset_id": "ORG-TECHGEN",
@@ -25,7 +25,7 @@
     "correlation_id": "aabb1122-3344-5566-7788-99aabbccddee",
     "source_event_id": "h1a2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c",
     "timestamp": "2026-03-07T10:00:01Z",
-    "source": "wertek.ai.hierarchy",
+    "source": "acme.hierarchy",
     "content_hash": "2b3c4d5e6f7a8b9c",
     "asset": {
       "asset_id": "PLANT-PESQUERIA",
@@ -47,7 +47,7 @@
     "correlation_id": "aabb1122-3344-5566-7788-99aabbccddee",
     "source_event_id": "h2b3c4d5-e6f7-8a9b-0c1d-2e3f4a5b6c7d",
     "timestamp": "2026-03-07T10:00:02Z",
-    "source": "wertek.ai.hierarchy",
+    "source": "acme.hierarchy",
     "content_hash": "3c4d5e6f7a8b9c0d",
     "asset": {
       "asset_id": "AREA-TURBINAS",
@@ -70,7 +70,7 @@
     "correlation_id": "aabb1122-3344-5566-7788-99aabbccddee",
     "source_event_id": "h3c4d5e6-f7a8-9b0c-1d2e-3f4a5b6c7d8e",
     "timestamp": "2026-03-07T10:00:03Z",
-    "source": "wertek.ai.hierarchy",
+    "source": "acme.hierarchy",
     "content_hash": "4d5e6f7a8b9c0d1e",
     "asset": {
       "asset_id": "MOTOR-001",

@@ -5,7 +5,7 @@
   "correlation_id": "3b2f9d8c-1c33-4a8a-9b77-54d11b2efc12",
   "source_event_id": "c4d5e6f7-a8b9-0c1d-2e3f-4a5b6c7d8e9f",
   "timestamp": "2026-03-07T09:16:00Z",
-  "source": "wertek.ai.cmms",
+  "source": "acme.cmms",
   "content_hash": "6f7a8b9c0d1e2f3a",
   "asset": {
     "asset_id": "MOTOR-001",

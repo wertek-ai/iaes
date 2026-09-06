@@ -104,7 +104,7 @@ alert = AssetHealth(
     rul_days=14,
     recommended_action="Schedule bearing inspection within 2 weeks",
     correlation_id=CORRELATION,
-    source="wertek.ai.vibration_classifier",
+    source="acme.vibration_classifier",
 )
 publish(alert)
 print()
@@ -138,7 +138,7 @@ critical = AssetHealth(
     rul_days=3,
     recommended_action="Replace bearing immediately -- risk of seizure",
     correlation_id=CORRELATION,
-    source="wertek.ai.vibration_classifier",
+    source="acme.vibration_classifier",
 )
 publish(critical)
 print()
@@ -152,7 +152,7 @@ wo = WorkOrderIntent(
     priority="critical",
     description="Vibration RMS exceeded Zone D (11.2 mm/s). AI diagnosis: bearing outer race defect. RUL: 3 days.",
     correlation_id=CORRELATION,
-    source="wertek.ai.auto_wo",
+    source="acme.auto_wo",
 )
 publish(wo)
 print()
@@ -185,7 +185,7 @@ recovery = AssetHealth(
     iso_13374_status="normal",
     recommended_action="Bearing replaced. Asset returned to normal operation.",
     correlation_id=CORRELATION,
-    source="wertek.ai.vibration_classifier",
+    source="acme.vibration_classifier",
 )
 publish(recovery)
 print()

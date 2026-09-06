@@ -4,7 +4,7 @@
   "event_id": "s1a2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c",
   "correlation_id": "ff112233-4455-6677-8899-aabbccddeeff",
   "timestamp": "2026-03-07T14:30:00Z",
-  "source": "wertek.edge.mcsa",
+  "source": "acme.mcsa",
   "content_hash": "5e6f7a8b9c0d1e2f",
   "asset": {
     "asset_id": "MOTOR-001",
