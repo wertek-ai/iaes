@@ -122,5 +122,7 @@ jobs:
       # the language toolchains do not install.
       - name: Check for normative dependency on the steward
         run: python tools/check_frontier.py
+      # The check above is stdlib only; only its arming test needs pytest.
+      - run: pip install pytest
       - name: Prove the check still catches the crossings it was armed against
         run: python -m pytest tests/test_frontier.py -q
