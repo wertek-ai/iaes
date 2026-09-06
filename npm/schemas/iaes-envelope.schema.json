@@ -72,7 +72,7 @@
     "source": {
       "type": "string",
       "pattern": "^[a-z][a-z0-9_.]+$",
-      "description": "Dot-notation producer identity (e.g. wertek.ai.diagnosis)"
+      "description": "Dot-notation producer identity (e.g. acme.diagnostics)"
     },
     "content_hash": {
       "type": "string",

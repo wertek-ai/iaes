@@ -74,7 +74,7 @@ module.exports = function (RED) {
     if (envelope.source != null && !SOURCE_RE.test(envelope.source)) {
       errors.push(
         'source "' + envelope.source +
-        '" must be lowercase dot-notation (e.g. wertek.ai.diagnosis)'
+        '" must be lowercase dot-notation (e.g. acme.diagnostics)'
       );
     }
 

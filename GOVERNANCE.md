@@ -32,6 +32,41 @@ Three boundaries follow from that, and they are commitments, not preferences:
 **The test, in one sentence:** if a rule needs a specific vendor's catalog,
 network, or judgment to be meaningful, it is not part of IAES.
 
+### 1.1 The boundary is checked, not remembered
+
+> This section adds no commitment. It makes mechanical the one §1 already
+> states, which is why it carries no RFC under §6.
+
+Design Principle #1 is not self-enforcing. A dependency on the steward does not
+look like the word "Wertek" in the text -- it looks like a default value, an
+example payload, or an error message. In September 2026 this repository was
+shipping our production API as the default endpoint of an n8n credential, our
+namespace as the producer identity in the normative envelope schema, and our
+multi-tenancy in a topic layout. All three passed every review, because a
+reviewer reads prose and these were values.
+
+So every repository that carries the IAES name runs
+[`tools/check_frontier.py`](tools/check_frontier.py) in CI. It fails on three
+things, in code and in code fences, and stays out of prose so that attribution,
+stewardship and the changelog's record of what was removed remain sayable:
+
+| | |
+|---|---|
+| **host** | infrastructure of the steward's as a value, default or placeholder |
+| **namespace** | the steward's namespace taught as what a producer identity looks like |
+| **model** | the steward's operating model as structure -- IAES carries no tenancy |
+
+A route such as `/iaes/ingest` is deliberately not a violation: anyone can mount
+it on their own server. The host in front of it is the dependency.
+
+**Two things it does not check, stated rather than implied.** Prose that tells a
+reader in words to point at the steward's host would pass; in practice the
+configuration it describes lives in a source file, which is scanned. And
+customer site names are not checked here, because recognising them needs a
+customer list that does not belong in a public repository -- that check runs
+before publishing, from the private side.
+
+
 ## 2. Stewardship
 
 IAES is authored and maintained by **Wertek AI**, which acts as its steward and

@@ -133,8 +133,8 @@ def validate(event: Dict[str, Any]) -> None:
     envelope_resource = Resource.from_contents(envelope_schema)
     event_resource = Resource.from_contents(event_schema)
 
-    # The event schema $id is like https://iaes.wertek.ai/schema/v1/asset.measurement
-    # The relative ref resolves to https://iaes.wertek.ai/schema/v1/iaes-envelope.schema.json
+    # The event schema $id is like https://iaes.dev/schema/v1/asset.measurement
+    # The relative ref resolves to https://iaes.dev/schema/v1/iaes-envelope.schema.json
     event_id = event_schema.get("$id", "")
     base_url = event_id.rsplit("/", 1)[0] + "/" if "/" in event_id else ""
     resolved_envelope_ref = base_url + "iaes-envelope.schema.json"

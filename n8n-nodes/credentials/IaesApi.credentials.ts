@@ -24,10 +24,13 @@ export class IaesApi implements ICredentialType {
 			displayName: 'HTTP Endpoint',
 			name: 'httpEndpoint',
 			type: 'string',
-			// IAES servers mount the ingest at the root. The earlier default
-			// carried an "/api/v1" prefix that no server implements, so every
-			// request built from it returned 404.
-			default: 'https://api.wertek.ai/iaes/ingest',
+			// No default host. IAES defines no transport binding, so there is no
+			// such thing as "the IAES server" to fall back to -- a default here
+			// would either point at somebody's infrastructure or fail silently.
+			// The path is the part that is conventional: servers mount the
+			// ingest at the root, not under an "/api/v1" prefix.
+			default: '',
+			required: true,
 			placeholder: 'https://your-api.com/iaes/ingest',
 			description:
 				'IAES ingest endpoint URL. The path is /iaes/ingest — there is no /api/v1 prefix. If you saved this credential before v0.2.0, correct the value by hand: changing the default does not update credentials already stored.',
@@ -52,7 +55,7 @@ export class IaesApi implements ICredentialType {
 			name: 'mqttBroker',
 			type: 'string',
 			default: 'mqtt://localhost:1883',
-			placeholder: 'mqtts://mqtt.wertek.ai:8883',
+			placeholder: 'mqtts://broker.example.com:8883',
 			description: 'MQTT broker connection URL',
 			displayOptions: {
 				show: { transport: ['mqtt'] },
@@ -82,7 +85,7 @@ export class IaesApi implements ICredentialType {
 			name: 'mqttTopicPrefix',
 			type: 'string',
 			default: 'iaes',
-			description: 'Topic prefix (events published to {prefix}/{org_id}/{asset_id}/{event_type})',
+			description: 'Topic prefix (events published to {prefix}/{asset_id}/{event_type})',
 			displayOptions: {
 				show: { transport: ['mqtt'] },
 			},

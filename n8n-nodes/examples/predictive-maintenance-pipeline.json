@@ -82,7 +82,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.wertek.ai/api/v1/iaes/ingest",
+        "url": "https://iaes-server.example.com/api/v1/iaes/ingest",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
@@ -100,7 +100,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "=https://api.wertek.ai/api/v1/alerts/resolve/{{ $json.iaes_lifecycle.correlation_id }}",
+        "url": "=https://iaes-server.example.com/api/v1/alerts/resolve/{{ $json.iaes_lifecycle.correlation_id }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {}

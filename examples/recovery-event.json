@@ -6,7 +6,7 @@
     "event_id": "f1a2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c",
     "correlation_id": "7a8b9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d",
     "timestamp": "2026-03-10T08:00:00Z",
-    "source": "wertek.energy.cdr_rules",
+    "source": "acme.cdr_rules",
     "content_hash": "a1b2c3d4e5f6a7b8",
     "asset": {
       "asset_id": "METER-AEL-001",
@@ -31,7 +31,7 @@
     "correlation_id": "7a8b9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d",
     "source_event_id": "f1a2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c",
     "timestamp": "2026-03-12T08:00:00Z",
-    "source": "wertek.energy.cdr_rules",
+    "source": "acme.cdr_rules",
     "content_hash": "c3d4e5f6a7b8c9d0",
     "asset": {
       "asset_id": "METER-AEL-001",
@@ -56,7 +56,7 @@
     "correlation_id": "7a8b9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d",
     "source_event_id": "f1a2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c",
     "timestamp": "2026-03-13T10:00:00Z",
-    "source": "wertek.energy.cdr_rules",
+    "source": "acme.cdr_rules",
     "content_hash": "e5f6a7b8c9d0e1f2",
     "asset": {
       "asset_id": "METER-AEL-001",

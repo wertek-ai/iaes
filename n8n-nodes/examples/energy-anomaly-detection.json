@@ -16,7 +16,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "={{ $credentials.iaesApi?.httpEndpoint || 'https://api.wertek.ai/api/v1/energy/readings/latest' }}",
+        "url": "={{ $credentials.iaesApi?.httpEndpoint || 'https://iaes-server.example.com/api/v1/energy/readings/latest' }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {}

@@ -105,7 +105,7 @@ onset = AssetHealth(
     rul_days=14,
     recommended_action="Schedule bearing inspection within 2 weeks",
     correlation_id=CORR_BEARING,
-    source="wertek.ai.vibration_classifier",
+    source="acme.vibration_classifier",
 )
 publish(onset)
 print()
@@ -145,7 +145,7 @@ escalation = AssetHealth(
     rul_days=3,
     recommended_action="Replace bearing immediately -- risk of seizure",
     correlation_id=CORR_BEARING,
-    source="wertek.ai.vibration_classifier",
+    source="acme.vibration_classifier",
 )
 publish(escalation)
 print()
@@ -166,7 +166,7 @@ wo = WorkOrderIntent(
         "18 threshold crossings correlated into single incident."
     ),
     correlation_id=CORR_BEARING,
-    source="wertek.ai.auto_wo",
+    source="acme.auto_wo",
 )
 publish(wo)
 print()
@@ -183,7 +183,7 @@ recovery = AssetHealth(
     iso_13374_status="normal",
     recommended_action="Bearing replaced. Asset returned to normal operation.",
     correlation_id=CORR_BEARING,
-    source="wertek.ai.vibration_classifier",
+    source="acme.vibration_classifier",
 )
 publish(recovery)
 print()
@@ -253,7 +253,7 @@ thermal_onset = AssetHealth(
         "9 threshold crossings (5 temp + 4 current) correlated."
     ),
     correlation_id=CORR_THERMAL,
-    source="wertek.ai.thermal_classifier",
+    source="acme.thermal_classifier",
 )
 publish(thermal_onset)
 print()
@@ -270,7 +270,7 @@ thermal_recovery = AssetHealth(
     iso_13374_status="normal",
     recommended_action="Cooling restored. Motor current nominal.",
     correlation_id=CORR_THERMAL,
-    source="wertek.ai.thermal_classifier",
+    source="acme.thermal_classifier",
 )
 publish(thermal_recovery)
 print()
