@@ -13,7 +13,9 @@ ISSN: N/A
 not been accepted; nothing in it is in force, and no schema changes
 until it is.
 
-This document proposes the changes that constitute IAES 1.5. It is
+This document proposes five wire-contract stabilization changes for
+IAES 1.5. It is not the whole of that release: other memos carry the
+fronts named in §1.2. It is
 Standards Track: it changes schema annotations and the obligations of a
 conforming producer, and it changes no field, no type and no
 enumeration value. Distribution of this memo is unlimited.
@@ -29,17 +31,20 @@ the Creative Commons Attribution 4.0 International License (CC BY 4.0).
 > ambiguous semantics, and unsupported external attributions before the
 > IAES 1.x wire contract is frozen.**
 
-Five defects were measured in the 1.4 artifacts. Each is a place where
-the standard says something it cannot support, or fails to say something
-it has already decided. None of them is discovered by reading; all five
-were found by comparing one artifact against another.
+Five findings were measured in the 1.4 artifacts. Each is a place where
+the standard says something it cannot support, fails to say something it
+has already decided, or leaves a reader free to conclude the opposite of
+what it means. Not all five are defects: one constraint turned out to be
+correct, and what was wrong was the behaviour around it. None of them is
+discovered by reading; all five were found by comparing one artifact
+against another.
 
 This memo resolves those five and nothing else.
 
 # Table of Contents
 
     1. Introduction
-       1.1. Why this is the last widening
+       1.1. Why these five, and why now
        1.2. What is deliberately not here
     2. Conventions
        2.1. What this memo can bind, and what it cannot
@@ -54,20 +59,22 @@ This memo resolves those five and nothing else.
 
 # 1. Introduction
 
-## 1.1. Why this is the last widening
+## 1.1. Why these five, and why now
 
 `GOVERNANCE.md` §4 makes BACKWARD the default compatibility mode. What
-it does not say is when the guarantee starts running in both directions.
+it does not say is when the guarantee starts running in both directions
+— when removing a constraint becomes as breaking as adding one, because
+a producer has become entitled to rely on both.
 
-IAES 1.5 is that point. After it, a minor release of 1.x may not remove
-a constraint any more than it may add one, because a producer will have
-been entitled to rely on both. Anything that requires breaking the wire
-contract becomes 2.0.
+Freezing the 1.x contract at that point has been proposed, and **this
+memo does not enact it**: a rule binding every future 1.x release is a
+change to `GOVERNANCE.md` and belongs to a memo of its own. What this
+memo does is make the five changes that ought to precede such a freeze,
+so that whatever is frozen is not an accident.
 
-That is why the five items below are worth a release of their own. Each
-is a constraint or a claim that turned out to be accidental, and the
-moment to remove an accidental constraint is before it is frozen, not
-after.
+Each of the five is a constraint or a claim that turned out to be
+unintended, and the moment to remove an unintended constraint is before
+anyone is entitled to rely on it.
 
 ## 1.2. What is deliberately not here
 
@@ -344,9 +351,11 @@ has always marked optional, and was not conforming.
   the standard and MUST relax. No published list constrains that field.
 - **No SDK is obliged to expose any constant.** Conformance is measured
   on the wire, not on a library's surface.
-- **No producer needs to change what it puts on the wire** to remain
-  valid, with the single exception of the two example programs that emit
-  a severity value in a priority field, which were never valid.
+- **No event that is schema-valid under 1.4 becomes schema-invalid
+  under 1.5.** Producers that synthesize meaningful values for absent
+  optional fields must nevertheless change that behaviour to conform,
+  and the two example programs that emit a severity value in a priority
+  field were never valid to begin with.
 
 # 10. Worked example
 
@@ -381,7 +390,12 @@ After:
 }
 ```
 
-Both validate. Only the second is true.
+Both validate. Only the second faithfully represents what the producer
+supplied.
+
+`0.0` is not a wrong value — it is the right one for an asset that was
+measured and found unremarkable. What the first event gets wrong is
+saying it on behalf of a producer that said nothing.
 
 # Author
 
