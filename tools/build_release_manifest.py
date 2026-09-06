@@ -22,6 +22,7 @@ release tool that needs an install is a release tool that stops running.
 """
 
 import argparse
+import fnmatch
 import hashlib
 import json
 import re
@@ -98,21 +99,40 @@ def major_minor(version: str) -> str:
     return ".".join(version.split(".")[:2])
 
 
-def normative_files() -> list:
+def tracked_at(ref: str) -> list:
+    """Every path the repository holds at that ref."""
+    out = subprocess.run(["git", "ls-tree", "-r", "--name-only", ref],
+                         cwd=ROOT, check=True, capture_output=True, text=True).stdout
+    return out.splitlines()
+
+
+def matching(ref: str, patterns: list) -> list:
+    """Paths at `ref` matching any pattern, in a stable order.
+
+    Deliberately not a glob of this disk. A manifest describes a release, so
+    the set of files in it belongs to the release: globbing the working tree
+    meant a manifest for a past tag included whatever exists today, and adding
+    one file made an already published manifest impossible to rebuild.
+    """
+    seen = []
+    for rel in sorted(tracked_at(ref)):
+        if any(fnmatch.fnmatch(rel, pattern) for pattern in patterns):
+            seen.append(ROOT / rel)
+    return seen
+
+
+def normative_files(ref: str = "HEAD") -> list:
+    present = set(tracked_at(ref))
     files = [ROOT / p for p in NORMATIVE]
-    for pattern in NORMATIVE_GLOBS:
-        files.extend(sorted(ROOT.glob(pattern)))
-    missing = [f for f in files if not f.exists()]
+    missing = [p for p in NORMATIVE if p not in present]
     if missing:
-        raise SystemExit(f"normative set is incomplete: {missing}")
+        raise SystemExit(f"normative set is incomplete at {ref}: {missing}")
+    files.extend(matching(ref, NORMATIVE_GLOBS))
     return files
 
 
-def rationale_files() -> list:
-    files = []
-    for pattern in RATIONALE_GLOBS:
-        files.extend(sorted(ROOT.glob(pattern)))
-    return files
+def rationale_files(ref: str = "HEAD") -> list:
+    return matching(ref, RATIONALE_GLOBS)
 
 
 def digest(path: Path, ref: str = "HEAD") -> str:
@@ -188,10 +208,11 @@ def check(tag: str | None) -> str:
 
 def build(tag: str | None, out: Path | None) -> dict:
     version = check(tag)
-    files = normative_files()
     # The tag when there is one, so the manifest describes the release rather
-    # than whatever happens to be checked out.
+    # than whatever happens to be checked out -- the list of files as much as
+    # their contents.
     ref = tag if tag else "HEAD"
+    files = normative_files(ref)
     manifest = {
         "specification_version": version,
         "tag": tag,
@@ -201,7 +222,7 @@ def build(tag: str | None, out: Path | None) -> dict:
         },
         "rationale": {
             str(f.relative_to(ROOT)).replace("\\", "/"): digest(f, ref)
-            for f in rationale_files()
+            for f in rationale_files(ref)
         },
         "implementations": {
             rel: {"version": v, "implements": major_minor(v)}
