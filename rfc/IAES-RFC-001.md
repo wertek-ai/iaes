@@ -203,13 +203,23 @@ and context. The envelope is serialized as a JSON object.
   Globally unique identifier. MUST NOT be reused. Producers MUST
   generate a new UUID for each event.
 
-### 3.2.4. correlation_id (OPTIONAL)
+### 3.2.4. correlation_id (REQUIRED)
 
   Type: string
   Format: UUID v4
 
   Groups causally related events. All events in an incident lifecycle
   (onset, escalation, recovery) SHOULD share the same correlation_id.
+
+    An event that starts its own flow correlates to itself: correlation_id
+    takes the value of event_id. A second random identifier would satisfy
+    the schema while meaning nothing, and would make one flow look like two.
+
+    This section said OPTIONAL until 2026-09-06, contradicting both the
+    schema and IAES_SPEC.md, which have required it since 1.0. A reader who
+    followed the rationale rather than the contract produced events the
+    standard's own validator rejects -- which is what the Arduino Opta
+    reference runtime did, in every event it ever emitted.
 
 ### 3.2.5. source_event_id (OPTIONAL)
 
