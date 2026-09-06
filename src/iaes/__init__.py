@@ -24,7 +24,7 @@ Usage::
     validate(payload)  # raises iaes.ValidationError if invalid
 """
 
-from .envelope import SPEC_VERSION, compute_content_hash
+from .envelope import SPEC_VERSION, compute_content_hash, schema_uri_for
 from .enums import (
     CompletionStatus,
     ConditionTrend,
@@ -90,5 +90,6 @@ __all__ = [
     "validate",
     "load_schema",
     "compute_content_hash",
+    "schema_uri_for",
     "ValidationError",
 ]
