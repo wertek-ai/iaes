@@ -122,6 +122,10 @@ jobs:
       # the language toolchains do not install.
       - name: Check for normative dependency on the steward
         run: python tools/check_frontier.py
+      # A citation to a section of this standard must resolve to a section that
+      # exists. Stdlib only, like its neighbour.
+      - name: Check that section citations resolve
+        run: python tools/check_citations.py
       # The check above is stdlib only; only its arming test needs pytest.
       - run: pip install pytest
       - name: Prove the check still catches the crossings it was armed against
