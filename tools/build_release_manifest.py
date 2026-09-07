@@ -246,7 +246,7 @@ def build(tag: str | None, out: Path | None) -> dict:
         ),
     }
     if out:
-        out.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        out.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
     return manifest
 
 

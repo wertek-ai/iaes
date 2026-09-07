@@ -86,7 +86,7 @@ class TestTheDigestComesFromTheRepository(unittest.TestCase):
         """Silence would be worse: a release cannot contain what it does not have."""
         tool = load_tool()
         stray = ROOT / "schema" / "not-committed.schema.json"
-        stray.write_text("{}", encoding="utf-8")
+        stray.write_text("{}", encoding="utf-8", newline="\n")
         try:
             with self.assertRaises(SystemExit):
                 tool.digest(stray)
@@ -180,7 +180,7 @@ class TestAReleaseStaysRebuildable(unittest.TestCase):
         self.NEW.write_text(
             '{"$schema": "https://json-schema.org/draft/2020-12/schema",\n'
             ' "$id": "https://iaes.dev/schema/v1/later", "type": "object"}\n',
-            encoding="utf-8")
+            encoding="utf-8", newline="\n")
         subprocess.run(["git", "add", str(self.NEW)], cwd=ROOT, capture_output=True)
 
         after = subprocess.run(

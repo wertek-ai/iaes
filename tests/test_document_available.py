@@ -35,13 +35,13 @@ def registry():
     def edit(fn):
         d = json.loads(original)
         fn(d)
-        REGISTRY.write_text(json.dumps(d, indent=2), encoding="utf-8")
+        REGISTRY.write_text(json.dumps(d, indent=2), encoding="utf-8", newline="\n")
         return run()
 
     try:
         yield edit
     finally:
-        REGISTRY.write_text(original, encoding="utf-8")
+        REGISTRY.write_text(original, encoding="utf-8", newline="\n")
 
 
 @pytest.fixture
@@ -50,13 +50,13 @@ def spec():
 
     def replace(old: str, new: str):
         assert old in original, f"the specification no longer contains {old!r}"
-        SPEC.write_text(original.replace(old, new, 1), encoding="utf-8")
+        SPEC.write_text(original.replace(old, new, 1), encoding="utf-8", newline="\n")
         return run()
 
     try:
         yield replace
     finally:
-        SPEC.write_text(original, encoding="utf-8")
+        SPEC.write_text(original, encoding="utf-8", newline="\n")
 
 
 def entry(d: dict, entry_id: str) -> dict:
@@ -152,12 +152,12 @@ def test_a_duplicate_key_is_refused_rather_than_resolved():
         REGISTRY.write_text(
             original.replace('"registry_version": 1,',
                              '"registry_version": 1,\n  "registry_version": 2,', 1),
-            encoding="utf-8")
+            encoding="utf-8", newline="\n")
         r = run()
         assert r.returncode == 1
         assert "twice" in r.stderr
     finally:
-        REGISTRY.write_text(original, encoding="utf-8")
+        REGISTRY.write_text(original, encoding="utf-8", newline="\n")
 
 
 def test_a_multipart_standard_cited_without_a_part_fails(spec):
