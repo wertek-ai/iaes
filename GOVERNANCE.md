@@ -1,7 +1,9 @@
 # IAES Governance
 
-**Status:** Normative. Applies from IAES v1.4 onward.
-**Last updated:** 2026-09-03
+**Status:** Normative. Applies from IAES v1.4 onward, except §3's definition of
+MAJOR, the pointer at the end of §4.2, §4.4, and item 2 of §8, which are
+incorporated from `rfc/IAES-RFC-003.md` and apply from **IAES 2.0**.
+**Last updated:** 2026-09-07
 
 This document defines who maintains the Industrial Asset Event Standard, how it
 changes, and what implementers are entitled to rely on. It exists because a
@@ -93,7 +95,7 @@ IAES versions are `MAJOR.MINOR.PATCH`.
 |---|---|---|
 | **PATCH** | Editorial only. No change to any schema. Typos, clarifications, examples, non-normative prose. | 1.3 → 1.3.1 |
 | **MINOR** | Backward-compatible additions. New optional fields, new event types, new values in an open catalog. | 1.3 → 1.4 |
-| **MAJOR** | Anything that can break an existing producer or consumer. | 1.x → 2.0 |
+| **MAJOR** | Anything that breaks the compatibility guarantee defined in §4. | 1.x → 2.0 |
 
 Every release is published with its own DOI. The **concept DOI** always resolves
 to the latest version.
@@ -206,6 +208,9 @@ producers follow.** Implementers may rely on this.
 > is a MAJOR change and must be released as such, with the previous version
 > kept available.
 
+A change to a producer or consumer obligation that is **not otherwise
+classified** by §4.1 or §4.2 is classified under §4.4.
+
 ### 4.3 Support window
 
 A MAJOR version remains published and resolvable for **at least 24 months**
@@ -215,6 +220,56 @@ version stays retrievable at its own URI and DOI.
 Deprecation is announced in the specification's version history and, where a
 transport allows it, signalled with the `Deprecation` and `Sunset` HTTP header
 fields (RFC 9745 and RFC 8594).
+
+### 4.4 Changes to producer and consumer obligations
+
+Apply §4.1 and §4.2 first. If the change is classified there, that
+classification governs and this subsection does not apply.
+
+A change to an obligation on a producer or a consumer that §4.1 and §4.2 do
+**not** otherwise classify is classified by the two tests below, applied in
+order. The first that answers, decides.
+
+**T1 — MEANING.** Must the same bytes, valid under version *N*, now be
+interpreted with a different meaning? If yes: **MAJOR**.
+
+§4.2 already says this of a named field. T1 is the same rule for meaning a
+version stated by other means -- what the *absence* of a field asserts, what a
+combination of fields asserts.
+
+Meaning is *changed* only where the previous version **stated** one. Where the
+previous version was silent, the new version **supplies** a meaning, and
+supplying is not changing: there was no rule to contradict.
+
+Silence is not permission: a producer whose behaviour a version never addressed
+was not authorised by it, and a first rule on the point is not the reversal of
+one. Silence is not a guarantee either -- where the standard said nothing,
+implementations may have assumed different things, and a consumer whose
+assumption the new obligation contradicts may break. That is a broken
+expectation, not a broken guarantee (§8, item 2), and such risks are disclosed
+in the release notes.
+
+**T2 — CROSS-VERSION INTEROPERABILITY.** Under the compatibility direction §4
+promises, can a consumer that declares *N+1* still consume an event that
+conforms to *N*, with the meaning *N* gave it? If no: **MAJOR**. If yes, the
+obligation may be **MINOR**, provided only implementations that declare *N+1*
+have to adopt the new behaviour.
+
+T2 is asked in the promised direction only. §4 guarantees BACKWARD: a consumer
+at *N* meeting an event from *N+1* is outside the guarantee, and requiring it
+would classify every addition as breaking.
+
+An obligation that only restates what the existing normative text already
+required is **PATCH**, per §3.
+
+> **The reasoning is not a substitute for the tests.** *The previous version
+> did not forbid it* answers T1 and answers nothing else. T2 is still asked,
+> and asked about events rather than about intentions: an obligation that
+> leaves an *N* event unreadable, or readable differently, by an *N+1* consumer
+> is MAJOR however silent *N* was.
+
+The rationale, including the framings this criterion rejected, is in
+`rfc/IAES-RFC-003.md`.
 
 ## 5. Schema identity
 
@@ -320,7 +375,10 @@ defines a process for adding new data elements rather than forbidding extension.
 
 1. Published versions are never edited in place, never unpublished, and always
    resolvable at their URI and DOI.
-2. A MINOR release will not break a working integration.
+2. A MINOR release preserves the BACKWARD compatibility guarantee in §4.
+   Behaviour a prior version did not specify is not guaranteed across
+   versions. Known risks involving such behaviour are disclosed in the release
+   notes.
 3. A MAJOR release is announced in the version history, keeps its predecessor
    available for at least 24 months, and states the migration.
 4. Vendor-specific requirements will not appear in normative text.
