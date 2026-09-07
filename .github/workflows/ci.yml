@@ -126,6 +126,10 @@ jobs:
       # exists. Stdlib only, like its neighbour.
       - name: Check that section citations resolve
         run: python tools/check_citations.py
+      # Second rung: is the cited document identified, and can anyone consult
+      # it? Separate from the first on purpose -- a red build should say which.
+      - name: Check that cited documents are declared and their availability stated
+        run: python tools/check_document_available.py
       # The check above is stdlib only; only its arming test needs pytest.
       - run: pip install pytest
       - name: Prove the check still catches the crossings it was armed against

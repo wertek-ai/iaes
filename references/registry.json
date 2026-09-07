@@ -1,0 +1,110 @@
+{
+  "$comment": "Which external document each reference in IAES_SPEC.md means, and whether it can be consulted. Normative for what IAES may cite: a claim about a document nobody can open is a claim nobody can check. It says nothing about whether the document supports what IAES attributes to it -- that is a separate question, and this file deliberately does not answer it.",
+  "registry_version": 1,
+  "measured": "2026-09-07",
+
+  "vocabulary": {
+    "id": "The identity this registry answers about. A document, not a family: an edition where one is known, because clause numbering differs between editions and translations.",
+    "availability": {
+      "public": "Published without charge by its publisher. Anyone can consult the same text.",
+      "available": "Not public, and a copy is held. Requires access_basis and, where the copy is a specific edition, that edition and language.",
+      "unavailable": "Not public and no copy held. A claim about it cannot be checked without buying it.",
+      "unresolved": "The citation does not identify a document, so availability cannot be asked. Requires resolution before it can be answered."
+    },
+    "access_basis": "How the copy was obtained. steward_copy means the editor holds a purchased copy."
+  },
+
+  "references": [
+    {
+      "id": "RFC-3339",
+      "publisher": "IETF",
+      "number": "3339",
+      "availability": "public",
+      "cited_as": "RFC 3339"
+    },
+    {
+      "id": "RFC-4122",
+      "publisher": "IETF",
+      "number": "4122",
+      "availability": "public",
+      "cited_as": "RFC 4122"
+    },
+    {
+      "id": "RFC-3986",
+      "publisher": "IETF",
+      "number": "3986",
+      "availability": "public",
+      "cited_as": "RFC 3986"
+    },
+    {
+      "id": "RFC-2119",
+      "publisher": "IETF",
+      "number": "2119",
+      "availability": "public",
+      "cited_as": "RFC 2119"
+    },
+    {
+      "id": "RFC-8174",
+      "publisher": "IETF",
+      "number": "8174",
+      "availability": "public",
+      "cited_as": "RFC 8174"
+    },
+    {
+      "id": "ISO-14224:2016-en",
+      "publisher": "ISO",
+      "number": "14224",
+      "edition": "2016",
+      "language": "en",
+      "availability": "available",
+      "access_basis": "steward_copy",
+      "cited_as": "ISO 14224"
+    },
+    {
+      "id": "ISO-17359:2018-en",
+      "publisher": "ISO",
+      "number": "17359",
+      "edition": "2018",
+      "language": "en",
+      "availability": "available",
+      "access_basis": "steward_copy",
+      "cited_as": "ISO 17359"
+    },
+    {
+      "id": "ISO-55000:2024-es",
+      "publisher": "ISO",
+      "number": "55000",
+      "edition": "2024",
+      "language": "es",
+      "availability": "available",
+      "access_basis": "steward_copy",
+      "cited_as": "ISO 55000",
+      "note": "The copy held is the 2024 Spanish edition. A clause cited from it must name that edition and language: numbering can differ between translations and editions, and 'ISO 55000' alone is not an interchangeable object."
+    },
+    {
+      "id": "ISO-4217",
+      "publisher": "ISO",
+      "number": "4217",
+      "availability": "unavailable",
+      "cited_as": "ISO 4217",
+      "note": "The code list is widely mirrored; the standard document is not held. Recorded as unavailable rather than assumed, because 'everybody knows it' is how unverifiable attributions get made."
+    },
+    {
+      "id": "ISO-13374-series",
+      "publisher": "ISO",
+      "number": "13374",
+      "availability": "unresolved",
+      "cited_as": "ISO 13374 series",
+      "note": "Cited as a series, so it names no document and availability cannot be answered. Measured: the citations cover at least two different subjects -- health status levels and a six-block processing model -- which cannot both be one part. Of the series only 13374-4:2015 (en) is held; 13374-2, which Appendix C depends on, is not. Resolving each citation to a part is editorial work; rfc/IAES-RFC-002.md proposes withdrawing the attributions instead."
+    }
+  ],
+
+  "held_but_not_cited": {
+    "$comment": "Documents the editor holds that this specification does not cite. Recorded so that 'we have it' is never confused with 'we use it', and so a future citation knows an edition is already available.",
+    "documents": [
+      "ISO 13374-4:2015 (en)",
+      "ISO 20816-3:2022 (en)",
+      "IEC 60812:2018 (en)"
+    ]
+  }
+}
