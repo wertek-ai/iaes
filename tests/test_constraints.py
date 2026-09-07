@@ -11,6 +11,12 @@ event it ever emitted was missing a required field, and the standard's own
 validator rejected all of them.
 
 A document that is not authoritative is still read.
+
+And it was known. RFC-000 4, item 2 names this exact divergence as the reason
+for demoting RFCs from authority: "RFC-001 and the envelope schema currently
+disagree about whether correlation_id is required". It was written down, and
+it survived anyway -- which is the argument for this file. Recording a defect
+is not the same as preventing it.
 """
 
 import json
