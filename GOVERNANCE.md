@@ -289,19 +289,24 @@ A guarantee is *reduced* when something an implementer was entitled to rely on
 becomes something they are not -- whether by withdrawing it, by adding a
 condition to it, or by redefining a term it depends on.
 
-**R2 — ADDITION.** Does the change add a guarantee, or add or widen an
-obligation of the steward, reducing nothing? If yes: **MINOR**.
+**R2 — CLASSIFICATION ONLY.** Does the change state or refine how future
+changes are classified, altering no guarantee in either direction? If yes:
+**MINOR**.
 
-**R3 — CLASSIFICATION ONLY.** Does the change state or refine how future
-changes are classified, altering no guarantee in either direction and no
-obligation of the steward? If yes: **MINOR**.
-
-> **R3 does not apply to a change that states a classification rule and, in
+> **R2 does not apply to a change that states a classification rule and, in
 > doing so, reduces a guarantee.** Such a change is R1. The form a change takes
 > does not determine its level; what it does to a published guarantee does.
-> Without this, R3 is the hole through which every reduction escapes: the change
+> Without this, R2 is the hole through which every reduction escapes: the change
 > that introduced §4.4 can be described as adding a classification rule, and it
 > also narrowed the definition of MAJOR and withdrew part of §8 item 2.
+
+**R3 — ADDITION.** Does the change add a guarantee, or add or widen an
+obligation of the steward, reducing nothing? If yes: **MINOR**.
+
+> Classification comes before addition on purpose. A rule for classifying future
+> changes *obliges the steward to classify them that way*, so an addition test
+> placed second would absorb every classification-only case and leave the third
+> test unreachable.
 
 An amendment that only corrects a typographical or formatting defect, leaving
 every guarantee and obligation identical, is **PATCH** per §3.

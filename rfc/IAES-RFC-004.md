@@ -16,7 +16,7 @@ ISSN: N/A
 This memo proposes a new subsection of `GOVERNANCE.md` §4. It defines no wire
 format and changes no schema.
 
-**State: Review**, per `GOVERNANCE.md` §6, at the steward's request.
+**State: Accepted**, per `GOVERNANCE.md` §6.
 **Compatibility: MINOR — a steward's decision under existing authority, not a
 derivation, and expressly not derived from the rule this memo proposes (§5).
 Target version: IAES 2.0.** Distribution is unlimited.
@@ -45,7 +45,7 @@ of the changes it incorporates.**
     1. What raised it
     2. The domain, and why it is not §4.4
     3. The rule
-       3.1. Why R3 carries a guard
+       3.1. Why the classification test comes second, and carries a guard
     4. The level of a release
     5. Compatibility level of this change
     6. Effect on existing implementers
@@ -102,23 +102,41 @@ because the change looked small from inside the current release.
 > on becomes something they are not, whether by withdrawing it, by adding a
 > condition to it, or by redefining a term it depends on.
 >
-> **R2 — ADDITION.** Does the change add a guarantee, or add or widen an
-> obligation of the steward, reducing nothing? If yes: **MINOR**.
+> **R2 — CLASSIFICATION ONLY.** Does the change state or refine how future
+> changes are classified, altering no guarantee in either direction? If yes:
+> **MINOR**.
 >
-> **R3 — CLASSIFICATION ONLY.** Does the change state or refine how future
-> changes are classified, altering no guarantee in either direction and no
-> obligation of the steward? If yes: **MINOR**.
->
-> **R3 does not apply to a change that states a classification rule and, in
+> **R2 does not apply to a change that states a classification rule and, in
 > doing so, reduces a guarantee.** Such a change is R1. The form a change takes
 > does not determine its level; what it does to a published guarantee does.
+>
+> **R3 — ADDITION.** Does the change add a guarantee, or add or widen an
+> obligation of the steward, reducing nothing? If yes: **MINOR**.
 >
 > An amendment that only corrects a typographical or formatting defect, leaving
 > every guarantee and obligation identical, is **PATCH** per §3.
 
-## 3.1. Why R3 carries a guard
+## 3.1. Why the classification test comes second, and carries a guard
 
-Without the guard, R3 is the hole through which every reduction escapes.
+**The order was wrong in the first draft of this memo, and the error was the
+one this memo exists to prevent.** The tests were R1 reduction, R2 addition,
+R3 classification-only — and a classification rule *obliges the steward to
+classify future changes a particular way*, which is an obligation of the
+steward, which answers R2. Every case R3 was written for would have been
+absorbed one test earlier, and **R3 would have been unreachable**: present in
+the document, never applying to anything.
+
+That is the same defect as the third test `IAES-RFC-003` had to replace, in the
+other direction. There a test could never return MAJOR; here a test could never
+be reached at all. Both look like a complete framework and neither
+discriminates.
+
+**A test that an earlier test absorbs is not a test.** Classification-only now
+runs second, before addition, so each of the three is reachable. No level
+changes: a classification rule was always meant to be MINOR, and it still is.
+
+Without its guard, the classification test is the hole through which every
+reduction escapes.
 
 `IAES-RFC-003` is the worked example, and it is not hypothetical. Presented one
 way it is a pure classification change: it adds §4.4, a rule for classifying
@@ -127,9 +145,9 @@ definition of MAJOR and withdraws part of §8 item 2** — and those are R1. A r
 that let the first description govern would have produced MINOR for a change the
 steward correctly called MAJOR.
 
-That is why the tests are ordered with R1 first and why R3 names the case
-explicitly rather than leaving it to good faith. **A test that can be satisfied
-by how a change is described, rather than by what it does, is not a test.**
+That is why R1 runs first and why R2 names the case explicitly rather than
+leaving it to good faith. **A test that can be satisfied by how a change is
+described, rather than by what it does, is not a test.**
 
 # 4. The level of a release
 
