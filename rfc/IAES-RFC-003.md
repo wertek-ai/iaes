@@ -16,7 +16,15 @@ ISSN: N/A
 This memo proposes an addition to the compatibility policy in `GOVERNANCE.md`
 §4. It defines no wire format and changes no schema.
 
-**State: Draft**, per `GOVERNANCE.md` §6. Distribution is unlimited.
+**State: Review**, per `GOVERNANCE.md` §6. **Target version: IAES 1.5** — the
+criterion has to exist before the release whose classification depends on it.
+Distribution is unlimited.
+
+It entered Review after its third test was replaced: the first version asked
+whether an implementation that declares *N* stops conforming to *N*, which a
+published version's immutability answers in advance and always the same way.
+§2 keeps the discarded framing, because a criterion is easier to trust when the
+shapes it rejected are visible.
 
 # Copyright Notice
 
@@ -92,10 +100,20 @@ third test must ask.
 > interpreted with a different meaning?
 > If yes: **MAJOR**.
 >
-> Meaning is *changed* only where the previous version stated one. Where the
-> previous version left it unstated, the new version **supplies** a meaning,
-> and supplying is not changing: no implementation was following a rule, so
-> none is contradicted.
+> Meaning is *changed* only where the previous version **stated** one. Where
+> the previous version was silent, the new version **supplies** a meaning, and
+> supplying is not changing: there was no rule to contradict.
+>
+> Silence is not permission. A producer whose behaviour the previous version
+> never addressed was not authorised by it; it was simply unaddressed, and the
+> new obligation is the first rule on the point rather than a reversal of one.
+> Nor is silence a guarantee: where the standard said nothing, implementations
+> may have assumed different things, and a consumer whose assumption the new
+> obligation contradicts may well break. **That is a broken expectation, not a
+> broken guarantee** — the compatibility promise covers what a version stated,
+> and cannot cover what it left open. Where such an expectation is known to be
+> widespread, the change is still MINOR under this section and the release
+> notes carry the warning.
 >
 > **T2 — CROSS-VERSION INTEROPERABILITY.** Under the compatibility direction
 > §4 promises, can a consumer that declares *N+1* still consume an event that
@@ -126,6 +144,13 @@ consumers update first, producers follow. A consumer at *N* meeting an event
 from *N+1* is outside the guarantee, and demanding it would classify every
 addition as breaking.
 
+A fourth note, on the reasoning most easily abused. *The previous version did
+not forbid it* is not by itself an argument for MINOR, and this section must
+not be read as making it one. It answers T1 — there was no stated meaning to
+change — and answers nothing else. T2 is still asked, and asked about events,
+not about intentions: an obligation that leaves a 1.4 event unreadable or
+re-readable by a 1.5 consumer is MAJOR however silent 1.4 was.
+
 # 4. Applying it to the case in §1
 
 **§4.1 and §4.2 first.** No schema changes; the field was optional before and is
@@ -138,7 +163,7 @@ a gap, not following a rule. The obligation **supplies** the meaning. **No.**
 **T2 — cross-version interoperability.** Two directions to walk, and both hold:
 
 ```
-producer 1.4:  anomaly_score = 0.0          (it substituted, as 1.4 allowed)
+producer 1.4:  anomaly_score = 0.0          (1.4 stated no rule either way)
       ↓
 consumer 1.5:  reads 0.0 as 0.0             same meaning, nothing to re-read
 
@@ -150,9 +175,17 @@ consumer 1.5:  the field was already optional; absent is valid
 A consumer that declares 1.5 consumes 1.4 events with the meaning 1.4 gave
 them. **Yes.**
 
+The distinction that carries this is worth stating exactly. 1.4 *did* state
+what `anomaly_score: 0.0` means: the score is zero. What it never stated was
+whether a producer may write that when it has no score. The obligation changes
+the second and leaves the first alone — a rule about **what a producer may
+assert**, not about **what a value means** — which is why every byte already on
+the wire keeps its reading.
+
 And the proviso holds: the new MUST binds only an implementation that wants to
-declare 1.5. A producer that keeps declaring 1.4 keeps substituting and stays
-conforming to 1.4 for as long as 1.4 is published.
+declare 1.5. A producer that keeps declaring 1.4 keeps substituting and remains
+conforming to 1.4, because 1.4 required nothing of it here, for as long as 1.4
+is published.
 
 **MINOR** — derived, not assumed. The point of the derivation is that it could
 have come out the other way: had 1.4 stated that an absent `anomaly_score`
