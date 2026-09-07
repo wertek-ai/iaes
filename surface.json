@@ -2,14 +2,12 @@
   "$comment": "The canonical SDK surface: what an implementation must expose to call itself an IAES SDK. SDK_SURFACE.md is the reasoning. tests/test_surface.py reads this file and fails when a declaration stops matching the code, so a gap cannot be closed or opened without the declaration moving with it.",
   "iaes_spec_version": "1.4",
   "measured": "2026-09-06",
-
   "status": {
     "state": "draft",
     "normative_for": "implementations",
     "normative_for_the_wire": false,
     "notice": "Changing this file does not change what an IAES event is. It changes what an implementation must offer to call itself an IAES SDK."
   },
-
   "naming": {
     "rule": "The same word, in each language's convention. Never a different verb.",
     "conventions": {
@@ -20,14 +18,16 @@
       "n8n": "one operation per capability"
     },
     "examples": {
-      "correct": ["compute_content_hash", "computeContentHash"],
+      "correct": [
+        "compute_content_hash",
+        "computeContentHash"
+      ],
       "incorrect": [
         "from_dict vs fromJSON -- different verbs, not different casing",
         "Client vs IaesClient -- the type is named differently, not spelled differently"
       ]
     }
   },
-
   "input": {
     "field_names": "exactly the schema's, in every language",
     "container": "idiomatic per language -- dataclass, object literal, struct, form fields",
@@ -36,13 +36,14 @@
     "optional_fields": "omitting and passing null behave identically",
     "lists": "a list is of EVENTS, never of fields. publish([a,b,c]) yes; Measurement([...]) no."
   },
-
   "errors": {
     "requirement": "Failure must look the same across implementations.",
-    "validation_failure_reports": ["that it failed", "the path of the offending field"],
+    "validation_failure_reports": [
+      "that it failed",
+      "the path of the offending field"
+    ],
     "note": "Python raises ValidationError and TypeScript has IaesClientError, and they do not do the same thing. This is the least-examined part of the surface and the most consequential for someone moving between languages."
   },
-
   "capabilities": {
     "build": {
       "what": "construct an event of a published type",
@@ -53,7 +54,10 @@
     "from_object": {
       "what": "construct an event from a plain object",
       "required": true,
-      "current_names": { "python": "from_dict", "typescript": "fromJSON" },
+      "current_names": {
+        "python": "from_dict",
+        "typescript": "fromJSON"
+      },
       "note": "Two verbs today. The canonical name is from_object; both existing names become deprecated aliases rather than disappearing."
     },
     "validate": {
@@ -83,48 +87,90 @@
       "note": "All of them. The flow runtimes take theirs from @iaes/sdk rather than exposing a node, which is the platform's idiom and counts as present."
     }
   },
-
   "not_capabilities": {
     "publish": "Sending an event somewhere is not part of this standard: IAES defines no transport, no endpoint contract and no delivery negotiation, so there is nothing for a second implementation to conform to. A function that sends is a client for a particular server and belongs to that server's package. It becomes a capability the day a transport binding exists.",
     "detect": "Deadbands, thresholds and assigning a severity when one is crossed put a value on a field and interpret a number. That is an implementation's judgment.",
-    "device_profiles": "An equipment catalog. GOVERNANCE.md section 1.2 excludes these by name, thresholds included.",
+    "device_profiles": "An equipment catalog. GOVERNANCE.md §1, item 2 excludes these by name, thresholds included.",
     "transport_clients": "A Modbus or MQTT client is neither standard nor product -- it is generic plumbing, like an HTTP library, and claims neither side.",
     "protocol_bindings": "node-red-contrib-iaes ships an iaes-sparkplug node. A binding maps IAES onto one wire protocol; it is useful and it is not part of the surface every implementation must offer."
   },
-
   "implementations": {
     "$comment": "Declared gaps, not silent ones. An absent capability that nobody declared is indistinguishable from one nobody thought of, and that is how five platforms arrived at five different surfaces. Checked by tests/test_surface.py.",
     "python": {
       "package": "iaes",
       "repo": "this",
-      "has": ["build:7", "from_object", "validate", "compute_content_hash", "schema_uri_for", "vocabulary:10"],
+      "has": [
+        "build:7",
+        "from_object",
+        "validate",
+        "compute_content_hash",
+        "schema_uri_for",
+        "vocabulary:10"
+      ],
       "gaps": [],
       "note": "route is not a gap: a library caller uses a switch."
     },
     "typescript": {
       "package": "@iaes/sdk",
       "repo": "this",
-      "has": ["build:7", "from_object", "compute_content_hash", "schema_uri_for", "vocabulary:10"],
-      "gaps": ["validate"],
+      "has": [
+        "build:7",
+        "from_object",
+        "compute_content_hash",
+        "schema_uri_for",
+        "vocabulary:10"
+      ],
+      "gaps": [
+        "validate"
+      ],
       "note": "The only SDK that cannot check an event against its schema, and the one both flow runtimes depend on."
     },
     "node_red": {
       "package": "node-red-contrib-iaes",
       "repo": "this",
-      "has": ["build:3", "validate", "route", "vocabulary:10"],
-      "gaps": ["from_object", "schema_uri_for", "build: completion, spare_part_usage, sensor_registration, hierarchy"]
+      "has": [
+        "build:3",
+        "validate",
+        "route",
+        "vocabulary:10"
+      ],
+      "gaps": [
+        "from_object",
+        "schema_uri_for",
+        "build: completion, spare_part_usage, sensor_registration, hierarchy"
+      ]
     },
     "n8n": {
       "package": "n8n-nodes-iaes",
       "repo": "this",
-      "has": ["build:6", "validate", "vocabulary:10"],
-      "gaps": ["from_object", "route", "schema_uri_for", "build: hierarchy"]
+      "has": [
+        "build:6",
+        "validate",
+        "vocabulary:10"
+      ],
+      "gaps": [
+        "from_object",
+        "route",
+        "schema_uri_for",
+        "build: hierarchy"
+      ]
     },
     "cpp": {
       "package": "iaes-opta-runtime",
       "repo": "wertek-ai/iaes-opta-runtime",
-      "has": ["build:2", "compute_content_hash", "vocabulary:1"],
-      "gaps": ["validate", "from_object", "route", "schema_uri_for", "build: work_order_intent, completion, spare_part_usage, sensor_registration, hierarchy", "vocabulary: 1 of 10 enumerations"],
+      "has": [
+        "build:2",
+        "compute_content_hash",
+        "vocabulary:1"
+      ],
+      "gaps": [
+        "validate",
+        "from_object",
+        "route",
+        "schema_uri_for",
+        "build: work_order_intent, completion, spare_part_usage, sensor_registration, hierarchy",
+        "vocabulary: 1 of 10 enumerations"
+      ],
       "note": "A microcontroller runtime, deliberately narrow. Its conformance is checked in its own repository's CI, not here, so tests/test_surface.py does not verify this row -- which is itself a gap, and stated rather than left implied."
     }
   }

@@ -149,7 +149,7 @@ class TestTheManifestKeepsAuthorityStraight(unittest.TestCase):
         offenders = [p for p in manifest["normative"] if p.startswith("rfc/")]
         self.assertEqual(
             offenders, [],
-            "an accepted RFC is rationale, not normative authority (RFC-000 §4.2)",
+            "an accepted RFC is rationale, not normative authority (RFC-000 §4, item 2)",
         )
 
     def test_the_rfcs_are_still_in_the_release(self):
