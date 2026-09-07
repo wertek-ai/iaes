@@ -1,8 +1,9 @@
 # IAES Governance
 
 **Status:** Normative. Applies from IAES v1.4 onward, except §3's definition of
-MAJOR, the pointer at the end of §4.2, §4.4, and item 2 of §8, which are
-incorporated from `rfc/IAES-RFC-003.md` and apply from **IAES 2.0**.
+MAJOR, the pointer at the end of §4.2, §4.4 and item 2 of §8 -- incorporated
+from `rfc/IAES-RFC-003.md` -- and §4.5, incorporated from
+`rfc/IAES-RFC-004.md`, which apply from **IAES 2.0**.
 **Last updated:** 2026-09-07
 
 This document defines who maintains the Industrial Asset Event Standard, how it
@@ -270,6 +271,58 @@ required is **PATCH**, per §3.
 
 The rationale, including the framings this criterion rejected, is in
 `rfc/IAES-RFC-003.md`.
+
+### 4.5 Changes to this policy and to the guarantees it defines
+
+This subsection classifies a change to this policy, to §8, or to an obligation
+of the steward. §4.4 does not reach these: its tests ask what happens to an
+event and to the implementations that exchange it, and these questions have no
+event in them.
+
+Apply the tests in order. The first that answers, decides.
+
+**R1 — REDUCTION.** Does the change remove a guarantee a published version gave
+to implementers, or narrow the conditions under which that guarantee holds? If
+yes: **MAJOR**.
+
+A guarantee is *reduced* when something an implementer was entitled to rely on
+becomes something they are not -- whether by withdrawing it, by adding a
+condition to it, or by redefining a term it depends on.
+
+**R2 — ADDITION.** Does the change add a guarantee, or add or widen an
+obligation of the steward, reducing nothing? If yes: **MINOR**.
+
+**R3 — CLASSIFICATION ONLY.** Does the change state or refine how future
+changes are classified, altering no guarantee in either direction and no
+obligation of the steward? If yes: **MINOR**.
+
+> **R3 does not apply to a change that states a classification rule and, in
+> doing so, reduces a guarantee.** Such a change is R1. The form a change takes
+> does not determine its level; what it does to a published guarantee does.
+> Without this, R3 is the hole through which every reduction escapes: the change
+> that introduced §4.4 can be described as adding a classification rule, and it
+> also narrowed the definition of MAJOR and withdrew part of §8 item 2.
+
+An amendment that only corrects a typographical or formatting defect, leaving
+every guarantee and obligation identical, is **PATCH** per §3.
+
+An obligation on a producer or a consumer is classified by §4.4, not here, even
+when it is written into this document.
+
+#### The level of a release
+
+The level of a release is the **maximum** level of the changes it incorporates,
+ordered `PATCH < MINOR < MAJOR`.
+
+A release does not take a lower level because most of the changes it carries are
+minor, and does not take a higher one because it is large. One MAJOR change
+makes the release MAJOR whatever else travels with it.
+
+This applies to releases made after it takes effect. Releases 1.0 through 1.4
+were classified without it, and reclassifying a published release would
+contradict §8 item 1.
+
+The rationale is in `rfc/IAES-RFC-004.md`.
 
 ## 5. Schema identity
 
