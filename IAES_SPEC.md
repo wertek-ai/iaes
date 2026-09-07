@@ -538,66 +538,79 @@ IAES uses semantic versioning for the specification itself:
 
 ## References
 
-What this specification depends on, and what it merely mentions. Measured from
-the artifacts on 2026-09-06: every format keyword the schemas use is listed
-here, and nothing is listed that nothing uses.
+What this specification depends on, and how much of that dependency its
+machine-validity artifact actually checks. Measured from the artifacts on
+2026-09-06.
 
-The strength of each is stated as **measured**, not as intended. The schemas
-carry two different mechanisms and the difference matters: `pattern` is
-asserted by every Draft 2020-12 validator, while `format` is an annotation
-that Draft 2020-12 leaves off by default. Measured 2026-09-06: a `timestamp`
-of `"banana"`, an `event_id` of `"no-uuid"` and a `dataschema` of `"not a
-uri"` are all accepted by the validator this repository publishes.
+Two questions, and they are independent:
 
-**Named by the schema, not enforced by it.** These documents define what the
-values mean. They are `format` annotations, so nothing rejects a value that
-ignores them.
+- **Normative for meaning** — must the value satisfy this document for the
+  event to conform to IAES? That is decided by this specification.
+- **Enforced by the schema** — does the schema reject a value that does not?
+  That is decided by JSON Schema and by what the schemas actually declare.
 
-| Document | What it names |
-|---|---|
-| RFC 3339 | `timestamp` and `calibration_date`. JSON Schema defines its `date-time` and `date` formats by this document, not by ISO 8601, which is the broader standard RFC 3339 profiles. |
-| RFC 4122 | `event_id`, `correlation_id` and `source_event_id`. The `uuid` format. |
-| RFC 3986 | `dataschema`. The `uri` format. |
+They are not the same question, and where they disagree the disagreement is
+the defect.
 
-**Enforced by the schema.** These are asserted by `pattern`, which every
-validator applies.
+| Document | Normative for meaning | Enforced by the schema |
+|---|---|---|
+| RFC 3339 | **Yes.** `timestamp` MUST be UTC with a timezone designator; `calibration_date` is a date. | **No.** Declared with `format`, which Draft 2020-12 treats as an annotation. |
+| RFC 4122 | **Yes** for `event_id`, `correlation_id` and `source_event_id`. | **No.** Same reason. |
+| RFC 3986 | **Yes** for `dataschema`, which carries a URI. | **No.** Same reason. |
+| RFC 2119, RFC 8174 | **Yes.** How MUST, SHOULD and MAY are to be read here. | **Not applicable.** Not a schema constraint. |
+| ISO 4217 | **Yes.** `currency` is an ISO 4217 code. | **Partly.** `^[A-Z]{3}$` checks the shape, not membership: `ZZZ` and `QQQ` pass. |
+| ISO 14224 | No. Mentioned for the `iso_14224` object and Appendix B. | No. |
+| ISO 17359 | No. Mentioned for `units_qualifier` and the acquisition fields. | No. |
+| ISO 13374 series | No. Mentioned for `iso_13374_status`, `condition_trend` and Appendix C. | No. |
+| ISO 55000 | No. Mentioned as asset management context. | No. |
 
-| Document | Where it binds |
-|---|---|
-| RFC 2119, RFC 8174 | The meaning of MUST, SHOULD and MAY in this document. |
-| ISO 4217 | Currency codes on `maintenance.spare_part_usage`, as a three-letter pattern. |
+### An event can be schema-valid and non-conforming
 
-**Informative** — mentioned for orientation. Nothing depends on them.
+Broken rather than read, against the validator this repository publishes:
 
-| Document | Where it is mentioned |
-|---|---|
-| ISO 14224 | The `iso_14224` object, and Appendix B. |
-| ISO 17359 | `units_qualifier`, `sampling_rate_hz`, `acquisition_duration_s`. |
-| ISO 13374 series | `iso_13374_status`, `condition_trend`, and Appendix C. |
-| ISO 55000 | Asset management context. |
+    timestamp      = "banana"          accepted
+    event_id       = "no-uuid"         accepted
+    correlation_id = "12345"           accepted
+    dataschema     = "esto no es uri"  accepted
 
-Whether the annotated formats *should* be enforced is an open question, not a
-settled one. The schema already asserts `event_type`, `source`, `spec_version`
-and `currency` with `pattern` while merely annotating the six identifier and
-date fields, and no document says why the two groups are treated differently.
-Enabling JSON Schema's format assertion does not settle it either: measured,
-which formats get checked depends on which optional packages the consumer
-happens to have installed, so the same event would be valid for one conforming
-reader and invalid for another. Deciding this belongs in a memo.
+Each of those satisfies the schema and violates this specification. An
+implementer can run the official validator, get green, and produce something
+this document forbids. That gap is the finding, not the accepted values.
+
+Switching JSON Schema's format assertion on does not close it. Measured with
+the checker enabled, `uuid` is rejected while `date-time` and `uri` are still
+accepted, because their checkers live in optional packages — so whether an
+event is valid would depend on which packages the reader happens to have
+installed, and two conforming readers would disagree about the same bytes.
+
+### Why this is not simply fixed
+
+The schemas already assert `event_type`, `source`, `spec_version` and
+`currency` with `pattern`, which every validator applies, while merely
+annotating the six identifier and date fields. No document says why the two
+groups are treated differently.
+
+Adding a pattern to close the gap is not available inside 1.x:
+`GOVERNANCE.md` §4.2 lists *adding a pattern where none existed* as a
+narrowing change, therefore MAJOR, and the compatibility guard implements
+that. Values that validate today would stop validating.
+
+So this is a decision with real consequences and it belongs in a memo, not in
+a references table. This section records the measurement the memo will need.
 
 Three of these documents were unnamed until 2026-09-06. The schemas have
 always used `uuid`, `uri`, `date-time` and `date`, so the specification has
-always depended on the documents that define them; it named none of them, and
-named ISO 8601, which it does not depend on. An implementer could satisfy the
-schema and had nowhere to read why.
+always meant to depend on the documents that define them; it named none of
+them, and named ISO 8601, which JSON Schema does not use and which the editor
+does not hold. An implementer could satisfy the schema and had nowhere to read
+why.
 
 The ISO 13374 entries say *series* rather than a part on purpose. The
 unqualified citations cover at least two different subjects — health status
 levels and a six-block processing model — which cannot both be the same part,
 and the editor holds only ISO 13374-4. A citation that does not identify a
-document cannot be checked, and pretending otherwise is how an unsupported
-attribution survives. `rfc/IAES-RFC-002.md` proposes withdrawing the ISO 13374
-attributions entirely; it is Draft, so this table records what the
+document cannot be checked. `rfc/IAES-RFC-002.md` proposes withdrawing the
+ISO 13374 attributions; it is Draft, so this table records what the
 specification says today.
 
 ## Appendix A: Failure Mode Taxonomy
