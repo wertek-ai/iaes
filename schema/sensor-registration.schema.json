@@ -41,7 +41,7 @@
         "calibration_date": {
           "type": ["string", "null"],
           "format": "date",
-          "description": "Last calibration date (ISO 8601 date)"
+          "description": "Last calibration date (RFC 3339 full-date)"
         },
         "communication_protocol": {
           "type": ["string", "null"],

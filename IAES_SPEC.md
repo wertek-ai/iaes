@@ -43,7 +43,7 @@ Every IAES event shares this envelope:
   "source_event_id": "uuid | null",
   "batch_id": "string | null",
   "dataschema": "https://iaes.dev/schema/v1/asset.health",
-  "timestamp": "ISO 8601",
+  "timestamp": "RFC 3339",
   "source": "vendor.system.subsystem",
   "content_hash": "sha256_16char",
   "asset": {
@@ -66,7 +66,7 @@ Every IAES event shares this envelope:
 | `event_id` | UUID | yes | Unique identifier for this event |
 | `correlation_id` | UUID | yes | Groups related events in a single flow |
 | `source_event_id` | UUID | no | References the originating event |
-| `timestamp` | ISO 8601 | yes | When the event occurred |
+| `timestamp` | RFC 3339 | yes | When the event occurred |
 | `source` | string | yes | Dot-notation producer identity (e.g. `vendor.diagnosis`, `operator.manual_inspection`) |
 | `batch_id` | string | no | Groups events from a single batch operation (e.g. gateway poll, bulk sync) |
 | `content_hash` | string | no | SHA-256 prefix (16 chars) of `data` payload for dedup |
@@ -271,7 +271,7 @@ Sensor discovery, onboarding, and lifecycle tracking.
 | `device_serial` | string | no | Device serial number |
 | `firmware_version` | string | no | Current firmware version |
 | `measurement_capabilities` | string[] | no | Measurement types this sensor provides |
-| `calibration_date` | ISO 8601 date | no | Last calibration date |
+| `calibration_date` | RFC 3339 full-date | no | Last calibration date |
 | `communication_protocol` | string | no | Protocol (mqtt, modbus_tcp, opcua, lorawan, etc.) |
 
 ### `maintenance.spare_part_usage` (v1.1)
@@ -376,7 +376,7 @@ Systems that emit IAES events MUST follow these rules:
 
 3. **Use dot-notation for `source`.** The `source` field MUST follow the pattern `vendor.system[.subsystem]`. Examples: `vendor.vibration`, `banner.dxm100`, `operator.manual_inspection`. Use lowercase, alphanumeric characters, dots, and underscores only.
 
-4. **Use ISO 8601 for timestamps.** The `timestamp` field MUST be in UTC with timezone designator (e.g. `2026-03-06T17:50:17Z`).
+4. **Use RFC 3339 for timestamps.** The `timestamp` field MUST be in UTC with timezone designator (e.g. `2026-03-06T17:50:17Z`). RFC 3339 is the profile of ISO 8601 that JSON Schema's `date-time` format is defined by; naming it means an implementer can read the exact document the constraint comes from, at no cost.
 
 5. **Do not assume consumer behavior.** A `maintenance.work_order_intent` declares intent — the producer MUST NOT assume the consumer will create a work order, or create it in any specific format.
 
@@ -536,6 +536,83 @@ IAES uses semantic versioning for the specification itself:
 | 1.3 | March 2026 | State transition model: `condition_trend` field on asset.health (`worsening`, `stable`, `improving`) based on ISO 13374-4 §5.3. Formalized recovery event pattern. State Transition Guidance in Architecture Guide (ISO 13374-4, ISO 17359, ISO 14224, ISO 55000). Recovery event example. All new fields optional — full backward compatibility. |
 | 1.4 | September 2026 | **Governance and compatibility policy become normative** ([GOVERNANCE.md](GOVERNANCE.md)): stated stewardship, BACKWARD compatibility as the default mode, a 24-month support window, canonical and resolvable `$id` versioned by URI, and an RFC-based change process. Scope boundaries made explicit: IAES defines no asset hierarchy, no equipment catalog, and no commercial terms. **No schema changed in this release.** **Schema identity corrected** under GOVERNANCE.md §5.1: the eight schemas declared `$id` under `https://iaes.wertek.ai/schema/v1/`, a host that has never resolved (verified 2026-09-03: no DNS answer). They now declare `https://iaes.dev/schema/v1/`, which is served. The old base is permanently reserved and will not be reassigned. Schema content is otherwise unchanged. **New optional envelope field `dataschema`**: the canonical URI of the schema the payload was written against, following the CloudEvents attribute of the same name. Derivable from `event_type`, so both SDKs set it automatically for published event types and omit it otherwise. Optional and additive: fully backward compatible. **`event_type` opened**: it was a closed enumeration of seven values while this same document ordered consumers to tolerate values they do not recognise — a contradiction that made unknown types impossible to produce. It is now a dot-notation pattern with the published types as examples. Widening, therefore backward compatible: every previously valid value still validates, and the compatibility guard verifies that rather than assuming it. |
 
+## References
+
+What this specification depends on, and how much of that dependency its
+machine-validity artifact actually checks. Measured from the artifacts on
+2026-09-06.
+
+Two questions, and they are independent:
+
+- **Normative for meaning** — must the value satisfy this document for the
+  event to conform to IAES? That is decided by this specification.
+- **Enforced by the schema** — does the schema reject a value that does not?
+  That is decided by JSON Schema and by what the schemas actually declare.
+
+They are not the same question, and where they disagree the disagreement is
+the defect.
+
+| Document | Normative for meaning | Enforced by the schema |
+|---|---|---|
+| RFC 3339 | **Yes.** `timestamp` MUST be UTC with a timezone designator; `calibration_date` is a date. | **No.** Declared with `format`, which Draft 2020-12 treats as an annotation. |
+| RFC 4122 | **Yes** for `event_id`, `correlation_id` and `source_event_id`. | **No.** Same reason. |
+| RFC 3986 | **Yes** for `dataschema`, which carries a URI. | **No.** Same reason. |
+| RFC 2119, RFC 8174 | **Yes.** How MUST, SHOULD and MAY are to be read here. | **Not applicable.** Not a schema constraint. |
+| ISO 4217 | **Yes.** `currency` is an ISO 4217 code. | **Partly.** `^[A-Z]{3}$` checks the shape, not membership: `ZZZ` and `QQQ` pass. |
+| ISO 14224 | No. Mentioned for the `iso_14224` object and Appendix B. | No. |
+| ISO 17359 | No. Mentioned for `units_qualifier` and the acquisition fields. | No. |
+| ISO 13374 series | No. Mentioned for `iso_13374_status`, `condition_trend` and Appendix C. | No. |
+| ISO 55000 | No. Mentioned as asset management context. | No. |
+
+### An event can be schema-valid and non-conforming
+
+Broken rather than read, against the validator this repository publishes:
+
+    timestamp      = "banana"          accepted
+    event_id       = "no-uuid"         accepted
+    correlation_id = "12345"           accepted
+    dataschema     = "esto no es uri"  accepted
+
+Each of those satisfies the schema and violates this specification. An
+implementer can run the official validator, get green, and produce something
+this document forbids. That gap is the finding, not the accepted values.
+
+Switching JSON Schema's format assertion on does not close it. Measured with
+the checker enabled, `uuid` is rejected while `date-time` and `uri` are still
+accepted, because their checkers live in optional packages — so whether an
+event is valid would depend on which packages the reader happens to have
+installed, and two conforming readers would disagree about the same bytes.
+
+### Why this is not simply fixed
+
+The schemas already assert `event_type`, `source`, `spec_version` and
+`currency` with `pattern`, which every validator applies, while merely
+annotating the six identifier and date fields. No document says why the two
+groups are treated differently.
+
+Adding a pattern to close the gap is not available inside 1.x:
+`GOVERNANCE.md` §4.2 lists *adding a pattern where none existed* as a
+narrowing change, therefore MAJOR, and the compatibility guard implements
+that. Values that validate today would stop validating.
+
+So this is a decision with real consequences and it belongs in a memo, not in
+a references table. This section records the measurement the memo will need.
+
+Three of these documents were unnamed until 2026-09-06. The schemas have
+always used `uuid`, `uri`, `date-time` and `date`, so the specification has
+always meant to depend on the documents that define them; it named none of
+them, and named ISO 8601, which JSON Schema does not use and which the editor
+does not hold. An implementer could satisfy the schema and had nowhere to read
+why.
+
+The ISO 13374 entries say *series* rather than a part on purpose. The
+unqualified citations cover at least two different subjects — health status
+levels and a six-block processing model — which cannot both be the same part,
+and the editor holds only ISO 13374-4. A citation that does not identify a
+document cannot be checked. `rfc/IAES-RFC-002.md` proposes withdrawing the
+ISO 13374 attributions; it is Draft, so this table records what the
+specification says today.
+
 ## Appendix A: Failure Mode Taxonomy
 
 Standard failure mode values for use in `asset.health` and `maintenance.completion` events. Based on ISO 14224 failure mode classification. Custom values are allowed — this list provides interoperability defaults.
@@ -635,7 +712,7 @@ All fields are optional. Producers MAY include any subset.
 
 The `iso_14224` object coexists with the `failure_mode` field from Appendix A. `failure_mode` provides a quick human-readable label; `iso_14224` provides structured classification for interoperability with systems that use ISO 14224 coding (common in oil & gas, power generation, and ISO-certified plants).
 
-## Appendix C: ISO 13374 Health Status Mapping
+## Appendix C: ISO 13374 series Health Status Mapping
 
 The `iso_13374_status` field on `asset.health` carries the ISO 13374-2 health status level. This is **complementary** to the IAES `severity` field:
 
@@ -644,7 +721,7 @@ The `iso_13374_status` field on `asset.health` carries the ISO 13374-2 health st
 
 ### Status Levels
 
-| ISO 13374 Status | Description | Nearest IAES `severity` |
+| ISO 13374 series status | Description | Nearest IAES `severity` |
 |------------------|-------------|------------------------|
 | `unknown` | Insufficient data to determine condition | `info` |
 | `normal` | Operating within normal parameters | `info` |
@@ -675,9 +752,9 @@ The `iso_13374_status` field on `asset.health` carries the ISO 13374-2 health st
 }
 ```
 
-Consumers that understand ISO 13374 can use `iso_13374_status` for condition-based reporting. Others use `severity` for action-based alerting. Both fields are optional; when both are present, they provide complementary perspectives.
+Consumers that understand the ISO 13374 series can use `iso_13374_status` for condition-based reporting. Others use `severity` for action-based alerting. Both fields are optional; when both are present, they provide complementary perspectives.
 
-### ISO 13374 6-Block Processing Model
+### ISO 13374 series 6-Block Processing Model
 
 IAES events map to the ISO 13374-2 processing blocks:
 
