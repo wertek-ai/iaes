@@ -4,21 +4,30 @@ Request for Comments: 002                                   Wertek AI
 Category: Standards Track                            September 2026
 ISSN: N/A
 
-              IAES 1.5 Wire Contract Stabilization
+              IAES 2.0 Wire Contract Stabilization
 ```
 
 # Status of This Memo
 
-**State: Draft**, per `GOVERNANCE.md` §6. It is open for comment and has
-not been accepted; nothing in it is in force, and no schema changes
-until it is.
+**State: Review**, per `GOVERNANCE.md` §6. **Compatibility: MINOR
+(§8). Target version: IAES 2.0.** It is open for comment and has not
+been accepted; nothing in it is in force, and no schema changes until
+it is.
 
 This document proposes five wire-contract stabilization changes for
-IAES 1.5. It is not the whole of that release: other memos carry the
-fronts named in §1.2. It is
-Standards Track: it changes schema annotations and the obligations of a
-conforming producer, and it changes no field, no type and no
-enumeration value. Distribution of this memo is unlimited.
+IAES 2.0. It is not the whole of that release: `IAES-RFC-003.md` carries
+the change that makes the release MAJOR, and other memos carry the
+fronts named in §1.2. It is Standards Track: it changes schema
+annotations and the obligations of a conforming producer, and it changes
+no field, no type and no enumeration value. Distribution of this memo is
+unlimited.
+
+It targeted 1.5 while it was drafted. The target moved to 2.0 for a
+reason outside these five decisions, recorded in `IAES-RFC-003.md` §5:
+incorporating the criterion this memo needed required reducing two
+promises `GOVERNANCE.md` had made, and reducing a promise is MAJOR under
+the authority that existed. None of that changes what the five decisions
+below say.
 
 # Copyright Notice
 
@@ -27,9 +36,9 @@ the Creative Commons Attribution 4.0 International License (CC BY 4.0).
 
 # Abstract
 
-> **IAES 1.5 adds no new capability. It removes accidental constraints,
-> ambiguous semantics, and unsupported external attributions before the
-> IAES 1.x wire contract is frozen.**
+> **These five changes add no new capability. They remove accidental
+> constraints, ambiguous semantics, and unsupported external
+> attributions before the IAES wire contract is frozen.**
 
 Five findings were measured in the 1.4 artifacts. Each is a place where
 the standard says something it cannot support, fails to say something it
@@ -90,7 +99,7 @@ anyone is entitled to rely on it.
   and whether anyone can consult it. What remains unresolved is whether a
   cited document *supports* a particular attribution, which is relation-audit
   work and belongs to its own memo. §4 below turns on that distinction.
-- **Anything that adds a field, a type or a value.** IAES 1.5 removes
+- **Anything that adds a field, a type or a value.** This memo removes
   and clarifies. A capability is not stabilization.
 
 # 2. Conventions
@@ -228,7 +237,7 @@ that the standard is asserting a correspondence it cannot show.
 ## 4.2. The change
 
 1. **[WIRE]** The attribution to ISO 13374-2 MUST be withdrawn from the
-   field's `description`. IAES 1.5 MUST NOT present this catalog as
+   field's `description`. The specification MUST NOT present this catalog as
    verified ISO vocabulary.
 2. **[WIRE]** The seven values and the field itself are unchanged.
    Nothing that validates today stops validating.
@@ -279,7 +288,7 @@ Inventing a vocabulary is permitted. Declaring it as inherited is not.
 ## 6.1. The problem
 
 `anomaly_score` is constrained to `[0,1]`. The question this memo had to
-answer was whether that range is meaning or accident, because after 1.5
+answer was whether that range is meaning or accident, because after this
 the answer cannot be revisited within 1.x.
 
 Measured, it is meaning. The field's own description reads "Probability
@@ -360,75 +369,71 @@ The nine that pair agree value for value, in both languages.
 | absent-means-unasserted | producers emit fewer fields; all optional |
 | `measurement_type` advisory | documentation; the field was already open |
 
-## 8.1. The principle exists; the operational criterion does not
+## 8.1. Classified, under a rule that now exists
 
-Whether this release is MINOR turns on Decision 4, and the two halves of
-`GOVERNANCE.md` answer differently.
+Every decision falls to `GOVERNANCE.md` §4.1 or §4.2 except Decision 4, and
+Decision 4 falls to **§4.4**, which was written because of it.
 
-§3 states the principle, and it is broad enough:
+| decision | classified by | level |
+|---|---|---|
+| 1 · severity and priority descriptions | §4.1, clarifying non-normative text | MINOR |
+| 2 · ISO attributions withdrawn | §4.1, correcting non-normative text | MINOR |
+| 3 · `condition_trend` declared IAES's own | §4.1, correcting non-normative text | MINOR |
+| 4 · absent means unasserted | **§4.4** | MINOR |
+| 5 · `anomaly_score` range | §4.1, clarifying; the constraint is unchanged | MINOR |
+| 6 · `measurement_type` advisory | §4.1, and it *relaxes* — the field was never closed | MINOR |
 
-> **MAJOR** — Anything that can break an existing producer or consumer.
+**This memo is MINOR.** It travels in a MAJOR release, which is not a
+contradiction: a release takes the level of the most severe change it carries,
+and the change that makes 2.0 MAJOR is in `IAES-RFC-003.md`, not here.
 
-§4.2 is the criterion that operationalises it, and measured, its five entries
-are all shaped like schema changes:
+That last sentence is an observation about how a release level is arrived at,
+not a rule anyone can cite: `GOVERNANCE.md` does not state it. It is offered as
+input to the memo that will write §4.5, which is where a rule about the level of
+a release as opposed to the level of a change belongs.
 
-    making an optional field required
-    removing or renaming a field or an event type
-    narrowing a constraint
-    changing the meaning or unit of an existing field
-    changing a schema's canonical $id
+## 8.2. Decision 4 under §4.4, step by step
 
-So §3 asks the right question — *does this break a producer or a consumer?* —
-and §4.2 does not say how to answer it for a change that touches no schema.
-The gap is not a missing category. It is a missing test.
+**§4.1 and §4.2 first.** None of the five criteria applies. No schema changes,
+and no existing field's stated meaning changes: `anomaly_score: 0.0` meant *the
+score is zero* before and means it after.
 
-## 8.2. Does it clarify an obligation, or create one?
+**T1 — meaning.** 1.4 stated no meaning for an absent optional field. A consumer
+that defaulted an absent `anomaly_score` to `0.0` was filling a gap, not
+following a rule, so the obligation **supplies** a meaning rather than changing
+one. **No.**
 
-Measured against the specification as it stands: **it creates one.** Nothing in
-IAES_SPEC.md says what the absence of an optional field means, and nothing
-forbids a producer supplying a value it was not given.
+**T2 — cross-version interoperability.** A producer that declares 1.4 and writes
+`anomaly_score: 0.0` keeps working, and a consumer at the next version reads
+`0.0` as `0.0`: same bytes, same meaning, nothing to re-read. A producer at the
+next version omits the field, which was already optional and already valid.
+**Yes.**
 
-But it is not a new direction. The Producer Guidelines already apply exactly
-this principle to one field:
+And the proviso holds: the new MUST binds only an implementation that adopts the
+new version. **MINOR.**
+
+## 8.3. What this memo argued before, and why it stops
+
+Earlier drafts reasoned from §3 directly, because the criterion did not exist.
+That reasoning is preserved in `IAES-RFC-003.md`; it does not belong here now
+that there is a rule to cite. Two things from it are worth keeping in view,
+because both are load-bearing and neither is obvious:
+
+> **"You must change code to implement a new version" is not the same as "the
+> new version is breaking."** If it were, MINOR could never carry a MUST.
+
+> **The direction is not symmetric.** *1.4 said nothing about absence* answers
+> T1 and answers nothing else. T2 is still asked, and asked about events rather
+> than intentions.
+
+The precedent that settles the *direction* of Decision 4, as opposed to its
+level, is already in the specification. The Producer Guidelines say:
 
 > A producer using a custom `event_type` with no published schema MUST omit
 > the field rather than point at a URI that does not resolve.
 
-That is *omit rather than fabricate*, decided once, for `dataschema`. Decision 4
-generalises a rule the standard already made. The precedent settles the
-direction; it does not settle the classification, which has to come from
-governance.
-
-## 8.3. Applying §3 directly
-
-Absent the missing criterion, ask §3's question literally: what breaks?
-
-A producer that declares 1.4 and writes `anomaly_score: 0.0` keeps working, and
-a consumer that declares 1.5 keeps reading it. The bytes are unchanged and
-`0.0` still means what it meant. Nothing that was valid becomes invalid, and no
-existing meaning is reinterpreted.
-
-What changes is narrower: an implementation that wants to *declare 1.5* must
-stop substituting. That is a cost of adopting the new version, not a break of
-the old one — and §4 already orients the guarantee that way: *consumers
-update first, producers follow.*
-
-The distinction worth stating, because it will recur:
-
-> **"you must change code to implement a new version" is not the same as "the
-> new version is breaking".** If it were, almost any new semantic requirement
-> would force MAJOR, and MINOR could never carry an obligation.
-
-The nearest counterexample, and why it holds: a 1.4 event that *omits*
-`anomaly_score` could have been defaulted to `0.0` by a 1.4 consumer, and a 1.5
-consumer must not. But absence had no stated meaning in 1.4 — a consumer that
-defaulted was filling a gap, not following a rule — so this supplies a meaning
-rather than changing one.
-
-**On that reading Decision 4 is MINOR.** This memo does not assert it, because
-the reading rests on a criterion `GOVERNANCE.md` does not yet contain. Writing
-that criterion is a governance change and belongs in its own memo; until it
-exists, this memo records the analysis and leaves the classification open.
+*Omit rather than fabricate*, decided once, for `dataschema`. Decision 4
+generalises a rule the standard had already made for one field.
 
 # 9. Effect on existing implementers
 
@@ -441,7 +446,7 @@ exists, this memo records the analysis and leaves the classification open.
 - **Anyone rejecting an unlisted `measurement_type`** is stricter than
   the standard and MUST relax. No published list constrains that field.
 - **No event that is schema-valid under 1.4 becomes schema-invalid
-  under 1.5.** Producers that synthesize meaningful values for absent
+  under this memo.** Producers that synthesize meaningful values for absent
   optional fields must nevertheless change that behaviour to conform,
   and the two example programs that emit a severity value in a priority
   field were never valid to begin with.
