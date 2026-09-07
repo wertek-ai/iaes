@@ -9,6 +9,10 @@ ISSN: N/A
 
 # Status of This Memo
 
+> **Authority notice.** This RFC records a proposal and the reasoning behind
+> it. It is **not** normative authority for how IAES behaves. The applicable
+> normative artifacts, as released, govern IAES. See `GOVERNANCE.md` §6.1.
+
 This document records how the IAES change process came into being, and
 ratifies the changes that were made while establishing it. It is a
 Process document: it defines no wire format and changes no schema.
