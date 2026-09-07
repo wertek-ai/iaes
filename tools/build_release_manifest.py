@@ -44,6 +44,12 @@ NORMATIVE = [
     # citation means and whether anyone can consult it. A release that did not
     # carry it would publish claims whose checkability lives outside the release.
     "references/registry.json",
+    # Normative for the SDK profile (GOVERNANCE.md §9). A claim names a release
+    # and is checked against that release's definition, so the definition has to
+    # be inside it: a normative document outside the published object is
+    # normative in a way nobody can verify.
+    "SDK_SURFACE.md",
+    "surface.json",
 ]
 NORMATIVE_GLOBS = [
     "schema/*.schema.json",

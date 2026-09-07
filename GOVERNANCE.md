@@ -3,7 +3,8 @@
 **Status:** Normative. Applies from IAES v1.4 onward, except §3's definition of
 MAJOR, the pointer at the end of §4.2, §4.4 and item 2 of §8 -- incorporated
 from `rfc/IAES-RFC-003.md` -- and §4.5, incorporated from
-`rfc/IAES-RFC-004.md`, which apply from **IAES 2.0**.
+`rfc/IAES-RFC-004.md`, and §9, incorporated from `rfc/IAES-RFC-005.md`, which
+apply from **IAES 2.0**.
 **Last updated:** 2026-09-07
 
 This document defines who maintains the Industrial Asset Event Standard, how it
@@ -441,6 +442,58 @@ defines a process for adding new data elements rather than forbidding extension.
    available for at least 24 months, and states the migration.
 4. Vendor-specific requirements will not appear in normative text.
 5. The CC BY 4.0 licence on every published version is irrevocable.
+
+## 9. Conformance
+
+There are two classes, and only the first is what *conforms to IAES* means with
+no qualifier.
+
+### 9.1 Wire conformance
+
+A system is **wire-conformant** when the events it produces validate against the
+published schemas and it observes the obligations this specification places on
+producers and consumers.
+
+Nothing about a system's internal API bears on this. A gateway that emits
+correct events conforms to IAES.
+
+### 9.2 The IAES SDK profile
+
+The **IAES SDK profile** is a set of capabilities a library exposes, defined by
+`surface.json` in the release that publishes it. `SDK_SURFACE.md` is its
+reasoning.
+
+A library **may claim** the profile, naming the release whose profile it meets.
+Claiming it is a statement any third party can check against the published
+definition.
+
+**Not claiming it is not a deficiency**, and says nothing about whether the
+library is wire-conformant. A narrow runtime that emits correct events and
+exposes no general-purpose API is wire-conformant and is not an SDK.
+
+### 9.3 The profile is claimed and checked, never granted
+
+**The steward does not grant the profile, and no one else does either.** The
+definition is published, versioned and machine-readable, so a claim is checkable
+by someone who has never spoken to the steward.
+
+This follows from §1: a rule that needs a specific vendor's judgment to be
+meaningful is not part of IAES, and a steward-granted profile would need exactly
+that. It would also make the steward the gatekeeper of a term its competitors
+need, while being a vendor with SDKs of its own. §2 already refuses the weaker
+form of the same thing -- a reference implementation confers no normative
+authority -- and certification would reintroduce it by another door.
+
+Because the definition is what a claim is checked against, it travels **inside**
+the release: `SDK_SURFACE.md` and `surface.json` are part of the normative set
+of every release that defines a profile. A definition outside the release would
+be normative in a way nobody can verify.
+
+IAES asserts no trademark. This standard cannot prevent anyone from calling a
+library an IAES SDK; it makes the claim mean something checkable, which is what
+a vendor-neutral standard is entitled to do.
+
+The rationale is in `rfc/IAES-RFC-005.md`.
 
 ---
 
