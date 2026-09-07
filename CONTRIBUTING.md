@@ -66,28 +66,38 @@ cd node-red && npm ci && npm test
 cd n8n-nodes && npm ci && npm run build
 ```
 
-Two guards run on every change and are worth knowing about before you are
-surprised by them:
+Repository guards run on every change and are worth knowing about before you
+are surprised by one:
 
 ```
-python tools/check_frontier.py                       # GOVERNANCE.md 1.1
-python tools/check_schema_compat.py --baseline main  # GOVERNANCE.md 4
+python tools/check_frontier.py                       # GOVERNANCE.md §1.1
+python tools/check_citations.py
+python tools/check_schema_compat.py --baseline main  # GOVERNANCE.md §4
 ```
 
-The first fails when the standard starts depending on its steward — a host, a
-namespace or an operating model of ours in a schema, a default or required
-behaviour. Naming Wertek in prose is fine; pointing at it in a value is not.
+`check_frontier` fails when the standard starts depending on its steward — a
+host, a namespace or an operating model of ours in a schema, a default, or
+required behaviour. Naming Wertek in prose is fine; pointing at it in a value
+is not.
+
+`check_citations` fails when an explicit citation to a section of an IAES
+document does not resolve to a section that exists. It checks nothing else: not
+ISO references, not URLs, not whether the cited section says what you claim.
+
+`check_schema_compat` fails on a change that would break a consumer reading the
+old schemas. It is the mechanical form of the compatibility policy, and it is
+allowed to be wrong about your intention: if it fails and you believe the
+change is compatible, say why in the pull request rather than working around
+it.
 
 **Repository guards enforce this repository's own integrity; they are not
 requirements of IAES conformance unless the standard text independently says
 so.** A guard demonstrates that this repository obeys a rule. It does not
 create the rule, and a third party implementing IAES runs none of them.
 
-The second fails on a change that would break a consumer reading the old
-schemas. It is the mechanical form of the compatibility policy, and it is
-allowed to be wrong about your intention: if it fails and you believe the
-change is compatible, say why in the pull request rather than working around
-it.
+This list is deliberately written without a count and without an order.
+Guards get added — the previous wording said "two", and was true until the day
+it was not.
 
 ## What a good change looks like here
 
