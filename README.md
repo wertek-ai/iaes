@@ -273,7 +273,7 @@ Every event serializes to the same envelope structure:
   "asset": {
     "asset_id": "MOTOR-001",
     "asset_name": "Motor Bomba P-101",
-    "plant": "Pesqueria",
+    "plant": "Planta Norte",
     "area": "Turbinas"
   },
   "data": {

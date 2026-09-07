@@ -255,7 +255,7 @@ class TestAssetHierarchy:
             hierarchy_level=HierarchyLevel.PLANT,
             relationship_type=RelationshipType.CHILD_OF,
             parent_asset_id="ORG-001",
-            asset_name="Pesqueria Plant",
+            asset_name="Planta Norte Plant",
         )
         d = e.to_dict()
         assert d["event_type"] == "asset.hierarchy"
