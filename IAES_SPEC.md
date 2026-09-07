@@ -79,7 +79,7 @@ Every IAES event shares this envelope:
 {
   "asset_id": "MOTOR-001",
   "asset_name": "Motor Bomba P-101",
-  "plant": "Pesqueria",
+  "plant": "Planta Norte",
   "area": "Turbinas"
 }
 ```
@@ -253,7 +253,7 @@ Sensor discovery, onboarding, and lifecycle tracking.
   "data": {
     "sensor_id": "MCSA-T41-001",
     "registration_status": "registered",
-    "sensor_model": "Wertek MCSA CT Module",
+    "sensor_model": "Acme MCSA CT Module",
     "device_serial": "T41-2026-00042",
     "firmware_version": "1.0.3",
     "measurement_capabilities": ["current_waveform", "current_spectrum", "current_rms", "thd"],
@@ -700,4 +700,6 @@ IAES is an open specification licensed under [CC BY 4.0](https://creativecommons
 
 *IAES v1.4 — September 2026*
 *Created by the [Wertek AI](https://wertek.ai) team.*
-*Reference implementation: [Wertek Integration Framework](https://github.com/wertek-ai/wertek-integrations)*
+*Implementations are listed in [README.md](README.md). None of them is
+privileged: conformance is measured on the wire, not against any one of
+them.*

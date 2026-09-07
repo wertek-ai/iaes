@@ -168,7 +168,7 @@ and context. The envelope is serialized as a JSON object.
   "asset": {
     "asset_id": "PUMP-001",
     "asset_name": "Cooling Water Pump #1",
-    "plant": "Pesqueria",
+    "plant": "Planta Norte",
     "area": "Turbine Hall"
   },
   "data": { }

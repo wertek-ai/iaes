@@ -9,13 +9,13 @@
   "asset": {
     "asset_id": "MOTOR-001",
     "asset_name": "Motor Bomba P-101",
-    "plant": "Pesqueria",
+    "plant": "Planta Norte",
     "area": "Turbinas"
   },
   "data": {
     "sensor_id": "MCSA-T41-001",
     "registration_status": "registered",
-    "sensor_model": "Wertek MCSA CT Module",
+    "sensor_model": "Acme MCSA CT Module",
     "device_serial": "T41-2026-00042",
     "firmware_version": "1.0.3",
     "measurement_capabilities": [

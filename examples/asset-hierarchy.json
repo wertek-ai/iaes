@@ -9,8 +9,8 @@
     "source": "acme.hierarchy",
     "content_hash": "1a2b3c4d5e6f7a8b",
     "asset": {
-      "asset_id": "ORG-TECHGEN",
-      "asset_name": "TechGen Pesqueria"
+      "asset_id": "ORG-ACME",
+      "asset_name": "Acme Industrial"
     },
     "data": {
       "hierarchy_level": "organization",
@@ -28,15 +28,15 @@
     "source": "acme.hierarchy",
     "content_hash": "2b3c4d5e6f7a8b9c",
     "asset": {
-      "asset_id": "PLANT-PESQUERIA",
-      "asset_name": "Planta Pesqueria",
-      "plant": "Pesqueria"
+      "asset_id": "PLANT-NORTE",
+      "asset_name": "Planta Norte",
+      "plant": "Planta Norte"
     },
     "data": {
       "hierarchy_level": "plant",
       "relationship_type": "child_of",
-      "parent_asset_id": "ORG-TECHGEN",
-      "location": "Pesqueria, Nuevo Leon, Mexico"
+      "parent_asset_id": "ORG-ACME",
+      "location": "Northfield, Country"
     }
   },
   {
@@ -52,13 +52,13 @@
     "asset": {
       "asset_id": "AREA-TURBINAS",
       "asset_name": "Turbinas",
-      "plant": "Pesqueria",
+      "plant": "Planta Norte",
       "area": "Turbinas"
     },
     "data": {
       "hierarchy_level": "area",
       "relationship_type": "child_of",
-      "parent_asset_id": "PLANT-PESQUERIA",
+      "parent_asset_id": "PLANT-NORTE",
       "location": "Building B, Floor 1"
     }
   },
@@ -75,7 +75,7 @@
     "asset": {
       "asset_id": "MOTOR-001",
       "asset_name": "Motor Bomba P-101",
-      "plant": "Pesqueria",
+      "plant": "Planta Norte",
       "area": "Turbinas"
     },
     "data": {

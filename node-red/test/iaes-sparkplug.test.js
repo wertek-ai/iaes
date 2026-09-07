@@ -269,7 +269,7 @@ describe("iaes-sparkplug node", () => {
       const node = createNode(RED, "iaes-sparkplug", {
         assetIdSource: "device_id",
         outputMode: "per_metric",
-        plant: "Pesqueria",
+        plant: "Planta Norte",
         area: "Turbinas",
         assetName: "Motor Bomba P-101",
       });
@@ -291,7 +291,7 @@ describe("iaes-sparkplug node", () => {
       // Asset fields
       assert.equal(iaes.asset.asset_id, "MOTOR-001");
       assert.equal(iaes.asset.asset_name, "Motor Bomba P-101");
-      assert.equal(iaes.asset.plant, "Pesqueria");
+      assert.equal(iaes.asset.plant, "Planta Norte");
       assert.equal(iaes.asset.area, "Turbinas");
 
       // Data fields
