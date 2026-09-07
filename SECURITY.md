@@ -26,8 +26,9 @@ RFCs with the measurement that found them.
 ## What IAES does not define, and therefore cannot get wrong
 
 **Transport security.** IAES defines no transport, no endpoint contract and no
-delivery negotiation. There is no TLS story here because there is no wire here
-— an IAES event is a shape, and how it travels belongs to whatever carries it.
+delivery negotiation. There is no TLS story here because there is no transport
+defined here. IAES is a wire contract — it says what an event is — and how
+that event travels belongs to whatever carries it.
 
 An implementation that publishes events in the clear is not violating this
 standard. It may well be a bad idea, and its own documentation should say so;
