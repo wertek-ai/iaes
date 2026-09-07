@@ -1,7 +1,9 @@
 # IAES Governance
 
-**Status:** Normative. Applies from IAES v1.4 onward.
-**Last updated:** 2026-09-03
+**Status:** Normative. Applies from IAES v1.4 onward, except §3's definition of
+MAJOR, the pointer at the end of §4.2, §4.4, and item 2 of §8, which are
+incorporated from `rfc/IAES-RFC-003.md` and apply from **IAES 2.0**.
+**Last updated:** 2026-09-07
 
 This document defines who maintains the Industrial Asset Event Standard, how it
 changes, and what implementers are entitled to rely on. It exists because a

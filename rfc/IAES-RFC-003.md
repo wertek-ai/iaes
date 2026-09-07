@@ -16,14 +16,14 @@ ISSN: N/A
 This memo proposes an addition to the compatibility policy in `GOVERNANCE.md`
 §4. It defines no wire format and changes no schema.
 
-**State: Review**, per `GOVERNANCE.md` §6. **Target version: undetermined** —
-see §5. Distribution is unlimited.
+**State: Accepted**, per `GOVERNANCE.md` §6. **Compatibility: MAJOR. Target
+version: IAES 2.0.** Distribution is unlimited.
 
-It cannot advance to Accepted yet, and the reason is in the memo rather than in
-the process: §4 has no rule that classifies a change to the compatibility
-policy itself, so this memo cannot state its own compatibility level, which §6
-requires of every RFC. §5.2 sets out the three ways forward and does not choose
-between them; two of the three end at IAES 2.0.
+It reached Accepted the long way. §4 has no rule that classifies a change to
+the compatibility policy itself, so this memo could not state its own
+compatibility level — which §6 requires of every RFC — and it said so instead
+of choosing a convenient one. The steward decided under the authority that
+exists (§5), not under a rule written for the occasion.
 
 §2 keeps the framings this criterion rejected — including the one this memo
 drafted first — because a criterion is easier to trust when the shapes it
@@ -216,15 +216,15 @@ change" would have rescued it.
 
 # 5. Compatibility level of this change
 
-**Not classifiable by §4 as it stands.** This memo states that rather than
-choosing a level, for the same reason it refused to classify Decision 4 before
-the criterion existed.
+**MAJOR. Target version: IAES 2.0.**
 
-An earlier draft of this section claimed MINOR, on the ground that no event,
-schema, field meaning or producer obligation changes. That is true and it is not
-a criterion: no such rule exists in §4. And the new §4.4 does not supply one,
-because it is deliberately scoped to obligations on producers and consumers —
-which this change is not. What this change alters is:
+Not derived from a rule for changes of this kind, because §4 has none. Decided
+by the steward under the authority that exists, and §5.1 records what that
+authority says. An earlier draft of this section claimed MINOR on the ground
+that no event, schema, field meaning or producer obligation changes — true, and
+not a criterion: no such rule exists in §4. The new §4.4 does not supply one
+either, being scoped to obligations on producers and consumers, which this
+change is not. What this change alters is:
 
 ```
 the compatibility policy itself
@@ -264,53 +264,81 @@ it is the only on-point precedent, and it does not point at MINOR.
 **Conclusion: nothing licenses MINOR, and the nearest authority points away from
 it.**
 
-## 5.2. The gap, and why it is not fixed here
+## 5.2. The decision, and the order it is taken in
 
-The ladder now reads:
+**MAJOR, under existing authority, and §4.5 afterwards.** Three options were on
+the table; the reasoning that chose between them is worth keeping, because the
+one that was rejected is the more tempting.
+
+**Rejected: write §4.5 first and let it classify this change.** A rule that is
+not yet authority must not grant itself the authority to enter as MINOR. That is
+the bootstrap this repository already met once — `IAES-RFC-000` records it: *a
+change process cannot govern the change that creates it* — and having learned to
+name it, using it as a shortcut would be worse than not having learned.
+
+**Taken: the existing authority is enough for the conservative answer.** §8 item
+2 promised that a MINOR release will not break a working integration, and this
+memo openly reduces that reliance for unspecified behaviour. §5.1, the only
+comparable exception, licenses MINOR precisely because *no implementer can have
+depended on* the defective identity — and here the opposite holds: §8 invited
+the dependency. §1 item 1, the only clause that classifies a change to one of
+GOVERNANCE's own commitments, says such a commitment is *not subject to change
+by a minor release*.
+
+Neither clause was written for this case. Both point the same way, and nothing
+points the other.
+
+### What §4.5 is for, and what it is not for
+
+The second-order gap is real and stays open until it is closed prospectively:
 
 ```
 §4.1 / §4.2   representation, and a named field's meaning
 §4.4          residual producer and consumer obligations
-   ???        changes to the compatibility policy itself
+§4.5          changes to the compatibility policy itself        ← still to write
               changes to what implementers may rely on
               changes to the steward's own obligations
 ```
 
-This memo closed the first-order gap and, on being incorporated, found the
-second-order one. **It is not fixed inside §4.4.** Folding *changes to the
-policy* into a subsection about *producer and consumer obligations* would mix
-two domains, which is the defect §4.4 exists to have avoided.
+§4.5 will be written in its own memo and **may travel inside 2.0 alongside this
+one**. It is not used to legitimise this memo's entry retroactively. Its purpose
+is that this gap never has to be decided by judgment again.
 
-There is a structural fact that makes the decision heavier than it looks.
-`GOVERNANCE.md` **has no version of its own**: §3-bis makes a specification
-release indivisible — the specification, this document, the schemas and the
-accepted RFCs under one tag, with one DOI. So a MAJOR change to governance
-carries the wire format to **2.0 without a single byte changing**.
+It does not belong inside §4.4: folding *changes to the policy* into a
+subsection about *producer and consumer obligations* would mix two domains,
+which is the defect §4.4 exists to have avoided.
 
-Three ways out, and the choice belongs to the steward:
+### What 2.0 means here
 
-1. **Classify it MAJOR** and let this part of governance go to 2.0. Coherent,
-   expensive, and the honest reading of §1 item 1 and of §5.1's principle.
-2. **Write §4.5 first**, in its own memo, for changes to the policy itself —
-   with §4.5 shaped so that a change that *adds a classification rule without
-   reducing any guarantee* is MINOR and a change that *reduces a guarantee* is
-   MAJOR. That memo would then be MINOR by its own rule, which is a fixed point
-   and must be declared as one rather than derived. This memo would still come
-   out MAJOR under it.
-3. **Reduce nothing**: leave §3 and §8 item 2 as they are and make §4.4 agree
-   with them, classifying a change that can break a consumer relying on
-   unspecified behaviour as MAJOR. Decision 4 would then be MAJOR, and IAES
-   would go to 2.0 for a rule about omitting a field.
+`GOVERNANCE.md` has no version of its own. §3-bis makes a specification release
+indivisible — the specification, this document, the schemas and the accepted
+RFCs under one tag, with one DOI — so a MAJOR change to governance carries the
+whole standard.
 
-📌 Options 1 and 3 both end at 2.0; they differ in what 2.0 is *for*. Option 2
-does not avoid that — it makes the classification derivable instead of asserted.
+That is the right result rather than an accident of packaging:
 
-**What this memo will not do is invent a fourth: an exception written to keep
-this change inside 1.5.** §5.1 shows what a legitimate narrow exception looks
-like — a stated ground, four conditions, evidence recorded, and a prohibition on
-carrying anything else. An exception reverse-engineered from a desired version
-number would have none of that, and would teach exactly what §5.1 says it exists
-to avoid: that version numbers do not mean what §3 says they mean.
+> **IAES 2.0 is the first version whose technical contract and whose contract
+> of evolution are both closed.**
+
+Materially changing what an implementer is authorised to rely on is a break in
+the standard even when no payload changes. A version number that moved only for
+payloads would be describing half the standard.
+
+### Measured: 2.0 is not free of schema work
+
+*«2.0 without touching a schema»* is not available, and the reason is in the
+schemas rather than in this memo:
+
+| where | today | consequence |
+|---|---|---|
+| `iaes-envelope.schema.json`, `spec_version` | `^1\.[0-9]+$` | an event declaring `2.0` **fails validation** against every published schema |
+| all eight `$id`s | `https://iaes.dev/schema/v1/…` | a major line needs its own identity; §4.2 already calls a `$id` change MAJOR |
+
+Both are release work and neither belongs in this memo. They are named here so
+the release is planned rather than discovered: the 2.0 cut has to widen or
+re-major the `spec_version` pattern, publish the schemas under a `v2` identity,
+keep every `v1` identity resolvable forever (§8 item 1), and carry the version
+history entry and migration statement §8 item 3 requires.
 
 # 6. Effect on existing implementers
 
@@ -441,7 +469,7 @@ the defect this repository has already paid for once: a canonical document that
 contradicted itself two sections apart, and two readers with the document open
 deduced opposite repairs.
 
-They ship together or not at all.
+They ship together, in **IAES 2.0**, or not at all.
 
 # Author
 
