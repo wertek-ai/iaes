@@ -48,7 +48,7 @@ UNPUBLISHED = {
         "why": "Closed in the schema since 1.0, with no convenience constant "
                "in either SDK. This is ergonomics, not a wire defect: the "
                "schema publishes the five values and a producer reading it "
-               "has everything it needs. Governed by SDK_SURFACE.md.",
+               "has everything it needs -- an SDK convenience, not a wire defect.",
         "resolve_in": "1.5",
     },
 }

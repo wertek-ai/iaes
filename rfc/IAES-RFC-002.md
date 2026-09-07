@@ -9,6 +9,10 @@ ISSN: N/A
 
 # Status of This Memo
 
+**State: Draft**, per `GOVERNANCE.md` §6. §8 leaves one question open for the
+change process rather than answering it: this memo does not claim a
+compatibility level it cannot derive.
+
 **State: Draft**, per `GOVERNANCE.md` §6. It is open for comment and has
 not been accepted; nothing in it is in force, and no schema changes
 until it is.
@@ -54,6 +58,9 @@ This memo resolves those five and nothing else.
     6. Decision 4: an absent optional value is not an assertion
     7. Decision 5: an advisory list does not constrain the wire
     8. Compatibility
+       8.1. Decision 4 is not classifiable by §4
+       8.2. Does it clarify an obligation, or create one?
+       8.3. What follows
     9. Effect on existing implementers
     10. Worked example
 
@@ -82,9 +89,11 @@ anyone is entitled to rely on it.
   `parent_asset_id`, and the difference between a relationship and a
   hierarchy are a model question, not a constraint audit. They belong to
   a separate memo.
-- **Reference provenance.** Which external documents IAES may cite, and
-  on what evidence, is a governance question raised by §4 below. It is
-  not resolved here.
+- **Reference support.** Document identity and availability are now
+  governed by `references/registry.json`: which document a citation means,
+  and whether anyone can consult it. What remains unresolved is whether a
+  cited document *supports* a particular attribution, which is relation-audit
+  work and belongs to its own memo. §4 below turns on that distinction.
 - **Anything that adds a field, a type or a value.** IAES 1.5 removes
   and clarifies. A capability is not stabilization.
 
@@ -116,10 +125,14 @@ first is binding on an implementer:
             Binding on this standard's publications, on nobody else.
 
     [REPO]  this repository's examples, SDKs and guards. Recorded so the
-            evidence is reproducible. NOT normative for anyone, and in
-            particular not for a third-party SDK: the surface an SDK
-            offers is governed by SDK_SURFACE.md, which is explicitly
-            normative for implementations and not for the wire.
+            evidence is reproducible, and normative for nobody. Changes to
+            this repository's SDK conveniences appear here only as
+            consequences of the wire decision.
+
+**This memo makes no claim about SDK-surface conformance.** Whether a second
+class of conformance exists beside wire conformance, and who grants it, is an
+open question of authority. A memo about six fields must not settle it in
+passing.
 
 A memo that quietly legislated for its author's own libraries would be
 the standard depending on the steward, which GOVERNANCE.md §1 forbids.
@@ -174,11 +187,22 @@ sitting under a column headed Priority.
    priority catalog. They were never valid; this is a repair, not a
    change to the standard.
 
-**[WIRE]** A producer MUST NOT present a severity value in a priority
-field, or the reverse. Which urgency an asset's condition deserves is
-the consumer's judgment — it is the party that knows what else is
-running — and IAES gives the two fields without deciding the mapping
-between them.
+**[WIRE]** `severity` MUST represent the condition of the asset.
+`priority` MUST represent the urgency of the proposed response.
+
+Stated as meaning rather than as provenance, on purpose. An earlier draft
+said a producer must not present a severity value in a priority field — but
+`low`, `medium` and `high` belong to both catalogs, and no consumer can tell
+from the event whether `priority: "high"` was chosen as urgency or copied
+across from severity. A rule the wire cannot observe is not a wire rule.
+
+What is observable is caught already: `critical` is not in the priority
+catalog, so the schema rejects it. The two example programs were invalid
+before this memo and would be invalid without it.
+
+Which urgency a condition deserves stays the consumer's judgment: it is the
+party that knows what else is running, and IAES gives both fields without
+deciding the mapping between them.
 
 # 4. Decision 2: iso_13374_status loses an attribution it cannot support
 
@@ -188,10 +212,15 @@ The field's description claims to carry the "ISO 13374-2 health status
 level", and `IAES_SPEC.md` Appendix C presents the seven values as an
 ISO mapping.
 
-Measured: **ISO 13374-2 is not among the documents available to the
-editor.** The claim cannot be verified, which means it cannot be
-defended if an implementer or a certification body asks on what basis it
-is made.
+Measured, in the order the standard now distinguishes: the citation
+**does not identify a document** — it names a part but no edition, and ISO
+revises under the same number — and separately, **no copy of the part is
+held**. `references/registry.json` records it as `unresolved` for the first
+reason, not `unavailable` for the second.
+
+Either alone would make the claim undefendable if an implementer or a
+certification body asked on what basis it is made. Together they mean the
+question cannot even be posed.
 
 This is not a statement that the values are wrong. It is a statement
 that the standard is asserting a correspondence it cannot show.
@@ -299,8 +328,9 @@ the two directions is a defect of the standard.
   producer with nowhere to read the values from. **That was wrong.** The
   schema publishes the five values, the schema is the normative
   artifact, and a producer reading it has everything it needs. What
-  differs is the ergonomics of two particular libraries, which is
-  governed by `SDK_SURFACE.md` and is **not** part of the wire contract.
+  differs is the ergonomics of two particular libraries, which is **not**
+  part of the wire contract. Which document governs that ergonomics is an
+  open question this memo does not answer.
 
 The nine that pair agree value for value, in both languages.
 
@@ -320,9 +350,7 @@ The nine that pair agree value for value, in both languages.
 
 # 8. Compatibility
 
-**BACKWARD**, per `GOVERNANCE.md` §4.1. This is a MINOR release.
-
-Nothing that validates under 1.4 stops validating under 1.5:
+**Schema-wise, BACKWARD.** Nothing that validates under 1.4 stops validating:
 
 | change | effect on the wire |
 |---|---|
@@ -331,13 +359,64 @@ Nothing that validates under 1.4 stops validating under 1.5:
 | `condition_trend` declared IAES's own | annotation only; values unchanged |
 | `anomaly_score` range | unchanged |
 | absent-means-unasserted | producers emit fewer fields; all optional |
-| `triggered_by` constant | this repository's SDKs only; no schema change |
 | `measurement_type` advisory | documentation; the field was already open |
 
-The one behaviour that changes is that a conforming producer stops
-inventing values for optional fields. A consumer that depended on
-`anomaly_score` always being present was relying on a field the schema
-has always marked optional, and was not conforming.
+## 8.1. Decision 4 is not classifiable by §4, and that is the finding
+
+Whether this release is MINOR turns on Decision 4, and `GOVERNANCE.md` §4.2
+cannot answer it. Its five criteria for MAJOR are, measured, all shaped like
+schema changes:
+
+    making an optional field required
+    removing or renaming a field or an event type
+    narrowing a constraint
+    changing the meaning or unit of an existing field
+    changing a schema's canonical $id
+
+**None of them is about what a producer must do.** Decision 4 adds no
+constraint to any schema and removes none; it obliges producers to stop
+substituting values they were not given.
+
+So the honest classification is neither. Reading it as MINOR because no bytes
+stop validating uses a test §4 does not offer, and reading it as MAJOR by
+analogy invents a criterion. This memo says so rather than picking whichever
+answer is convenient.
+
+## 8.2. Does it clarify an obligation, or create one?
+
+Measured against the specification as it stands: **it creates one.** Nothing in
+IAES_SPEC.md says what the absence of an optional field means, and nothing
+forbids a producer from supplying a value it was not given. A producer that
+wrote `anomaly_score: 0.0` for an unknown score broke no stated rule.
+
+But it is not a new direction. The specification already applies exactly this
+principle to one field, in the Producer Guidelines:
+
+> A producer using a custom `event_type` with no published schema MUST omit
+> the field rather than point at a URI that does not resolve.
+
+That is *omit rather than fabricate*, decided once, for `dataschema`. Decision 4
+generalises a rule the standard already made, to every optional field, for the
+same reason.
+
+## 8.3. What follows
+
+Three routes, and the choice belongs to the change process rather than to this
+memo:
+
+1. **Extend §4** so it can classify a change to a conformance rule as well as a
+   change to a schema. That is governance work and needs its own memo. Until it
+   exists, every future decision of this shape hits the same wall.
+2. **Weaken Decision 4 to SHOULD.** It would then be advice, and an
+   implementation could keep fabricating while remaining conforming — which
+   defeats the purpose, since the defect is precisely that green is misleading.
+3. **Release it as MAJOR**, conservatively, on the ground that a previously
+   conforming producer becomes non-conforming.
+
+This memo's position: the gap in §4 is worth naming before it is worked around.
+An RFC that quietly picked MINOR would be doing to §4 what the `format`
+annotations do to the prose — claiming a strength the mechanism does not
+exercise.
 
 # 9. Effect on existing implementers
 
@@ -349,8 +428,6 @@ has always marked optional, and was not conforming.
   The field continues to work; the claim about its provenance does not.
 - **Anyone rejecting an unlisted `measurement_type`** is stricter than
   the standard and MUST relax. No published list constrains that field.
-- **No SDK is obliged to expose any constant.** Conformance is measured
-  on the wire, not on a library's surface.
 - **No event that is schema-valid under 1.4 becomes schema-invalid
   under 1.5.** Producers that synthesize meaningful values for absent
   optional fields must nevertheless change that behaviour to conform,
