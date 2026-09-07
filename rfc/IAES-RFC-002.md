@@ -406,25 +406,34 @@ annotation or provenance: §4.1's text bullet is scoped to *non-normative* text,
 §4.2's five criteria do not reach it, and §4.4 is about obligations, which these
 are not.
 
+**§4.5 does not reach them either**, and it is worth saying so rather than
+leaving a reader to assume that the newest subsection catches whatever the
+older ones missed. Its domain is this policy, §8, and the obligations of the
+**steward**. Decisions 1 to 3 are normative corrections to an annotation and to
+an attribution of provenance **on the wire artifacts** — a schema's
+`description`, an appendix — which is neither the policy nor a promise the
+steward made.
+
 So the memo's overall level is a **steward's decision, not a derivation**: this
 memo is **MINOR**, with Decisions 4 and 5 derived and 1 to 3 resting on judgment
 until the rule exists.
 
 ## 8.1.1. Two inputs for §4.5
 
-The gap `IAES-RFC-003.md` §5.2 left open now has a second face, and both belong
-in the memo that writes §4.5:
+The gap `IAES-RFC-003.md` §5.2 left open had two faces. §4.5 closed the first
+and left the second, and the record of which is which matters:
 
 1. **How the level of a *release* follows from the levels of the *changes* it
-   carries.** This memo is MINOR and ships inside a MAJOR release. That is not a
-   contradiction — the release takes the level of the most severe change it
-   carries, and the severe one is in `IAES-RFC-003.md`, not here — but
-   `GOVERNANCE.md` nowhere says it, so it is an observation and not a rule
-   anyone may cite.
+   carries.** ✅ **Closed.** `GOVERNANCE.md` §4.5 now states it: the level of a
+   release is the maximum level of the changes it incorporates,
+   `PATCH < MINOR < MAJOR`. This memo is MINOR and ships inside a MAJOR release,
+   and that pairing is now something a reader can look up rather than infer.
 2. **How to classify a normative change that alters neither representation, nor
    meaning, nor obligation.** Decisions 1 to 3 are exactly that shape, and they
    will not be the last: a standard that names its own provenance will
-   eventually have to correct it again.
+   eventually have to correct it again. §4.5 closed the gap above this one —
+   changes to the policy — and deliberately not this one, which sits below it:
+   a normative annotation on a wire artifact.
 
 ## 8.2. Decision 4 under §4.4, step by step
 
