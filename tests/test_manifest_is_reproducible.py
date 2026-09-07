@@ -148,3 +148,47 @@ def _autocrlf_here() -> str:
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestAReleaseStaysRebuildable(unittest.TestCase):
+    """Membership in a release and the content of a release resolve against the
+    same ref, or a published manifest stops being reproducible.
+
+    NORMATIVE was made ref-aware and NORMATIVE_GLOBS was not, so the defect
+    survived hidden behind the glob: adding one schema made spec-v1.4
+    impossible to rebuild, because the glob offered a file the tag never had.
+    """
+
+    NEW = ROOT / "schema" / "a-later-event.schema.json"
+
+    def tearDown(self):
+        subprocess.run(["git", "rm", "-f", "--cached", "-q", str(self.NEW)],
+                       cwd=ROOT, capture_output=True)
+        self.NEW.unlink(missing_ok=True)
+
+    def test_a_schema_added_later_does_not_break_an_earlier_tag(self):
+        tags = subprocess.run(["git", "tag", "-l", "spec-v*"], cwd=ROOT,
+                              capture_output=True, text=True).stdout.split()
+        if not tags:
+            self.skipTest("no specification tag in this clone")
+        tag = sorted(tags)[-1]
+        before = subprocess.run(
+            [sys.executable, "tools/build_release_manifest.py", "--tag", tag],
+            cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(before.returncode, 0, before.stderr)
+
+        self.NEW.write_text(
+            '{"$schema": "https://json-schema.org/draft/2020-12/schema",\n'
+            ' "$id": "https://iaes.dev/schema/v1/later", "type": "object"}\n',
+            encoding="utf-8")
+        subprocess.run(["git", "add", str(self.NEW)], cwd=ROOT, capture_output=True)
+
+        after = subprocess.run(
+            [sys.executable, "tools/build_release_manifest.py", "--tag", tag],
+            cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(
+            after.returncode, 0,
+            f"a schema added after {tag} made {tag} impossible to rebuild:\n{after.stderr}")
+        self.assertEqual(
+            before.stdout, after.stdout,
+            f"{tag} must describe the same release regardless of what exists today")

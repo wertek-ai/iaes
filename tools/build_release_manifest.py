@@ -22,6 +22,7 @@ release tool that needs an install is a release tool that stops running.
 """
 
 import argparse
+import fnmatch
 import hashlib
 import json
 import re
@@ -39,6 +40,10 @@ TAG_PREFIX = "spec-v"
 NORMATIVE = [
     "IAES_SPEC.md",
     "GOVERNANCE.md",
+    # Normative for what IAES may cite: it declares which external document each
+    # citation means and whether anyone can consult it. A release that did not
+    # carry it would publish claims whose checkability lives outside the release.
+    "references/registry.json",
 ]
 NORMATIVE_GLOBS = [
     "schema/*.schema.json",
@@ -98,21 +103,48 @@ def major_minor(version: str) -> str:
     return ".".join(version.split(".")[:2])
 
 
-def normative_files() -> list:
-    files = [ROOT / p for p in NORMATIVE]
-    for pattern in NORMATIVE_GLOBS:
-        files.extend(sorted(ROOT.glob(pattern)))
-    missing = [f for f in files if not f.exists()]
-    if missing:
-        raise SystemExit(f"normative set is incomplete: {missing}")
+def tracked_at(ref: str) -> list:
+    """Every path the repository holds at that ref, in a stable order."""
+    out = subprocess.run(["git", "ls-tree", "-r", "--name-only", ref],
+                         cwd=ROOT, check=True, capture_output=True, text=True).stdout
+    return sorted(out.splitlines())
+
+
+def matching(ref: str, patterns: list) -> list:
+    """Paths at `ref` matching any pattern.
+
+    Deliberately not ROOT.glob. Membership in a release and the content of a
+    release must resolve against the same ref: globbing the working tree meant
+    a manifest for a past tag included whatever exists today, so adding one
+    schema would make an already published manifest impossible to rebuild --
+    the one property this tool exists to have.
+
+    That defect survived the earlier fix because it was hidden behind the
+    glob: NORMATIVE was made ref-aware and NORMATIVE_GLOBS was not.
+    """
+    return [ROOT / rel for rel in tracked_at(ref)
+            if any(fnmatch.fnmatch(rel, pattern) for pattern in patterns)]
+
+
+def normative_files(ref: str = "HEAD") -> list:
+    """The normative set as it stood at `ref`.
+
+    A file added to NORMATIVE after a release was tagged was not part of that
+    release. At HEAD the set must be complete: there an omission is a defect
+    rather than history.
+    """
+    present = set(tracked_at(ref))
+    files = [ROOT / p for p in NORMATIVE if p in present]
+    if ref == "HEAD":
+        missing = [p for p in NORMATIVE if p not in present]
+        if missing:
+            raise SystemExit(f"normative set is incomplete at {ref}: {missing}")
+    files.extend(matching(ref, NORMATIVE_GLOBS))
     return files
 
 
-def rationale_files() -> list:
-    files = []
-    for pattern in RATIONALE_GLOBS:
-        files.extend(sorted(ROOT.glob(pattern)))
-    return files
+def rationale_files(ref: str = "HEAD") -> list:
+    return matching(ref, RATIONALE_GLOBS)
 
 
 def digest(path: Path, ref: str = "HEAD") -> str:
@@ -188,10 +220,8 @@ def check(tag: str | None) -> str:
 
 def build(tag: str | None, out: Path | None) -> dict:
     version = check(tag)
-    files = normative_files()
-    # The tag when there is one, so the manifest describes the release rather
-    # than whatever happens to be checked out.
     ref = tag if tag else "HEAD"
+    files = normative_files(ref)
     manifest = {
         "specification_version": version,
         "tag": tag,
@@ -201,7 +231,7 @@ def build(tag: str | None, out: Path | None) -> dict:
         },
         "rationale": {
             str(f.relative_to(ROOT)).replace("\\", "/"): digest(f, ref)
-            for f in rationale_files()
+            for f in rationale_files(ref)
         },
         "implementations": {
             rel: {"version": v, "implements": major_minor(v)}
