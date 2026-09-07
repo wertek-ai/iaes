@@ -18,6 +18,14 @@ nothing.
 So this deliberately does NOT check whether a cited document says what the
 specification claims. That is the third rung, and it needs the documents open.
 
+One limit, stated rather than discovered. A mention is declared by name, so
+declaring one exempts every occurrence of that name -- including a real
+dependency added later under the same name. Making it per-occurrence would
+mean tracking line numbers, which go stale on every edit and would produce
+false failures on reflow. The exemption list is short, each entry carries its
+reason, and both are reviewed when it changes; that is the trade, and it is a
+trade rather than an oversight.
+
 Stdlib only, like its neighbours: it must run and fail before any toolchain
 installs.
 
@@ -31,7 +39,16 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 REGISTRY = ROOT / "references" / "registry.json"
-SPEC = ROOT / "IAES_SPEC.md"
+
+# The artifacts that can make a normative claim, and therefore the artifacts
+# whose external references have to be accounted for. Deliberately not a
+# curated table inside the specification: checking a declaration against
+# another copy of the same declaration proves only that we wrote it twice.
+# RFCs are excluded because they are rationale, not authority (GOVERNANCE.md
+# 6.1), and SDK_SURFACE.md is excluded until it is settled who grants it the
+# authority it claims for itself.
+NORMATIVE_ARTIFACTS = ["IAES_SPEC.md", "GOVERNANCE.md"]
+NORMATIVE_GLOBS = ["schema/*.schema.json"]
 
 # Fields each availability value obliges. An entry that claims a copy must say
 # which copy, because an edition is part of the evidence's identity.
@@ -44,6 +61,15 @@ REQUIRED_BY_AVAILABILITY = {
 
 # A standard published in parts. Citing one without a part names no document.
 MULTIPART = {"13374", "81346", "13849", "61508", "62443"}
+
+# Publishers whose documents are immutable once numbered: a revision gets a new
+# number rather than a new edition of the old one. For these a number alone
+# identifies a document. ISO revises under the same number, so an ISO citation
+# without an edition does not.
+IMMUTABLE_PUBLISHERS = {"RFC"}
+
+CITATION = re.compile(
+    r"\b(RFC|ISO/TS|ISO/IEC|ISO|IEC)[ /]([0-9]{3,5}(?:-[0-9]+)?)(:[0-9]{4})?(\s+series)?")
 
 
 def load_registry() -> dict:
@@ -65,23 +91,45 @@ def load_registry() -> dict:
     return json.loads(REGISTRY.read_text(encoding="utf-8"), object_pairs_hook=no_duplicates)
 
 
-def cited_documents() -> list:
-    """The external documents named in the specification's References section."""
-    text = SPEC.read_text(encoding="utf-8")
-    start = text.index("## References")
-    end = text.index("## Appendix A", start)
-    section = text[start:end]
+def normative_files() -> list:
+    files = [ROOT / p for p in NORMATIVE_ARTIFACTS]
+    for pattern in NORMATIVE_GLOBS:
+        files.extend(sorted(ROOT.glob(pattern)))
+    missing = [f for f in files if not f.exists()]
+    if missing:
+        raise SystemExit(f"error: normative artifact missing: {missing}")
+    return files
 
-    found = []
-    for line in section.split("\n"):
-        if not line.startswith("|"):
-            continue
-        cell = line.split("|")[1].strip()
-        # A cell may name more than one, as "RFC 2119, RFC 8174".
-        for m in re.finditer(r"\b(RFC|ISO|IEC)\s+([0-9]+(?:-[0-9]+)?)(\s+series)?", cell):
-            publisher, number, series = m.group(1), m.group(2), bool(m.group(3))
-            found.append((f"{publisher} {number}" + (" series" if series else ""),
-                          publisher, number, series))
+
+def cited_documents() -> dict:
+    """Every external document named by a normative artifact, and where.
+
+    Also picks up the one dependency that is not prose: the JSON Schema dialect
+    each schema declares in `$schema`. A schema that says which dialect it
+    speaks depends on that dialect's specification as surely as the text
+    depends on the documents it names.
+    """
+    found = {}
+    for path in normative_files():
+        text = path.read_text(encoding="utf-8")
+        rel = path.relative_to(ROOT).as_posix()
+
+        for m in CITATION.finditer(text):
+            publisher, number = m.group(1), m.group(2)
+            edition = (m.group(3) or "").lstrip(":")
+            series = bool(m.group(4))
+            name = f"{publisher} {number}" + (f":{edition}" if edition else "") \
+                                           + (" series" if series else "")
+            found.setdefault(name, {"publisher": publisher, "number": number,
+                                    "edition": edition, "series": series,
+                                    "where": set()})["where"].add(rel)
+
+        if path.suffix == ".json":
+            dialect = json.loads(text).get("$schema")
+            if dialect:
+                found.setdefault(dialect, {"publisher": "JSON Schema", "number": "",
+                                           "edition": "", "series": False,
+                                           "where": set()})["where"].add(rel)
     return found
 
 
@@ -89,31 +137,45 @@ def main() -> None:
     registry = load_registry()
     entries = registry.get("references", [])
     by_citation = {e.get("cited_as"): e for e in entries}
+    # Keys beginning with $ are commentary, not entries. Counting one as a
+    # mention would make the summary line report a number nobody declared.
+    mentions = {k: v for k, v in registry.get("mentions_not_dependencies", {}).items()
+                if not k.startswith("$")}
     problems = []
 
-    # 1. Everything the specification cites is declared.
-    for cited_as, publisher, number, series in cited_documents():
-        # Asked first, deliberately. A multi-part standard cited without a part
-        # names no document, so "it is not in the registry" would be true and
-        # would teach the wrong repair: adding a registry entry for a family.
-        if publisher == "ISO" and number in MULTIPART and "-" not in number and not series:
-            problems.append(
-                f"{cited_as} is a multi-part standard and does not identify a "
-                f"document. Cite a part and edition, or write "
-                f"\"{publisher} {number} series\" if the statement concerns the "
-                f"family as a whole. Do not add a registry entry for it: "
-                f"availability cannot be answered about a family.")
+    cited = cited_documents()
+
+    for name, info in sorted(cited.items()):
+        publisher, number = info["publisher"], info["number"]
+        where = ", ".join(sorted(info["where"]))
+
+        # A passing mention is not a dependency, and must say so on the record.
+        if name in mentions:
+            if not mentions[name]:
+                problems.append(
+                    f"{name} is listed as a mention rather than a dependency, with "
+                    f"no reason. Say why nothing depends on it, or register it.")
             continue
 
-        entry = by_citation.get(cited_as)
+        # Asked first: a citation that names no document cannot be asked about
+        # availability, and "not in the registry" would teach the wrong repair.
+        if publisher.startswith("ISO") and number in MULTIPART \
+                and "-" not in number and not info["series"]:
+            problems.append(
+                f"{name} (in {where}) is a multi-part standard and does not identify "
+                f"a document. Cite a part and edition, or write \"{publisher} "
+                f"{number} series\" if the statement concerns the family. Do not add "
+                f"a registry entry: availability cannot be answered about a family.")
+            continue
+
+        entry = by_citation.get(name)
         if entry is None:
             problems.append(
-                f"IAES_SPEC.md cites {cited_as}, which references/registry.json does "
-                f"not declare. Add an entry with its `cited_as`, its identity and its "
-                f"availability, so a reader can tell whether the claim can be checked.")
+                f"{name} (in {where}) is not declared in references/registry.json. "
+                f"Add an entry with its `cited_as`, its identity and its availability, "
+                f"so a reader can tell whether the claim can be checked.")
             continue
 
-        # 2. Each entry says enough for its own availability value.
         av = entry.get("availability")
         if av not in REQUIRED_BY_AVAILABILITY:
             problems.append(
@@ -127,14 +189,25 @@ def main() -> None:
                     f"missing. A held copy is a specific edition in a specific "
                     f"language; without them the entry names a family, not evidence.")
 
-    # 3. Nothing declared that nothing cites.
-    cited_names = {c for c, _, _, _ in cited_documents()}
-    for entry in entries:
-        if entry.get("cited_as") not in cited_names:
+        # Identity before possession. An ISO number without an edition does not
+        # name a document -- ISO revises under the same number -- so it cannot
+        # be recorded as available or unavailable, only as unresolved.
+        if publisher not in IMMUTABLE_PUBLISHERS and publisher != "JSON Schema" \
+                and not info["edition"] and not info["series"] \
+                and av in ("available", "unavailable"):
             problems.append(
-                f"{entry.get('id')}: declared in the registry and cited nowhere in "
-                f"IAES_SPEC.md. Remove it, or cite it. A registry that outlives its "
-                f"citations stops describing the specification.")
+                f"{name} (in {where}) names no edition, and {publisher} revises "
+                f"under the same number, so the citation does not identify a "
+                f"document. Its registry entry claims availability {av!r}, which "
+                f"answers a question that cannot yet be asked. Either pin the "
+                f"edition in the citation, or record it as `unresolved`.")
+
+    for entry in entries:
+        if entry.get("cited_as") not in cited:
+            problems.append(
+                f"{entry.get('id')}: declared in the registry and cited by no "
+                f"normative artifact. Remove it, or cite it. A registry that "
+                f"outlives its citations stops describing the specification.")
 
     if problems:
         for p in problems:
@@ -146,7 +219,8 @@ def main() -> None:
     for e in entries:
         counts[e["availability"]] = counts.get(e["availability"], 0) + 1
     summary = ", ".join(f"{v} {k}" for k, v in sorted(counts.items()))
-    print(f"every cited document is declared and its availability stated ({summary})")
+    print(f"every external document named by a normative artifact is accounted "
+          f"for ({len(cited)} citations, {summary}, {len(mentions)} mention(s))")
     print("not checked here: whether a document supports what the specification "
           "attributes to it -- that needs the document open, and is a separate question")
 

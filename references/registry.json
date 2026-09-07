@@ -1,55 +1,37 @@
 {
-  "$comment": "Which external document each reference in IAES_SPEC.md means, and whether it can be consulted. Normative for what IAES may cite: a claim about a document nobody can open is a claim nobody can check. It says nothing about whether the document supports what IAES attributes to it -- that is a separate question, and this file deliberately does not answer it.",
+  "$comment": "Which external document each citation in a normative artifact means, and whether anyone can consult it. Normative for what IAES may cite: a claim about a document nobody can open is a claim nobody can check. It says nothing about whether a document supports what IAES attributes to it -- that is a separate question this file deliberately does not answer.",
   "registry_version": 1,
   "measured": "2026-09-07",
 
+  "two_questions": {
+    "identity": "Does the citation name a document? A number alone identifies an IETF RFC, because a revision gets a new number. It does not identify an ISO standard, which is revised under the same number, so an ISO citation without an edition names a family.",
+    "availability": "Given an identified document, can it be consulted? This can only be asked once identity is settled -- which is why `unresolved` exists and is not a kind of `unavailable`."
+  },
+
   "vocabulary": {
-    "id": "The identity this registry answers about. A document, not a family: an edition where one is known, because clause numbering differs between editions and translations.",
-    "availability": {
-      "public": "Published without charge by its publisher. Anyone can consult the same text.",
-      "available": "Not public, and a copy is held. Requires access_basis and, where the copy is a specific edition, that edition and language.",
-      "unavailable": "Not public and no copy held. A claim about it cannot be checked without buying it.",
-      "unresolved": "The citation does not identify a document, so availability cannot be asked. Requires resolution before it can be answered."
-    },
-    "access_basis": "How the copy was obtained. steward_copy means the editor holds a purchased copy."
+    "public": "Published without charge by its publisher. Anyone can consult the same text.",
+    "available": "Not public, and a copy is held. Requires edition, language and access_basis.",
+    "unavailable": "Identified, not public, and no copy held. Checking a claim about it needs a purchase.",
+    "unresolved": "The citation does not identify a document. Availability cannot be asked yet. Requires a note saying what would resolve it."
   },
 
   "references": [
+    { "id": "RFC-2119", "publisher": "IETF", "number": "2119", "availability": "public", "cited_as": "RFC 2119" },
+    { "id": "RFC-3339", "publisher": "IETF", "number": "3339", "availability": "public", "cited_as": "RFC 3339" },
+    { "id": "RFC-3986", "publisher": "IETF", "number": "3986", "availability": "public", "cited_as": "RFC 3986" },
+    { "id": "RFC-4122", "publisher": "IETF", "number": "4122", "availability": "public", "cited_as": "RFC 4122" },
+    { "id": "RFC-8174", "publisher": "IETF", "number": "8174", "availability": "public", "cited_as": "RFC 8174" },
+    { "id": "RFC-8594", "publisher": "IETF", "number": "8594", "availability": "public", "cited_as": "RFC 8594" },
+    { "id": "RFC-9745", "publisher": "IETF", "number": "9745", "availability": "public", "cited_as": "RFC 9745" },
+
     {
-      "id": "RFC-3339",
-      "publisher": "IETF",
-      "number": "3339",
+      "id": "json-schema-draft-2020-12",
+      "publisher": "JSON Schema",
       "availability": "public",
-      "cited_as": "RFC 3339"
+      "cited_as": "https://json-schema.org/draft/2020-12/schema",
+      "note": "Not a prose citation. Every schema declares this dialect in `$schema`, so the schemas depend on its specification as surely as the text depends on the documents it names. Identified by URI, which pins the draft."
     },
-    {
-      "id": "RFC-4122",
-      "publisher": "IETF",
-      "number": "4122",
-      "availability": "public",
-      "cited_as": "RFC 4122"
-    },
-    {
-      "id": "RFC-3986",
-      "publisher": "IETF",
-      "number": "3986",
-      "availability": "public",
-      "cited_as": "RFC 3986"
-    },
-    {
-      "id": "RFC-2119",
-      "publisher": "IETF",
-      "number": "2119",
-      "availability": "public",
-      "cited_as": "RFC 2119"
-    },
-    {
-      "id": "RFC-8174",
-      "publisher": "IETF",
-      "number": "8174",
-      "availability": "public",
-      "cited_as": "RFC 8174"
-    },
+
     {
       "id": "ISO-14224:2016-en",
       "publisher": "ISO",
@@ -58,36 +40,55 @@
       "language": "en",
       "availability": "available",
       "access_basis": "steward_copy",
-      "cited_as": "ISO 14224"
+      "cited_as": "ISO 14224:2016"
     },
     {
-      "id": "ISO-17359:2018-en",
+      "id": "ISO-14224-unpinned",
+      "publisher": "ISO",
+      "number": "14224",
+      "availability": "unresolved",
+      "cited_as": "ISO 14224",
+      "note": "Cited without an edition in GOVERNANCE.md, IAES_SPEC.md and two schemas, so it names a family rather than a document. The 2016 English edition is held, and the claims were probably made against it -- but nobody recorded that, which is precisely the gap. Resolved by pinning the edition in each citation."
+    },
+    {
+      "id": "ISO-17359-unpinned",
       "publisher": "ISO",
       "number": "17359",
-      "edition": "2018",
-      "language": "en",
-      "availability": "available",
-      "access_basis": "steward_copy",
-      "cited_as": "ISO 17359"
+      "availability": "unresolved",
+      "cited_as": "ISO 17359",
+      "note": "Cited without an edition. The 2018 English edition is held. Resolved by pinning it in the citation."
     },
     {
-      "id": "ISO-55000:2024-es",
+      "id": "ISO-55000-unpinned",
       "publisher": "ISO",
       "number": "55000",
-      "edition": "2024",
-      "language": "es",
-      "availability": "available",
-      "access_basis": "steward_copy",
+      "availability": "unresolved",
       "cited_as": "ISO 55000",
-      "note": "The copy held is the 2024 Spanish edition. A clause cited from it must name that edition and language: numbering can differ between translations and editions, and 'ISO 55000' alone is not an interchangeable object."
+      "note": "Cited without an edition. The copy held is the 2024 Spanish edition; clause numbering can differ between translations, so an edition and a language are both needed before a clause is cited from it."
     },
     {
-      "id": "ISO-4217",
+      "id": "ISO-4217-unpinned",
       "publisher": "ISO",
       "number": "4217",
-      "availability": "unavailable",
+      "availability": "unresolved",
       "cited_as": "ISO 4217",
-      "note": "The code list is widely mirrored; the standard document is not held. Recorded as unavailable rather than assumed, because 'everybody knows it' is how unverifiable attributions get made."
+      "note": "Cited without an edition and no copy is held. Recording it as unavailable would answer a question that cannot be asked: without an edition there is no document to be unavailable. The code list is widely mirrored, which is not the same as the standard being identified."
+    },
+    {
+      "id": "ISO-13374-2-unpinned",
+      "publisher": "ISO",
+      "number": "13374-2",
+      "availability": "unresolved",
+      "cited_as": "ISO 13374-2",
+      "note": "Names a part but no edition, and no copy is held. rfc/IAES-RFC-002.md proposes withdrawing the attribution rather than pinning it, because it was never verified."
+    },
+    {
+      "id": "ISO-13374-4-unpinned",
+      "publisher": "ISO",
+      "number": "13374-4",
+      "availability": "unresolved",
+      "cited_as": "ISO 13374-4",
+      "note": "Names a part but no edition. The 2015 English edition is held and was read on 2026-09-06; rfc/IAES-RFC-002.md proposes withdrawing the attribution because that reading did not support it."
     },
     {
       "id": "ISO-13374-series",
@@ -95,12 +96,27 @@
       "number": "13374",
       "availability": "unresolved",
       "cited_as": "ISO 13374 series",
-      "note": "Cited as a series, so it names no document and availability cannot be answered. Measured: the citations cover at least two different subjects -- health status levels and a six-block processing model -- which cannot both be one part. Of the series only 13374-4:2015 (en) is held; 13374-2, which Appendix C depends on, is not. Resolving each citation to a part is editorial work; rfc/IAES-RFC-002.md proposes withdrawing the attributions instead."
+      "note": "Cited as a series on purpose: the citations cover at least two different subjects -- health status levels and a six-block processing model -- which cannot both be one part. A series names no document, so availability cannot be asked at all."
+    },
+    {
+      "id": "ISO-TS-15143-3:2020",
+      "publisher": "ISO/TS",
+      "number": "15143-3",
+      "edition": "2020",
+      "availability": "unavailable",
+      "cited_as": "ISO/TS 15143-3:2020",
+      "note": "Identified -- the citation pins the edition -- and no copy is held. Cited in GOVERNANCE.md as precedent for a normative annex, so a claim about it would need the document."
     }
   ],
 
+  "mentions_not_dependencies": {
+    "$comment": "Named by a normative artifact and depended on by nothing. Recorded rather than filtered, so that 'we did not register it' is a decision somebody made and not an omission nobody noticed.",
+    "ISO 8601": "Named only to explain what RFC 3339 profiles, and to record that an earlier version of this specification cited it in RFC 3339's place. Nothing depends on it: the schemas use JSON Schema's date-time and date formats, which are defined by RFC 3339.",
+    "ISO 13374": "Appears in the version history describing what release 1.2 did, and in prose explaining why the current citations say `series`. Neither is a dependency of this release."
+  },
+
   "held_but_not_cited": {
-    "$comment": "Documents the editor holds that this specification does not cite. Recorded so that 'we have it' is never confused with 'we use it', and so a future citation knows an edition is already available.",
+    "$comment": "Documents the editor holds that no normative artifact cites. Recorded so 'we have it' is never confused with 'we use it', and so a future citation knows an edition is already available.",
     "documents": [
       "ISO 13374-4:2015 (en)",
       "ISO 20816-3:2022 (en)",

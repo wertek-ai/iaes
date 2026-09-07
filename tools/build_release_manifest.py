@@ -39,6 +39,10 @@ TAG_PREFIX = "spec-v"
 NORMATIVE = [
     "IAES_SPEC.md",
     "GOVERNANCE.md",
+    # Normative for what IAES may cite: it declares which external document each
+    # citation means and whether anyone can consult it. A release that did not
+    # carry it would publish claims whose checkability lives outside the release.
+    "references/registry.json",
 ]
 NORMATIVE_GLOBS = [
     "schema/*.schema.json",
@@ -98,13 +102,25 @@ def major_minor(version: str) -> str:
     return ".".join(version.split(".")[:2])
 
 
-def normative_files() -> list:
-    files = [ROOT / p for p in NORMATIVE]
+def normative_files(ref: str = "HEAD") -> list:
+    """The normative set, tolerating entries that a past release predates.
+
+    A file added to NORMATIVE after a release was tagged was not part of that
+    release. Demanding it at that tag would make an already published manifest
+    impossible to rebuild -- which is the one property this tool exists to
+    have. At HEAD the set must be complete: there an omission is a defect
+    rather than history.
+    """
+    present = set(subprocess.run(
+        ["git", "ls-tree", "-r", "--name-only", ref],
+        cwd=ROOT, check=True, capture_output=True, text=True).stdout.splitlines())
+    files = [ROOT / p for p in NORMATIVE if p in present]
+    if ref == "HEAD":
+        missing = [p for p in NORMATIVE if p not in present]
+        if missing:
+            raise SystemExit(f"normative set is incomplete at {ref}: {missing}")
     for pattern in NORMATIVE_GLOBS:
         files.extend(sorted(ROOT.glob(pattern)))
-    missing = [f for f in files if not f.exists()]
-    if missing:
-        raise SystemExit(f"normative set is incomplete: {missing}")
     return files
 
 
@@ -188,10 +204,8 @@ def check(tag: str | None) -> str:
 
 def build(tag: str | None, out: Path | None) -> dict:
     version = check(tag)
-    files = normative_files()
-    # The tag when there is one, so the manifest describes the release rather
-    # than whatever happens to be checked out.
     ref = tag if tag else "HEAD"
+    files = normative_files(ref)
     manifest = {
         "specification_version": version,
         "tag": tag,

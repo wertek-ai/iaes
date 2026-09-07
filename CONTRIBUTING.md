@@ -72,6 +72,7 @@ are surprised by one:
 ```
 python tools/check_frontier.py                       # GOVERNANCE.md §1.1
 python tools/check_citations.py
+python tools/check_document_available.py
 python tools/check_schema_compat.py --baseline main  # GOVERNANCE.md §4
 ```
 
@@ -83,6 +84,12 @@ is not.
 `check_citations` fails when an explicit citation to a section of an IAES
 document does not resolve to a section that exists. It checks nothing else: not
 ISO references, not URLs, not whether the cited section says what you claim.
+
+`check_document_available` fails when a normative artifact names an external
+document that `references/registry.json` does not account for, or when the
+registry claims a document is available without saying which edition. It does
+not check whether the document supports what the specification attributes to
+it; that is a different question and is not automated.
 
 `check_schema_compat` fails on a change that would break a consumer reading the
 old schemas. It is the mechanical form of the compatibility policy, and it is
