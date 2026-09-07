@@ -28,13 +28,13 @@ def appended():
     original = GOVERNANCE.read_text(encoding="utf-8")
 
     def add(line: str):
-        GOVERNANCE.write_text(original + "\n" + line + "\n", encoding="utf-8")
+        GOVERNANCE.write_text(original + "\n" + line + "\n", encoding="utf-8", newline="\n")
         return run()
 
     try:
         yield add
     finally:
-        GOVERNANCE.write_text(original, encoding="utf-8")
+        GOVERNANCE.write_text(original, encoding="utf-8", newline="\n")
 
 
 def test_the_repository_is_clean():
