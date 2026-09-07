@@ -11,9 +11,8 @@ ISSN: N/A
 # Status of This Memo
 
 > **Authority notice.** This RFC records a proposal and the reasoning behind
-> it. It is **not** normative authority for how IAES behaves. What governs is
-> the specification, the schemas and `GOVERNANCE.md` as released. See
-> `GOVERNANCE.md` §6.1.
+> it. It is **not** normative authority for how IAES behaves. The applicable
+> normative artifacts, as released, govern IAES. See `GOVERNANCE.md` §6.1.
 
 This document recorded the specification of IAES v1.3 for the industrial
 asset intelligence community, and requested discussion and suggestions for

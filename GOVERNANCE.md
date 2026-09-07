@@ -262,8 +262,8 @@ Changes are proposed as **RFCs** in `rfc/`, numbered sequentially.
 
 **An RFC is the proposal and rationale for a change; it is not normative
 authority.** When an RFC is Accepted, the accepted change is incorporated into
-the specification, the schemas, or this document as applicable. Those
-incorporated artifacts govern IAES from the release that carries the change.
+the **applicable normative artifact or artifacts**. Those incorporated
+artifacts govern IAES from the release that carries the change.
 The RFC remains the historical record of *why* the decision was made.
 
 This rule is stated here, in a normative document, on purpose. It used to be
@@ -277,20 +277,25 @@ the release that carries it" of an Accepted RFC.
 
 The chain runs one way:
 
-    GOVERNANCE.md  (normative)  defines what authority an RFC has
+    GOVERNANCE.md      (normative)  defines what authority an RFC has
         v
-    rfc/*.md       (rationale)  records why a change was made
+    rfc/*.md           (rationale)  records why a change was made
         v
-    IAES_SPEC.md, schema/, GOVERNANCE.md  (normative)  contain what governs
+    the normative artifacts, as released, contain what governs
 
 An implementer needs the third row. The second explains it. The first says so.
+
+The third row is deliberately not a list. Which artifacts are normative can
+change -- `SDK_SURFACE.md`, for one, declares itself normative for
+implementations though not for the wire -- and a rule that enumerates a set
+that can grow becomes false the day it grows.
 
 
 | State | Meaning |
 |---|---|
 | **Draft** | Written and open for comment. Anyone may open one. |
 | **Review** | The steward has accepted it for consideration and stated a target version. |
-| **Accepted** | The decision is accepted and its change has been incorporated into the applicable normative artifact. The incorporated change is normative from the release that carries it; the RFC itself remains rationale. |
+| **Accepted** | The decision is accepted and its change has been incorporated into the applicable normative artifact or artifacts. The incorporated change is normative from the release that carries it; the RFC itself remains rationale. |
 | **Rejected** | Closed with a written reason. The reason stays in the repository. |
 | **Superseded** | Replaced by a later RFC, which names it. |
 
