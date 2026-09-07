@@ -542,15 +542,30 @@ What this specification depends on, and what it merely mentions. Measured from
 the artifacts on 2026-09-06: every format keyword the schemas use is listed
 here, and nothing is listed that nothing uses.
 
-**Normative** — an implementation must satisfy these to be conforming.
+The strength of each is stated as **measured**, not as intended. The schemas
+carry two different mechanisms and the difference matters: `pattern` is
+asserted by every Draft 2020-12 validator, while `format` is an annotation
+that Draft 2020-12 leaves off by default. Measured 2026-09-06: a `timestamp`
+of `"banana"`, an `event_id` of `"no-uuid"` and a `dataschema` of `"not a
+uri"` are all accepted by the validator this repository publishes.
+
+**Named by the schema, not enforced by it.** These documents define what the
+values mean. They are `format` annotations, so nothing rejects a value that
+ignores them.
+
+| Document | What it names |
+|---|---|
+| RFC 3339 | `timestamp` and `calibration_date`. JSON Schema defines its `date-time` and `date` formats by this document, not by ISO 8601, which is the broader standard RFC 3339 profiles. |
+| RFC 4122 | `event_id`, `correlation_id` and `source_event_id`. The `uuid` format. |
+| RFC 3986 | `dataschema`. The `uri` format. |
+
+**Enforced by the schema.** These are asserted by `pattern`, which every
+validator applies.
 
 | Document | Where it binds |
 |---|---|
-| RFC 3339 | `timestamp` and `calibration_date`. JSON Schema defines its `date-time` and `date` formats by this document, not by ISO 8601, which is the broader standard RFC 3339 profiles. |
-| RFC 4122 | `event_id` and `correlation_id`. The `uuid` format. |
-| RFC 3986 | `dataschema`. The `uri` format. |
 | RFC 2119, RFC 8174 | The meaning of MUST, SHOULD and MAY in this document. |
-| ISO 4217 | Currency codes on `maintenance.spare_part_usage`. |
+| ISO 4217 | Currency codes on `maintenance.spare_part_usage`, as a three-letter pattern. |
 
 **Informative** — mentioned for orientation. Nothing depends on them.
 
@@ -561,7 +576,16 @@ here, and nothing is listed that nothing uses.
 | ISO 13374 series | `iso_13374_status`, `condition_trend`, and Appendix C. |
 | ISO 55000 | Asset management context. |
 
-Three of the normative entries were unnamed until 2026-09-06. The schemas have
+Whether the annotated formats *should* be enforced is an open question, not a
+settled one. The schema already asserts `event_type`, `source`, `spec_version`
+and `currency` with `pattern` while merely annotating the six identifier and
+date fields, and no document says why the two groups are treated differently.
+Enabling JSON Schema's format assertion does not settle it either: measured,
+which formats get checked depends on which optional packages the consumer
+happens to have installed, so the same event would be valid for one conforming
+reader and invalid for another. Deciding this belongs in a memo.
+
+Three of these documents were unnamed until 2026-09-06. The schemas have
 always used `uuid`, `uri`, `date-time` and `date`, so the specification has
 always depended on the documents that define them; it named none of them, and
 named ISO 8601, which it does not depend on. An implementer could satisfy the
