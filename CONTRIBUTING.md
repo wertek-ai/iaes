@@ -32,15 +32,22 @@ file names.
 
 | | |
 |---|---|
-| `schema/*.schema.json` | **decides.** It is what a validator runs. If the schema and any other document disagree, the schema is right and the other document is a defect. |
-| `IAES_SPEC.md` | normative prose. What people read. It must agree with the schema. |
+| `schema/*.schema.json` | **decides machine-validity of an event.** It is what a validator runs. |
+| `IAES_SPEC.md` | normative prose. Governs semantics: what a field means and what a conforming implementation must do. |
 | `rfc/*.md` | **rationale, not authority** — `rfc/IAES-RFC-000.md` §4, item 2. An incorporated RFC records why a decision was made; it does not make one. |
 | `SDK_SURFACE.md`, `surface.json` | normative **for implementations**, not for the wire. What an SDK must expose to call itself an IAES SDK. Conformance is measured on the wire, so an SDK that exposes less is still producing valid events. |
-| `GOVERNANCE.md` | the process, the scope boundaries and the compatibility policy. |
+| `GOVERNANCE.md` | **normative too.** The process, the scope boundaries and the compatibility policy. It declares commitments no schema could override: §1.2 excludes equipment catalogs by name, and a schema that closed one would be the defect. |
 | everything else | tooling, examples, tests. |
 
-Changing prose in `IAES_SPEC.md` to match the schema is an ordinary pull
-request. Changing the schema is an RFC.
+None of the three outranks the others, and **they must not contradict one
+another**. Where they do, the disagreement itself is the defect, and which one
+gives way depends on which is wrong — that is a question for the pull request,
+not a rule of precedence. The `correlation_id` divergence was found exactly
+that way: three documents, one of them stale, and no amount of precedence
+would have told you which.
+
+Changing prose to match the schema is an ordinary pull request. Changing what
+an event is, or what an implementation must do, is an RFC.
 
 ## Running the tests
 
