@@ -9,8 +9,9 @@ ISSN: N/A
 
 # Status of This Memo
 
-**State: Review**, per `GOVERNANCE.md` §6. **Compatibility: MINOR
-(§8). Target version: IAES 2.0.** It is open for comment and has not
+**State: Review**, per `GOVERNANCE.md` §6. **Compatibility: MINOR —
+partly derived, partly the steward's decision (§8.1). Target version:
+IAES 2.0.** It is open for comment and has not
 been accepted; nothing in it is in force, and no schema changes until
 it is.
 
@@ -63,9 +64,10 @@ This memo resolves those five and nothing else.
     6. Decision 4: an absent optional value is not an assertion
     7. Decision 5: an advisory list does not constrain the wire
     8. Compatibility
-       8.1. The principle exists; the operational criterion does not
-       8.2. Does it clarify an obligation, or create one?
-       8.3. Applying §3 directly
+       8.1. Classified, and where the policy still has no test
+            8.1.1. Two inputs for §4.5
+       8.2. Decision 4 under §4.4, step by step
+       8.3. What this memo argued before, and why it stops
     9. Effect on existing implementers
     10. Worked example
 
@@ -369,28 +371,60 @@ The nine that pair agree value for value, in both languages.
 | absent-means-unasserted | producers emit fewer fields; all optional |
 | `measurement_type` advisory | documentation; the field was already open |
 
-## 8.1. Classified, under a rule that now exists
-
-Every decision falls to `GOVERNANCE.md` §4.1 or §4.2 except Decision 4, and
-Decision 4 falls to **§4.4**, which was written because of it.
+## 8.1. Classified, and where the policy still has no test
 
 | decision | classified by | level |
 |---|---|---|
-| 1 · severity and priority descriptions | §4.1, clarifying non-normative text | MINOR |
-| 2 · ISO attributions withdrawn | §4.1, correcting non-normative text | MINOR |
-| 3 · `condition_trend` declared IAES's own | §4.1, correcting non-normative text | MINOR |
-| 4 · absent means unasserted | **§4.4** | MINOR |
-| 5 · `anomaly_score` range | §4.1, clarifying; the constraint is unchanged | MINOR |
-| 6 · `measurement_type` advisory | §4.1, and it *relaxes* — the field was never closed | MINOR |
+| 1 · `severity` is not `priority` | *see below* | non-breaking |
+| 2 · `iso_13374_status` attribution withdrawn | *see below* | non-breaking |
+| 3 · `condition_trend` declared IAES's own | *see below* | non-breaking |
+| 4 · an absent optional value is not an assertion | **§4.4** | **MINOR**, derived |
+| 5 · an advisory list does not constrain the wire | §4.1, *relaxing a constraint* | MINOR |
 
-**This memo is MINOR.** It travels in a MAJOR release, which is not a
-contradiction: a release takes the level of the most severe change it carries,
-and the change that makes 2.0 MAJOR is in `IAES-RFC-003.md`, not here.
+**Decision 4 is derived** — §8.2 walks it. **Decision 5 relaxes**: it forbids a
+consumer from rejecting an unlisted `measurement_type`, which is §4.1's
+*relaxing a constraint* almost word for word, and the field was never closed on
+the wire to begin with.
 
-That last sentence is an observation about how a release level is arrived at,
-not a rule anyone can cite: `GOVERNANCE.md` does not state it. It is offered as
-input to the memo that will write §4.5, which is where a rule about the level of
-a release as opposed to the level of a change belongs.
+**Decisions 1 to 3 are not classified, and this memo says so rather than
+rounding them off.** An earlier version of this table filed them under §4.1 as
+*clarifying non-normative text*, which contradicts the memo itself: §3.2, §4.2
+and §5.2 tag them **[WIRE]** and state them as MUSTs on the `description` of a
+field in a normative schema. A memo cannot call the same change normative above
+and non-normative below.
+
+What they actually are:
+
+> They change **no validation, no field meaning, and no obligation on a
+> producer or a consumer**. They correct a normative annotation and an
+> attribution of provenance. Every event valid before is valid after, and every
+> consumer reads every value exactly as it did.
+
+They are **non-breaking**, and that is measured. But *non-breaking* is not a
+level, and §4 has no rule for a correction that is normative and affects only
+annotation or provenance: §4.1's text bullet is scoped to *non-normative* text,
+§4.2's five criteria do not reach it, and §4.4 is about obligations, which these
+are not.
+
+So the memo's overall level is a **steward's decision, not a derivation**: this
+memo is **MINOR**, with Decisions 4 and 5 derived and 1 to 3 resting on judgment
+until the rule exists.
+
+## 8.1.1. Two inputs for §4.5
+
+The gap `IAES-RFC-003.md` §5.2 left open now has a second face, and both belong
+in the memo that writes §4.5:
+
+1. **How the level of a *release* follows from the levels of the *changes* it
+   carries.** This memo is MINOR and ships inside a MAJOR release. That is not a
+   contradiction — the release takes the level of the most severe change it
+   carries, and the severe one is in `IAES-RFC-003.md`, not here — but
+   `GOVERNANCE.md` nowhere says it, so it is an observation and not a rule
+   anyone may cite.
+2. **How to classify a normative change that alters neither representation, nor
+   meaning, nor obligation.** Decisions 1 to 3 are exactly that shape, and they
+   will not be the last: a standard that names its own provenance will
+   eventually have to correct it again.
 
 ## 8.2. Decision 4 under §4.4, step by step
 
