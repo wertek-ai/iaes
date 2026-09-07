@@ -258,11 +258,39 @@ can tell what a message was written against without out-of-band agreement.
 
 Changes are proposed as **RFCs** in `rfc/`, numbered sequentially.
 
+### 6.1 What an RFC is, and what it is not
+
+**An RFC is the proposal and rationale for a change; it is not normative
+authority.** When an RFC is Accepted, the accepted change is incorporated into
+the specification, the schemas, or this document as applicable. Those
+incorporated artifacts govern IAES from the release that carries the change.
+The RFC remains the historical record of *why* the decision was made.
+
+This rule is stated here, in a normative document, on purpose. It used to be
+stated only inside an RFC and inside a contributing guide -- so a reader could
+learn that RFCs are not authority only by believing an RFC, or by opening a
+file that governs this repository rather than the standard. An independent
+implementer, given the repository in September 2026, cited an RFC as authority
+for a normative claim. That was not a careless reading: nothing they were
+entitled to rely on said otherwise, and the table below said "Normative from
+the release that carries it" of an Accepted RFC.
+
+The chain runs one way:
+
+    GOVERNANCE.md  (normative)  defines what authority an RFC has
+        v
+    rfc/*.md       (rationale)  records why a change was made
+        v
+    IAES_SPEC.md, schema/, GOVERNANCE.md  (normative)  contain what governs
+
+An implementer needs the third row. The second explains it. The first says so.
+
+
 | State | Meaning |
 |---|---|
 | **Draft** | Written and open for comment. Anyone may open one. |
 | **Review** | The steward has accepted it for consideration and stated a target version. |
-| **Accepted** | Merged into the specification. Normative from the release that carries it. |
+| **Accepted** | The decision is accepted and its change has been incorporated into the applicable normative artifact. The incorporated change is normative from the release that carries it; the RFC itself remains rationale. |
 | **Rejected** | Closed with a written reason. The reason stays in the repository. |
 | **Superseded** | Replaced by a later RFC, which names it. |
 

@@ -10,9 +10,16 @@ ISSN: N/A
 
 # Status of This Memo
 
-This document specifies an open standard for the industrial asset
-intelligence community, and requests discussion and suggestions for
-improvements. Distribution of this memo is unlimited.
+> **Authority notice.** This RFC records a proposal and the reasoning behind
+> it. It is **not** normative authority for how IAES behaves. What governs is
+> the specification, the schemas and `GOVERNANCE.md` as released. See
+> `GOVERNANCE.md` §6.1.
+
+This document recorded the specification of IAES v1.3 for the industrial
+asset intelligence community, and requested discussion and suggestions for
+improvements. It says v1.3 because that is the decision it documents; later
+releases are described by the specification, not by this memo. Distribution
+of this memo is unlimited.
 
 # Copyright Notice
 
