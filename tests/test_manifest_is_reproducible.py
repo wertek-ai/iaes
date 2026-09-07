@@ -167,7 +167,11 @@ class TestAReleaseStaysRebuildable(unittest.TestCase):
         self.NEW.unlink(missing_ok=True)
 
     def test_a_schema_added_later_does_not_break_an_earlier_tag(self):
-        tag = "spec-v1.4"
+        tags = subprocess.run(["git", "tag", "-l", "spec-v*"], cwd=ROOT,
+                              capture_output=True, text=True).stdout.split()
+        if not tags:
+            self.skipTest("no specification tag in this clone")
+        tag = sorted(tags)[-1]
         before = subprocess.run(
             [sys.executable, "tools/build_release_manifest.py", "--tag", tag],
             cwd=ROOT, capture_output=True, text=True)

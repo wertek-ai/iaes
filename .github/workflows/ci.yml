@@ -67,6 +67,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Tags, so the reproducibility tests run rather than skip. Without
+          # them CI reported "1 skipped" and nobody read it -- including the
+          # test whose own docstring calls it the only one that would have
+          # caught the manifest defect on its own.
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
