@@ -34,9 +34,11 @@ Creative Commons Attribution 4.0 International License (CC BY 4.0).
 # Abstract
 
 `GOVERNANCE.md` §3 says MAJOR is *anything that can break an existing producer
-or consumer*. §4.2 operationalises that, and all five of its criteria are
-shaped like schema changes. So a change that alters what a producer must **do**
-— while altering no schema — has a category and no test.
+or consumer*. §4.2 operationalises that in five criteria: four are shaped like
+schema changes, and the fifth — *changing the meaning or the unit of an
+existing field while keeping its name* — already reaches past the schema into
+what a value means. What none of the five reaches is a change to what a
+producer or a consumer must **do**. That has a category and no test.
 
 This memo supplies the test. It asks whether the change breaks the
 **interoperability guarantee** §4 exists to protect — that a consumer built for
@@ -50,8 +52,8 @@ new obligation *supplies* a meaning the standard had left unstated, or
 A drafted change would oblige a producer to omit an optional field it was not
 given, rather than substitute a value. Measured against §4.2, it is none of the
 five: it makes no optional field required, removes and renames nothing, narrows
-no constraint, changes no unit, moves no `$id`. Every schema is byte-identical
-before and after.
+no constraint, changes no existing field's meaning or unit, moves no `$id`.
+Every schema is byte-identical before and after.
 
 Reading it MINOR because nothing stops validating uses a test §4.2 does not
 offer. Reading it MAJOR by analogy invents one. The gap is worth closing before
@@ -88,17 +90,22 @@ third test must ask.
 
 # 3. The criterion
 
-> **[TEXT]** Apply `GOVERNANCE.md` §4.1 and §4.2 first: they classify the
-> change to the **representation**. If the change is classified there, that
-> classification governs and this section does not apply.
+> **[TEXT]** Apply `GOVERNANCE.md` §4.1 and §4.2 first. If the change is
+> classified there, that classification governs and this section does not
+> apply.
 >
-> A change that §4.1 and §4.2 do not classify — one that alters an obligation
-> on a producer or a consumer without altering any schema — is classified by
-> the two tests below, in order. The first that answers, decides.
+> A change to an obligation on a producer or a consumer that §4.1 and §4.2 do
+> **not** otherwise classify is classified by the two tests below, in order.
+> The first that answers, decides.
 >
 > **T1 — MEANING.** Must the same bytes, valid under version *N*, now be
 > interpreted with a different meaning?
 > If yes: **MAJOR**.
+>
+> §4.2 already says this of a **named field**. T1 is the same rule for meaning
+> a version stated by other means — what the *absence* of a field asserts, what
+> a combination of fields asserts — which is why it is reached only for changes
+> §4.2 does not already classify.
 >
 > Meaning is *changed* only where the previous version **stated** one. Where
 > the previous version was silent, the new version **supplies** a meaning, and
@@ -128,11 +135,16 @@ third test must ask.
 Three notes on why it is shaped this way.
 
 **§4.1 and §4.2 come first, and are not restated here.** An earlier draft
-opened with *does data that was valid become invalid?* — a question that cannot
-arise inside the set this section is defined over, since a change that alters no
-schema cannot invalidate a payload. Asking it made the section look complete
-and made its own scope incoherent. The representation is classified where it was
-always classified; this section begins where that leaves off.
+opened with *does data that was valid become invalid?* — which §4.2 already
+answers, and which cannot arise for a change that reaches this section at all.
+Asking it made the section look complete and made its own scope incoherent.
+
+The same draft described §4.1 and §4.2 as classifying *the representation*, and
+that is measurably not what they do: the fourth criterion in §4.2 is a rule
+about **meaning**, and a version can change a field's stated meaning without
+touching a byte of any schema. The boundary is therefore not *schema change
+versus no schema change*. It is **already classified there versus residual**,
+and this section only ever handles the residual.
 
 **T1 before T2.** A change of meaning can leave every event consumable —
 parsed, accepted, no error anywhere — and still be read wrongly. That is the
@@ -153,8 +165,9 @@ re-readable by a 1.5 consumer is MAJOR however silent 1.4 was.
 
 # 4. Applying it to the case in §1
 
-**§4.1 and §4.2 first.** No schema changes; the field was optional before and is
-optional after. Not classified there, so the tests apply.
+**§4.1 and §4.2 first.** None of the five applies: no schema changes, and no
+existing field's stated meaning changes — `anomaly_score: 0.0` meant *the score
+is zero* before and means it after. Not classified there, so the tests apply.
 
 **T1 — meaning.** The previous version stated no meaning for an absent optional
 field. A consumer that defaulted an absent `anomaly_score` to `0.0` was filling
@@ -192,7 +205,38 @@ have come out the other way: had 1.4 stated that an absent `anomaly_score`
 means zero, T1 would have caught it, and no amount of "the bytes did not
 change" would have rescued it.
 
-# 5. What this memo does not decide
+# 5. Compatibility level of this change
+
+**MINOR.**
+
+This memo changes no event, no schema, no field's meaning, and no obligation on
+any producer or consumer. It changes how *future* changes are classified.
+
+Not PATCH: §3 reserves PATCH for editorial change, and this is not editorial —
+it amends normative text and alters what MAJOR means (§8). Not MAJOR: nothing
+that conforms to 1.4 stops conforming, and nothing a 1.4 implementation does
+becomes wrong.
+
+Applying this memo's own criterion to itself is not circular but it is not
+evidence either, so it is not offered as the argument: §4.1 and §4.2 do not
+classify it, T1 finds no stated meaning changed, T2 finds every 1.4 event still
+consumable by a 1.5 consumer with the meaning 1.4 gave it. The reason it is
+MINOR is the paragraph above; the criterion agreeing is a consistency check.
+
+# 6. Effect on existing implementers
+
+**None.** No implementation has anything to do.
+
+An implementation conforming to 1.4 remains conforming. No producer must change
+what it emits, no consumer must change what it accepts, and no deployed
+integration behaves differently because this memo was accepted.
+
+What changes is for the steward and for future proposals: a class of change
+that previously had no stated test now has one, and two normative sentences
+that promised more than §4 guarantees now say what §4 actually guarantees (§8).
+An implementer who relied on those two sentences as written should read §8.4.
+
+# 7. What this memo does not decide
 
 - **Whether a second class of conformance exists** beside wire conformance —
   an SDK surface, a package's documented API — and who would grant it. The
@@ -205,19 +249,84 @@ change" would have rescued it.
 - **Retroactive reclassification.** Releases already published keep the
   classification they were published with.
 
-# 6. Proposed incorporation
+# 8. Proposed incorporation
 
-If accepted, §3 as a new subsection of `GOVERNANCE.md` §4, numbered §4.4, with
-a pointer at the end of §4.2 reading: *a change that alters an obligation on a
-producer or a consumer without altering a schema is not classified by this
-section; see §4.4.* §4.1 and §4.2 are unchanged, and are applied first: this
-adds a case they did not cover and overrides neither.
+The criterion cannot be added as one new subsection. Two sentences already in
+`GOVERNANCE.md` promise something broader than §4 guarantees, and leaving them
+standing beside §4.4 would put the document in contradiction with itself —
+which is the failure this project has spent a fortnight learning to look for.
+**A local rule is not incorporated until the surrounding authority agrees with
+it.**
 
-The general statement, which is the part worth keeping if the rest is revised:
+Four amendments, and they are one change.
 
-> A compatibility policy is not complete if it only classifies changes to the
-> **representation**. It must also classify changes to the **obligations** of
-> those who produce and consume that representation.
+## 8.1. §3 — what MAJOR means
+
+The table today reads:
+
+> **MAJOR** — Anything that can break an existing producer or consumer.
+
+Read literally beside §4.4, that is a contradiction: this memo says a consumer
+that relied on unspecified behaviour may break and the change is still MINOR.
+Both cannot stand. Replace with:
+
+> **MAJOR** — Anything that breaks the compatibility guarantee defined in §4.
+
+This is not a weaker promise. It is the same promise, stated in terms of what
+the standard can actually deliver: a version can guarantee what it **said**,
+and cannot guarantee what it left open, because it does not know what anyone
+inferred from the silence.
+
+## 8.2. §4.2 — the pointer, and what it must not say
+
+At the end of §4.2:
+
+> A change to a producer or consumer obligation that is not otherwise
+> classified by §4.1 or §4.2 is classified under §4.4.
+
+The wording matters. An earlier draft of this memo said *a change that alters
+an obligation without altering a schema*, and that is false: §4.2's fourth
+criterion — *changing the meaning or the unit of an existing field while
+keeping its name* — needs no schema change at all. A version can redefine
+`severity` from *condition of the asset* to *urgency of the response* in prose
+alone, and §4.2 already classifies that MAJOR.
+
+So the boundary is **already classified there versus residual**, never *schema
+versus no schema*. §4.1 and §4.2 are unchanged in substance and are applied
+first.
+
+## 8.3. §4.4 — the criterion
+
+§3 of this memo, as a new subsection after §4.3, titled *Changes to producer
+and consumer obligations*.
+
+## 8.4. §8 — what implementers can rely on
+
+Item 2 today reads:
+
+> A MINOR release will not break a working integration.
+
+A working integration includes one that depends on behaviour no version ever
+specified, so as written the sentence promises what §4 cannot deliver. Replace
+with:
+
+> A MINOR release preserves the BACKWARD compatibility guarantee in §4.
+> Behaviour a prior version did not specify is not guaranteed across versions.
+> Known risks involving such behaviour are disclosed in the release notes.
+
+The third sentence is the part that keeps this honest. Narrowing a promise
+without owing anything in return would be a downgrade; the disclosure
+obligation is what the steward gives back, and it is normative.
+
+## 8.5. Why all four in one release
+
+§4.4 alone would leave `GOVERNANCE.md` asserting two incompatible definitions
+of *break*, in §3 and in §4.4, two sections apart. That is the exact shape of
+the defect this repository has already paid for once: a canonical document that
+contradicted itself two sections apart, and two readers with the document open
+deduced opposite repairs.
+
+They ship together or not at all.
 
 # Author
 
