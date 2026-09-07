@@ -16,15 +16,18 @@ ISSN: N/A
 This memo proposes an addition to the compatibility policy in `GOVERNANCE.md`
 §4. It defines no wire format and changes no schema.
 
-**State: Review**, per `GOVERNANCE.md` §6. **Target version: IAES 1.5** — the
-criterion has to exist before the release whose classification depends on it.
-Distribution is unlimited.
+**State: Review**, per `GOVERNANCE.md` §6. **Target version: undetermined** —
+see §5. Distribution is unlimited.
 
-It entered Review after its third test was replaced: the first version asked
-whether an implementation that declares *N* stops conforming to *N*, which a
-published version's immutability answers in advance and always the same way.
-§2 keeps the discarded framing, because a criterion is easier to trust when the
-shapes it rejected are visible.
+It cannot advance to Accepted yet, and the reason is in the memo rather than in
+the process: §4 has no rule that classifies a change to the compatibility
+policy itself, so this memo cannot state its own compatibility level, which §6
+requires of every RFC. §5.2 sets out the three ways forward and does not choose
+between them; two of the three end at IAES 2.0.
+
+§2 keeps the framings this criterion rejected — including the one this memo
+drafted first — because a criterion is easier to trust when the shapes it
+turned down are visible.
 
 # Copyright Notice
 
@@ -37,8 +40,14 @@ Creative Commons Attribution 4.0 International License (CC BY 4.0).
 or consumer*. §4.2 operationalises that in five criteria: four are shaped like
 schema changes, and the fifth — *changing the meaning or the unit of an
 existing field while keeping its name* — already reaches past the schema into
-what a value means. What none of the five reaches is a change to what a
-producer or a consumer must **do**. That has a category and no test.
+what a value means.
+
+Between them they classify a great many obligations: making an optional field
+required changes what a producer must do, and so does narrowing a constraint.
+What the five do **not** reach is the residual — an obligation on a producer or
+a consumer that is classified neither as a change to the representation nor as
+a change to an existing field's meaning. That residual has a category and no
+test.
 
 This memo supplies the test. It asks whether the change breaks the
 **interoperability guarantee** §4 exists to protect — that a consumer built for
@@ -207,34 +216,121 @@ change" would have rescued it.
 
 # 5. Compatibility level of this change
 
-**MINOR.**
+**Not classifiable by §4 as it stands.** This memo states that rather than
+choosing a level, for the same reason it refused to classify Decision 4 before
+the criterion existed.
 
-This memo changes no event, no schema, no field's meaning, and no obligation on
-any producer or consumer. It changes how *future* changes are classified.
+An earlier draft of this section claimed MINOR, on the ground that no event,
+schema, field meaning or producer obligation changes. That is true and it is not
+a criterion: no such rule exists in §4. And the new §4.4 does not supply one,
+because it is deliberately scoped to obligations on producers and consumers —
+which this change is not. What this change alters is:
 
-Not PATCH: §3 reserves PATCH for editorial change, and this is not editorial —
-it amends normative text and alters what MAJOR means (§8). Not MAJOR: nothing
-that conforms to 1.4 stops conforming, and nothing a 1.4 implementation does
-becomes wrong.
+```
+the compatibility policy itself
+the definition of MAJOR
+what implementers may rely on
+an obligation of the steward (disclosure)
+```
 
-Applying this memo's own criterion to itself is not circular but it is not
-evidence either, so it is not offered as the argument: §4.1 and §4.2 do not
-classify it, T1 finds no stated meaning changed, T2 finds every 1.4 event still
-consumable by a 1.5 consumer with the meaning 1.4 gave it. The reason it is
-MINOR is the paragraph above; the criterion agreeing is a consistency check.
+## 5.1. Measured: no authority reaches it
+
+Every nearby clause was read, and each excludes itself:
+
+| clause | what it covers | why it does not reach this change |
+|---|---|---|
+| §3, PATCH | *Editorial only. No change to any schema.* | amending a normative guarantee is not editorial |
+| §4.1, last bullet | *adding, correcting, or clarifying **non-normative** text* | GOVERNANCE.md is normative in its header; §8 is not an example or a note |
+| §4.2 | five criteria | every one is about an event, a field, a catalog or a schema |
+| §4.4 | producer and consumer obligations | scoped away from the policy itself, on purpose |
+| §5.1 | a `$id` that never resolved | narrow by construction, and forbids carrying any other change |
+| §1, item 1 | one boundary commitment | *«not subject to change by a minor release»* |
+
+Two of those rows decide more than the others.
+
+**§5.1 is the only exception the standard grants, and its stated ground is
+dependability**: *an `$id` that has never been resolvable was never a usable
+identity, and **no implementer can have depended on it***. Applied here the
+principle points the other way — §8 is titled *What implementers can rely on*,
+it is normative, and an implementer could depend on item 2 precisely because it
+invited them to. Whether §4 could back the promise is the steward's problem, not
+theirs.
+
+**§1 item 1 is the only place GOVERNANCE classifies a change to one of its own
+commitments**, and what it says is that the commitment is *not subject to change
+by a minor release*. It is scoped to one boundary and is not a general rule, but
+it is the only on-point precedent, and it does not point at MINOR.
+
+**Conclusion: nothing licenses MINOR, and the nearest authority points away from
+it.**
+
+## 5.2. The gap, and why it is not fixed here
+
+The ladder now reads:
+
+```
+§4.1 / §4.2   representation, and a named field's meaning
+§4.4          residual producer and consumer obligations
+   ???        changes to the compatibility policy itself
+              changes to what implementers may rely on
+              changes to the steward's own obligations
+```
+
+This memo closed the first-order gap and, on being incorporated, found the
+second-order one. **It is not fixed inside §4.4.** Folding *changes to the
+policy* into a subsection about *producer and consumer obligations* would mix
+two domains, which is the defect §4.4 exists to have avoided.
+
+There is a structural fact that makes the decision heavier than it looks.
+`GOVERNANCE.md` **has no version of its own**: §3-bis makes a specification
+release indivisible — the specification, this document, the schemas and the
+accepted RFCs under one tag, with one DOI. So a MAJOR change to governance
+carries the wire format to **2.0 without a single byte changing**.
+
+Three ways out, and the choice belongs to the steward:
+
+1. **Classify it MAJOR** and let this part of governance go to 2.0. Coherent,
+   expensive, and the honest reading of §1 item 1 and of §5.1's principle.
+2. **Write §4.5 first**, in its own memo, for changes to the policy itself —
+   with §4.5 shaped so that a change that *adds a classification rule without
+   reducing any guarantee* is MINOR and a change that *reduces a guarantee* is
+   MAJOR. That memo would then be MINOR by its own rule, which is a fixed point
+   and must be declared as one rather than derived. This memo would still come
+   out MAJOR under it.
+3. **Reduce nothing**: leave §3 and §8 item 2 as they are and make §4.4 agree
+   with them, classifying a change that can break a consumer relying on
+   unspecified behaviour as MAJOR. Decision 4 would then be MAJOR, and IAES
+   would go to 2.0 for a rule about omitting a field.
+
+📌 Options 1 and 3 both end at 2.0; they differ in what 2.0 is *for*. Option 2
+does not avoid that — it makes the classification derivable instead of asserted.
+
+**What this memo will not do is invent a fourth: an exception written to keep
+this change inside 1.5.** §5.1 shows what a legitimate narrow exception looks
+like — a stated ground, four conditions, evidence recorded, and a prohibition on
+carrying anything else. An exception reverse-engineered from a desired version
+number would have none of that, and would teach exactly what §5.1 says it exists
+to avoid: that version numbers do not mean what §3 says they mean.
 
 # 6. Effect on existing implementers
 
-**None.** No implementation has anything to do.
+**No implementation has to change. Some reliance does.** Those are different
+claims, and an earlier draft of this section collapsed them into *«None»*.
 
-An implementation conforming to 1.4 remains conforming. No producer must change
-what it emits, no consumer must change what it accepts, and no deployed
-integration behaves differently because this memo was accepted.
+Nothing at runtime moves. An implementation conforming to 1.4 remains
+conforming, no producer changes what it emits, no consumer changes what it
+accepts, and no deployed integration behaves differently because this memo was
+accepted.
 
-What changes is for the steward and for future proposals: a class of change
-that previously had no stated test now has one, and two normative sentences
-that promised more than §4 guarantees now say what §4 actually guarantees (§8).
-An implementer who relied on those two sentences as written should read §8.4.
+But an implementer was entitled by §8 item 2 to rely on *a MINOR release will
+not break a working integration*, and after §8.4 that entitlement is narrower:
+it covers behaviour a version specified, and no longer covers behaviour it left
+open. Nobody has code to write; an implementer whose upgrade policy said *MINOR
+releases can be taken without review* has a policy to revisit, and is owed the
+disclosure §8.4 now requires in exchange.
+
+That distinction — **no work, less reliance** — is why §5 cannot call this
+change MINOR by observing that no runtime is affected.
 
 # 7. What this memo does not decide
 
@@ -272,10 +368,29 @@ Both cannot stand. Replace with:
 
 > **MAJOR** — Anything that breaks the compatibility guarantee defined in §4.
 
-This is not a weaker promise. It is the same promise, stated in terms of what
-the standard can actually deliver: a version can guarantee what it **said**,
-and cannot guarantee what it left open, because it does not know what anyone
-inferred from the silence.
+**It is a narrower promise, and saying otherwise would be false.** The
+accounting is:
+
+```
+before:  a working integration                      → protected
+
+after:   an integration relying on specified
+         behaviour                                  → protected
+         an integration relying on unspecified
+         behaviour                                  → not protected
+                                                    → disclosed, where the risk
+                                                      is known
+```
+
+Less guarantee of non-breakage, more guarantee of transparency. That is a trade,
+not an equivalence, and the disclosure obligation does not return the guarantee
+it replaces.
+
+What justifies the trade is that the wider promise was one the standard could
+not keep: a version can guarantee what it **said**, and cannot guarantee what it
+left open, because it does not know what anyone inferred from the silence. But
+being unkeepable is a reason to change a promise — it is not, by itself,
+authority to change it at any particular release level. That question is §5.
 
 ## 8.2. §4.2 — the pointer, and what it must not say
 
