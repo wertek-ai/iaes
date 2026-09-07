@@ -19,7 +19,7 @@ compatibility level under `GOVERNANCE.md` §4, the effect on existing
 implementers, and at least one worked example. It starts in **Draft** and
 nothing in it is in force until it is Accepted.
 
-`rfc/IAES-RFC-002.md` is a reasonable one to copy the shape from.
+`rfc/IAES-RFC-001.md` is an existing example to copy the shape from.
 
 **Everything else is an ordinary pull request:** documentation, examples,
 tests, tooling, SDK internals, a broken link, a typo. If you are not sure which
@@ -77,6 +77,11 @@ python tools/check_schema_compat.py --baseline main  # GOVERNANCE.md 4
 The first fails when the standard starts depending on its steward — a host, a
 namespace or an operating model of ours in a schema, a default or required
 behaviour. Naming Wertek in prose is fine; pointing at it in a value is not.
+
+**Repository guards enforce this repository's own integrity; they are not
+requirements of IAES conformance unless the standard text independently says
+so.** A guard demonstrates that this repository obeys a rule. It does not
+create the rule, and a third party implementing IAES runs none of them.
 
 The second fails on a change that would break a consumer reading the old
 schemas. It is the mechanical form of the compatibility policy, and it is
