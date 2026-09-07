@@ -410,7 +410,7 @@ existing meaning is reinterpreted.
 
 What changes is narrower: an implementation that wants to *declare 1.5* must
 stop substituting. That is a cost of adopting the new version, not a break of
-the old one — and §4.3 already orients the guarantee that way: *consumers
+the old one — and §4 already orients the guarantee that way: *consumers
 update first, producers follow.*
 
 The distinction worth stating, because it will recur:
