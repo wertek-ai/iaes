@@ -9,10 +9,6 @@ ISSN: N/A
 
 # Status of This Memo
 
-**State: Draft**, per `GOVERNANCE.md` §6. §8 leaves one question open for the
-change process rather than answering it: this memo does not claim a
-compatibility level it cannot derive.
-
 **State: Draft**, per `GOVERNANCE.md` §6. It is open for comment and has
 not been accepted; nothing in it is in force, and no schema changes
 until it is.
@@ -58,9 +54,9 @@ This memo resolves those five and nothing else.
     6. Decision 4: an absent optional value is not an assertion
     7. Decision 5: an advisory list does not constrain the wire
     8. Compatibility
-       8.1. Decision 4 is not classifiable by §4
+       8.1. The principle exists; the operational criterion does not
        8.2. Does it clarify an obligation, or create one?
-       8.3. What follows
+       8.3. Applying §3 directly
     9. Effect on existing implementers
     10. Worked example
 
@@ -109,11 +105,15 @@ reproducible from this repository.
 
 ## 2.1. What this memo can bind, and what it cannot
 
-IAES is a wire contract. A memo of this standard may say what an event
-means and what a conforming producer or consumer must do with it. It may
-not say how anybody's library is built, and it has no authority over
-Wertek's implementations that it does not equally have over a third
-party's.
+This memo is limited to the IAES wire contract. Within that limit it may
+say what an event means and what a conforming producer or consumer must do
+with it. It may not say how anybody's library is built, and it has no
+authority over the steward's implementations that it does not equally have
+over a third party's.
+
+Whether IAES is *only* a wire contract is a larger question -- `GOVERNANCE.md`
+already carries obligations about packages and their documentation -- and
+this memo does not need to answer it to decide six fields.
 
 Every change below therefore carries one of three tags, and only the
 first is binding on an implementer:
@@ -344,9 +344,8 @@ The nine that pair agree value for value, in both languages.
    for a constraint.
 3. **[REPO]** `triggered_by` is added to this repository's SDKs as a
    convenience constant, and the asymmetry guard keeps the two sides
-   declared. Neither binds a third-party implementation: an SDK that
-   exposes no constants is still conforming, because conformance is
-   measured on the wire.
+   declared. That follows from this repository's implementation choices and
+   makes no claim about third-party SDK-surface conformance.
 
 # 8. Compatibility
 
@@ -361,11 +360,17 @@ The nine that pair agree value for value, in both languages.
 | absent-means-unasserted | producers emit fewer fields; all optional |
 | `measurement_type` advisory | documentation; the field was already open |
 
-## 8.1. Decision 4 is not classifiable by §4, and that is the finding
+## 8.1. The principle exists; the operational criterion does not
 
-Whether this release is MINOR turns on Decision 4, and `GOVERNANCE.md` §4.2
-cannot answer it. Its five criteria for MAJOR are, measured, all shaped like
-schema changes:
+Whether this release is MINOR turns on Decision 4, and the two halves of
+`GOVERNANCE.md` answer differently.
+
+§3 states the principle, and it is broad enough:
+
+> **MAJOR** — Anything that can break an existing producer or consumer.
+
+§4.2 is the criterion that operationalises it, and measured, its five entries
+are all shaped like schema changes:
 
     making an optional field required
     removing or renaming a field or an event type
@@ -373,50 +378,57 @@ schema changes:
     changing the meaning or unit of an existing field
     changing a schema's canonical $id
 
-**None of them is about what a producer must do.** Decision 4 adds no
-constraint to any schema and removes none; it obliges producers to stop
-substituting values they were not given.
-
-So the honest classification is neither. Reading it as MINOR because no bytes
-stop validating uses a test §4 does not offer, and reading it as MAJOR by
-analogy invents a criterion. This memo says so rather than picking whichever
-answer is convenient.
+So §3 asks the right question — *does this break a producer or a consumer?* —
+and §4.2 does not say how to answer it for a change that touches no schema.
+The gap is not a missing category. It is a missing test.
 
 ## 8.2. Does it clarify an obligation, or create one?
 
 Measured against the specification as it stands: **it creates one.** Nothing in
 IAES_SPEC.md says what the absence of an optional field means, and nothing
-forbids a producer from supplying a value it was not given. A producer that
-wrote `anomaly_score: 0.0` for an unknown score broke no stated rule.
+forbids a producer supplying a value it was not given.
 
-But it is not a new direction. The specification already applies exactly this
-principle to one field, in the Producer Guidelines:
+But it is not a new direction. The Producer Guidelines already apply exactly
+this principle to one field:
 
 > A producer using a custom `event_type` with no published schema MUST omit
 > the field rather than point at a URI that does not resolve.
 
 That is *omit rather than fabricate*, decided once, for `dataschema`. Decision 4
-generalises a rule the standard already made, to every optional field, for the
-same reason.
+generalises a rule the standard already made. The precedent settles the
+direction; it does not settle the classification, which has to come from
+governance.
 
-## 8.3. What follows
+## 8.3. Applying §3 directly
 
-Three routes, and the choice belongs to the change process rather than to this
-memo:
+Absent the missing criterion, ask §3's question literally: what breaks?
 
-1. **Extend §4** so it can classify a change to a conformance rule as well as a
-   change to a schema. That is governance work and needs its own memo. Until it
-   exists, every future decision of this shape hits the same wall.
-2. **Weaken Decision 4 to SHOULD.** It would then be advice, and an
-   implementation could keep fabricating while remaining conforming — which
-   defeats the purpose, since the defect is precisely that green is misleading.
-3. **Release it as MAJOR**, conservatively, on the ground that a previously
-   conforming producer becomes non-conforming.
+A producer that declares 1.4 and writes `anomaly_score: 0.0` keeps working, and
+a consumer that declares 1.5 keeps reading it. The bytes are unchanged and
+`0.0` still means what it meant. Nothing that was valid becomes invalid, and no
+existing meaning is reinterpreted.
 
-This memo's position: the gap in §4 is worth naming before it is worked around.
-An RFC that quietly picked MINOR would be doing to §4 what the `format`
-annotations do to the prose — claiming a strength the mechanism does not
-exercise.
+What changes is narrower: an implementation that wants to *declare 1.5* must
+stop substituting. That is a cost of adopting the new version, not a break of
+the old one — and §4.3 already orients the guarantee that way: *consumers
+update first, producers follow.*
+
+The distinction worth stating, because it will recur:
+
+> **"you must change code to implement a new version" is not the same as "the
+> new version is breaking".** If it were, almost any new semantic requirement
+> would force MAJOR, and MINOR could never carry an obligation.
+
+The nearest counterexample, and why it holds: a 1.4 event that *omits*
+`anomaly_score` could have been defaulted to `0.0` by a 1.4 consumer, and a 1.5
+consumer must not. But absence had no stated meaning in 1.4 — a consumer that
+defaulted was filling a gap, not following a rule — so this supplies a meaning
+rather than changing one.
+
+**On that reading Decision 4 is MINOR.** This memo does not assert it, because
+the reading rests on a criterion `GOVERNANCE.md` does not yet contain. Writing
+that criterion is a governance change and belongs in its own memo; until it
+exists, this memo records the analysis and leaves the classification open.
 
 # 9. Effect on existing implementers
 
