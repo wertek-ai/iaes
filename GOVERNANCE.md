@@ -4,7 +4,9 @@
 MAJOR, the pointer at the end of §4.2, §4.4 and item 2 of §8 -- incorporated
 from `rfc/IAES-RFC-003.md` -- and §4.5, incorporated from
 `rfc/IAES-RFC-004.md`, and §9, incorporated from `rfc/IAES-RFC-005.md` and
-`rfc/IAES-RFC-006.md`, which apply from **IAES 2.0**.
+`rfc/IAES-RFC-006.md`, which apply from **IAES 2.0**. The changes accumulated
+after 1.4 that no memo had accounted for are ratified by
+`rfc/IAES-RFC-007.md`, which also amends §1.1 and §6.1.
 **Last updated:** 2026-09-07
 
 This document defines who maintains the Industrial Asset Event Standard, how it
@@ -38,8 +40,14 @@ network, or judgment to be meaningful, it is not part of IAES.
 
 ### 1.1 The boundary is checked, not remembered
 
-> This section adds no commitment. It makes mechanical the one §1 already
-> states, which is why it carries no RFC under §6.
+> This section does not widen the substantive boundary §1 states; it makes that
+> boundary mechanically enforceable, and obliges the steward to enforce it. Its
+> adoption is recorded by `rfc/IAES-RFC-007.md`.
+>
+> An earlier version of this notice claimed the section carried no RFC because
+> it added no commitment. Three paragraphs below it obliges every repository
+> carrying the IAES name to run a check in CI, which is an obligation of the
+> steward -- MINOR under §4.5 R3, not exempt.
 
 Design Principle #1 is not self-enforcing. A dependency on the steward does not
 look like the word "Wertek" in the text -- it looks like a default value, an
@@ -400,9 +408,15 @@ The chain runs one way:
 An implementer needs the third row. The second explains it. The first says so.
 
 The third row is deliberately not a list. Which artifacts are normative can
-change -- `SDK_SURFACE.md`, for one, declares itself normative for
-implementations though not for the wire -- and a rule that enumerates a set
-that can grow becomes false the day it grows.
+change -- `surface.json` joined the set in 2.0, normative for the SDK profile
+and not for the wire -- and a rule that enumerates a set that can grow becomes
+false the day it grows.
+
+The example used to be `SDK_SURFACE.md`, which then declared itself normative
+for implementations. It no longer does: RFC-006 made `surface.json` the
+definition and left `SDK_SURFACE.md` as its reasoning, so that one thing would
+not have two authorities. The illustration of a growing set had gone stale about
+its own repository, which is the failure this section is otherwise about.
 
 
 | State | Meaning |
