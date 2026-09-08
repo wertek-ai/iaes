@@ -293,7 +293,7 @@ def test_the_python_alias_still_works_and_says_it_is_deprecated():
     import iaes
 
     event = {
-        "spec_version": "1.4", "event_type": "asset.health",
+        "spec_version": "2.0", "event_type": "asset.health",
         "event_id": "x", "correlation_id": "x",
         "timestamp": "2026-09-08T12:00:00Z", "source": "acme.d",
         "asset": {"asset_id": "M1"},

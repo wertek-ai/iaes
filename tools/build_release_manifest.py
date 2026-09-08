@@ -78,26 +78,53 @@ PACKAGES = {
 }
 
 
-def spec_version_from_document() -> str:
-    title = (ROOT / "IAES_SPEC.md").read_text(encoding="utf-8").split("\n", 1)[0]
+def _text_at(ref: str, path: str) -> str:
+    """A file's content at a ref. HEAD means the checkout, as elsewhere here."""
+    if ref == "HEAD":
+        return (ROOT / path).read_text(encoding="utf-8")
+    out = subprocess.run(["git", "show", f"{ref}:{path}"],
+                         cwd=ROOT, check=True, capture_output=True)
+    return out.stdout.decode("utf-8")
+
+
+def spec_version_from_document(ref: str = "HEAD") -> str:
+    """The version the specification titles itself, AT THAT REF.
+
+    This read the working tree unconditionally until 2.0. That was invisible
+    while only one specification version existed, and wrong the moment a second
+    did: rebuilding the manifest of spec-v1.4 compared that tag against whatever
+    the checkout said today, and failed with "tag spec-v1.4 says 1.4 but the
+    specification says 2.0".
+
+    A manifest describes a release, so every value in it has to come from that
+    release. That is the property the reproducibility tests exist to hold, and
+    it was the tool itself that stopped holding it.
+    """
+    title = _text_at(ref, "IAES_SPEC.md").split("\n", 1)[0]
     m = re.search(r"v(\d+\.\d+)\s*$", title)
     if not m:
         raise SystemExit(f"no version in the specification title: {title!r}")
     return m.group(1)
 
 
-def spec_version_from_sdk() -> str:
-    src = (ROOT / "src" / "iaes" / "envelope.py").read_text(encoding="utf-8")
+def spec_version_from_sdk(ref: str = "HEAD") -> str:
+    src = _text_at(ref, "src/iaes/envelope.py")
     m = re.search(r'^SPEC_VERSION\s*=\s*["\']([^"\']+)["\']', src, re.M)
     if not m:
         raise SystemExit("SPEC_VERSION not found in the Python SDK")
     return m.group(1)
 
 
-def package_versions() -> dict:
+def package_versions(ref: str = "HEAD") -> dict:
+    """What each package declared AT THAT REF.
+
+    Same reason as `spec_version_from_document`: describing spec-v1.4 while
+    reading today's package.json reported that the 1.4 release ships 2.0.0
+    packages. A manifest describes a release, and the packages are part of it.
+    """
     out = {}
     for rel, kind in PACKAGES.items():
-        text = (ROOT / rel).read_text(encoding="utf-8")
+        text = _text_at(ref, rel)
         if kind == "json":
             out[rel] = json.loads(text)["version"]
         else:
@@ -185,8 +212,9 @@ def digest(path: Path, ref: str = "HEAD") -> str:
 
 def check(tag: str | None) -> str:
     """Every surface must name the same specification version."""
-    document = spec_version_from_document()
-    sdk = spec_version_from_sdk()
+    ref = tag or "HEAD"
+    document = spec_version_from_document(ref)
+    sdk = spec_version_from_sdk(ref)
     problems = []
 
     if sdk != document:
@@ -212,7 +240,7 @@ def check(tag: str | None) -> str:
                 )
 
     # Packages implement a specification; they do not have one of their own.
-    for rel, version in package_versions().items():
+    for rel, version in package_versions(ref).items():
         if major_minor(version) != document:
             problems.append(
                 f"{rel} is {version}, which implements {major_minor(version)}, "

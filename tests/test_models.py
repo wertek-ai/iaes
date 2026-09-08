@@ -568,7 +568,7 @@ class TestDataschema:
             value=4.2,
             unit="mm/s",
         ).to_dict()
-        assert e["dataschema"] == "https://iaes.dev/schema/v1/asset.measurement"
+        assert e["dataschema"] == "https://iaes.dev/schema/v2/asset.measurement"
 
     def test_the_uri_is_the_event_type(self):
         """The slug of every published schema is its event_type, which is why
@@ -589,10 +589,10 @@ class TestDataschema:
 
 class TestVersion:
     def test_spec_version(self):
-        assert SPEC_VERSION == "1.4"
+        assert SPEC_VERSION == "2.0"
 
     def test_package_version(self):
-        assert iaes.__version__ == "1.4.1"
+        assert iaes.__version__ == "2.0.0"
 
     def test_the_package_version_declares_the_spec_it_implements(self):
         """GOVERNANCE.md §3.1 — the first two numbers ARE the specification.

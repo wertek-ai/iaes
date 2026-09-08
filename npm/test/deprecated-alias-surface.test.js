@@ -84,7 +84,7 @@ test("the dispatch alias is declared too", () => {
 test("and both still work at runtime", () => {
   const sdk = require("../dist/index.js");
   const event = {
-    spec_version: "1.4",
+    spec_version: "2.0",
     event_type: "asset.health",
     event_id: "550e8400-e29b-41d4-a716-446655440000",
     correlation_id: "550e8400-e29b-41d4-a716-446655440000",

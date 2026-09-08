@@ -4,13 +4,13 @@ import hashlib
 import json
 from typing import Any, Dict
 
-SPEC_VERSION = "1.4"
+SPEC_VERSION = "2.0"
 
 #: Canonical base for schema identity. Every schema is served at
 #: ``SCHEMA_BASE + <event_type>``, which is why ``dataschema`` can be derived
 #: instead of asked for: the event type already determines the contract.
 #: See GOVERNANCE.md section 5.
-SCHEMA_BASE = "https://iaes.dev/schema/v1/"
+SCHEMA_BASE = "https://iaes.dev/schema/v2/"
 
 #: Event types whose schema is published. ``dataschema`` is only emitted for
 #: these: pointing at a URI that does not resolve is worse than omitting the

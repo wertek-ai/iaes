@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://iaes.dev/schema/v1/asset.hierarchy",
+  "$id": "https://iaes.dev/schema/v2/asset.hierarchy",
   "title": "IAES asset.hierarchy",
   "description": "Asset hierarchy structure sync — organizations, plants, areas, and equipment",
   "allOf": [

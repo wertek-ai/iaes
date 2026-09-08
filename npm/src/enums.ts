@@ -41,6 +41,11 @@ export const UnitsQualifier = {
 export type UnitsQualifier =
   (typeof UnitsQualifier)[keyof typeof UnitsQualifier];
 
+/**
+ * Health status levels. IAES's own vocabulary: any correspondence to an
+ * external standard is unverified and is not asserted here. The name is
+ * retained for compatibility with 1.x (rfc/IAES-RFC-002.md decision 2).
+ */
 export const ISO13374Status = {
   UNKNOWN: "unknown",
   NORMAL: "normal",
@@ -53,6 +58,11 @@ export const ISO13374Status = {
 export type ISO13374Status =
   (typeof ISO13374Status)[keyof typeof ISO13374Status];
 
+/**
+ * Temporal trend of the assessed condition. IAES's own vocabulary: any
+ * correspondence to an external standard is unverified and is not asserted
+ * here (rfc/IAES-RFC-002.md decision 3).
+ */
 export const ConditionTrend = {
   WORSENING: "worsening",
   STABLE: "stable",

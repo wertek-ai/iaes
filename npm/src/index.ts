@@ -2,7 +2,7 @@
  * IAES — Industrial Asset Event Standard
  *
  * A vendor-neutral TypeScript/JavaScript SDK for creating, serializing,
- * and deserializing industrial asset events per the IAES v1.3 specification.
+ * and deserializing industrial asset events per the IAES v2.0 specification.
  *
  * @example
  * ```ts

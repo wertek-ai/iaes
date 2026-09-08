@@ -17,7 +17,7 @@ const { validate, ValidationError, loadSchema, loadEnvelopeSchema } = require(".
 
 function goodEvent(overrides = {}) {
   return {
-    spec_version: "1.4",
+    spec_version: "2.0",
     event_type: "asset.health",
     event_id: "550e8400-e29b-41d4-a716-446655440000",
     correlation_id: "550e8400-e29b-41d4-a716-446655440000",

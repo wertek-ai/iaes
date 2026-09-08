@@ -1,5 +1,5 @@
 {
-  "spec_version": "1.0",
+  "spec_version": "2.0",
   "event_type": "asset.health",
   "event_id": "a9e3c4b2-9d3a-4a12-b1f3-2e44a1caa8a1",
   "correlation_id": "3b2f9d8c-1c33-4a8a-9b77-54d11b2efc12",

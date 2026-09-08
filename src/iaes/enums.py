@@ -46,7 +46,9 @@ class UnitsQualifier(str, Enum):
 
 
 class ISO13374Status(str, Enum):
-    """ISO 13374-2 condition status levels."""
+    """Health status levels. IAES's own vocabulary: any correspondence to an
+    external standard is unverified and is not asserted here. The name is
+    retained for compatibility with 1.x (rfc/IAES-RFC-002.md decision 2)."""
 
     UNKNOWN = "unknown"
     NORMAL = "normal"
@@ -58,7 +60,9 @@ class ISO13374Status(str, Enum):
 
 
 class ConditionTrend(str, Enum):
-    """ISO 13374-4 §5.3 condition trend — stable vs worsening distinction (v1.3)."""
+    """Temporal trend of the assessed condition. IAES's own vocabulary: any
+    correspondence to an external standard is unverified and is not asserted
+    here (rfc/IAES-RFC-002.md decision 3)."""
 
     WORSENING = "worsening"
     STABLE = "stable"

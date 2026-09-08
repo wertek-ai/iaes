@@ -27,8 +27,8 @@ Sensors --> Intelligence --> IAES --> Connectors --> Enterprise Systems
 ## Part of IAES
 
 The standard ships as four packages that version together. **The first two
-numbers of a package version are the specification it implements** — `1.4.x`
-implements IAES 1.4.
+numbers of a package version are the specification it implements** — `2.0.x`
+implements IAES 2.0.
 
 | Runtime | Package | Install |
 |---|---|---|
@@ -223,7 +223,7 @@ event = from_dict(wire)  # AssetMeasurement, AssetHealth, etc.
 print(event.asset_id, event.value)
 ```
 
-## Event Types (v1.4)
+## Event Types (v2.0)
 
 | Event Type | Python | TypeScript | Purpose |
 |------------|--------|------------|---------|
@@ -262,7 +262,7 @@ Every event serializes to the same envelope structure:
 
 ```json
 {
-  "spec_version": "1.4",
+  "spec_version": "2.0",
   "dataschema": "https://iaes.dev/schema/v1/asset.measurement",
   "event_type": "asset.measurement",
   "event_id": "a9e3c4b2-...",
@@ -400,4 +400,4 @@ IAES is an open specification. The specification text and JSON schemas are licen
 
 ---
 
-*IAES v1.4 — September 2026*
+*IAES v2.0 — September 2026*
