@@ -13,7 +13,7 @@ ISSN: N/A
 > it. It is **not** normative authority for how IAES behaves. The applicable
 > normative artifacts, as released, govern IAES. See `GOVERNANCE.md` §6.1.
 
-**State: Review**, per `GOVERNANCE.md` §6, at the steward's request.
+**State: Accepted**, per `GOVERNANCE.md` §6.
 **Compatibility: MAJOR, and the reason is one change, not the set (§9). Target
 version: IAES 2.0.** Distribution is unlimited.
 
