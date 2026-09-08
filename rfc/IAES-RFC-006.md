@@ -16,7 +16,7 @@ ISSN: N/A
 This memo adopts the first IAES SDK profile, under the class `GOVERNANCE.md` §9
 defines. It changes no schema and imposes nothing on the wire.
 
-**State: Review**, per `GOVERNANCE.md` §6, at the steward's request.
+**State: Accepted**, per `GOVERNANCE.md` §6.
 **Compatibility: MINOR, derived under §4.5 (R3). Target version: IAES 2.0.**
 Distribution is unlimited.
 
@@ -269,9 +269,16 @@ the canonical name with their present names kept as deprecated aliases, before
    as the release whose profile it defines, with §2 through §5 of this memo
    recorded in it: the library scope, the six required capabilities, `route` not
    required, the canonical name and its aliases, and the failure requirement.
-2. **`surface.json` and `SDK_SURFACE.md` enter the release manifest's normative
-   set**, per `GOVERNANCE.md` §9.4 — a claim names a release and is checked
-   against that release's definition.
+2. **`surface.json` enters the release manifest's normative set**, per
+   `GOVERNANCE.md` §9.4 — a claim names a release and is checked against that
+   release's definition.
+
+   **`SDK_SURFACE.md` does not.** An earlier draft put both there, which would
+   have made the reasoning normative alongside the definition it explains: two
+   authorities over the same thing, which is the shape `IAES-RFC-000` and
+   `GOVERNANCE.md` §6.1 already closed for RFCs. It keeps travelling in the
+   repository and explaining the profile; it does not govern it, and it says so
+   in its own header.
 3. **`GOVERNANCE.md` §9.2** stops saying that no profile is adopted, and names
    the profile IAES 2.0 adopts and where its definition lives.
 
