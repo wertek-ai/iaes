@@ -30,6 +30,8 @@ export {
 } from "./envelope";
 export type { IAESEnvelope, AssetIdentity } from "./envelope";
 
+export { validate, loadSchema, loadEnvelopeSchema, ValidationError } from "./validation";
+
 export {
   Severity,
   MeasurementType,

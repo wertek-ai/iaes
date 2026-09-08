@@ -2,7 +2,7 @@
   "$comment": "What each implementation offers today. NOT NORMATIVE and deliberately not part of any release: surface.json defines the IAES SDK profile, and this file records how far each implementation is from it. They were one file until 2026-09-08, which meant an SDK release would have edited a normative artifact -- the implementation moving the standard, which is the boundary backwards. tests/test_surface.py checks this file against the code, and checks that every capability it names exists in surface.json.",
   "measures": "the IAES SDK profile defined in surface.json",
   "not_normative": "Nothing here requires anything of anyone. A library's claim to the profile lives in that library's own published documentation (rfc/IAES-RFC-006.md §6); `claims_profile` here records whether such a claim has been made, and is not itself the claim.",
-  "measured": "2026-09-06",
+  "measured": "2026-09-08",
   "implementations": {
     "$comment": "Declared gaps, not silent ones. An absent capability that nobody declared is indistinguishable from one nobody thought of, and that is how five platforms arrived at five different surfaces. Checked by tests/test_surface.py.",
     "python": {
@@ -27,16 +27,15 @@
       "has": [
         "build:7",
         "from_object",
+        "validate",
         "compute_content_hash",
         "schema_uri_for",
         "vocabulary:10"
       ],
-      "gaps": [
-        "validate"
-      ],
-      "note": "The only SDK that cannot check an event against its schema, and the one both flow runtimes depend on.",
+      "gaps": [],
+      "note": "Gained validate on 2026-09-08. Mirrors the Python SDK: same behaviour, same shape of failure, and a custom event_type validated against the envelope alone.",
       "claims_profile": false,
-      "claim_note": "Lacks validate, which the profile requires, and does not yet expose the canonical name from_object."
+      "claim_note": "Has all six capabilities. Does not yet expose the canonical name from_object; today it is fromJSON, which becomes a deprecated alias."
     },
     "node_red": {
       "package": "node-red-contrib-iaes",
