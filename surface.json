@@ -3,11 +3,13 @@
   "iaes_spec_version": "1.4",
   "measured": "2026-09-06",
   "status": {
-    "state": "draft",
-    "normative_for": null,
+    "state": "normative",
+    "normative_for": "the IAES SDK profile (GOVERNANCE.md §9.2)",
     "normative_for_the_wire": false,
-    "notice": "This file is not normative. It is a measurement of what five implementations expose and a proposal for what an IAES SDK profile could require. GOVERNANCE.md §9 defines the profile as a class of conformance; no profile has been adopted, and adopting one -- deciding which capabilities are genuinely universal -- is a separate change with its own memo.",
-    "why_not_normative_yet": "The list is measured, not designed. Making this file normative would adopt it as the definition of the profile, which is a decision nobody has taken."
+    "profile_of": "IAES 2.0",
+    "adopted_by": "rfc/IAES-RFC-006.md",
+    "notice": "Changing this file does not change what an IAES event is. It changes what a library must expose to claim the IAES SDK profile. A library that does not claim the profile is unaffected, and may still be wire-conformant.",
+    "claimed_not_granted": "No one grants this profile. A library claims it by stating, in its published documentation, that it implements the IAES SDK profile of IAES 2.0; any third party checks the claim against this file. See GOVERNANCE.md §9.3 for why the steward must not be the grantor."
   },
   "naming": {
     "rule": "The same word, in each language's convention. Never a different verb.",
@@ -43,14 +45,20 @@
       "that it failed",
       "the path of the offending field"
     ],
-    "note": "Python raises ValidationError and TypeScript has IaesClientError, and they do not do the same thing. This is the least-examined part of the surface and the most consequential for someone moving between languages."
+    "note": "Python raises ValidationError and TypeScript has IaesClientError, and they do not do the same thing. This is the least-examined part of the surface and the most consequential for someone moving between languages.",
+    "required": [
+      "that it failed",
+      "the path of the offending field"
+    ],
+    "not_required": "The type raised, its name, and the mechanism -- exception, result type, error value -- are the language's business. Requiring a shared error shape across a language with exceptions, one with result types and one with neither would be designing a cross-language error model from two data points."
   },
   "capabilities": {
     "build": {
       "what": "construct an event of a published type",
       "per": "event_type",
       "published_types": 7,
-      "required": true
+      "required": true,
+      "required_types": "all 7 published event types"
     },
     "from_object": {
       "what": "construct an event from a plain object",
@@ -59,7 +67,12 @@
         "python": "from_dict",
         "typescript": "fromJSON"
       },
-      "note": "Two verbs today. The canonical name is from_object; both existing names become deprecated aliases rather than disappearing."
+      "note": "The canonical name is from_object. The existing names become deprecated aliases and keep working: removing them would break every caller and make a naming decision into a MAJOR change, which would teach that tidying the surface is expensive.",
+      "canonical_name": "from_object",
+      "deprecated_aliases": {
+        "python": "from_dict",
+        "typescript": "fromJSON"
+      }
     },
     "validate": {
       "what": "check an event against its published schema, reporting the failing field path",
@@ -79,13 +92,15 @@
     "route": {
       "what": "separate events by type using only the published vocabulary",
       "required": false,
-      "note": "Required where the platform's shape makes it meaningful -- a flow runtime. A library caller does this with a switch, which is why its absence in Python and TypeScript is not a gap."
+      "note": "Required where the platform's shape makes it meaningful -- a flow runtime. A library caller does this with a switch, which is why its absence in Python and TypeScript is not a gap.",
+      "why_not_required": "A library caller uses a switch. Requiring a dispatcher would be requiring an opinion about program structure, which a wire standard's SDK does not owe anyone. Flow runtimes have it because dispatch is what a flow runtime is."
     },
     "vocabulary": {
       "what": "expose the published enumerations",
       "count": 10,
       "required": true,
-      "note": "All of them. The flow runtimes take theirs from @iaes/sdk rather than exposing a node, which is the platform's idiom and counts as present."
+      "note": "All of them. The flow runtimes take theirs from @iaes/sdk rather than exposing a node, which is the platform's idiom and counts as present.",
+      "required_enumerations": "all 10 published enumerations"
     }
   },
   "not_capabilities": {
@@ -109,7 +124,9 @@
         "vocabulary:10"
       ],
       "gaps": [],
-      "note": "route is not a gap: a library caller uses a switch."
+      "note": "route is not a gap: a library caller uses a switch.",
+      "claims_profile": false,
+      "claim_note": "Has all six capabilities. Does not yet expose the canonical name from_object; today it is from_dict, which becomes a deprecated alias."
     },
     "typescript": {
       "package": "@iaes/sdk",
@@ -124,7 +141,9 @@
       "gaps": [
         "validate"
       ],
-      "note": "The only SDK that cannot check an event against its schema, and the one both flow runtimes depend on."
+      "note": "The only SDK that cannot check an event against its schema, and the one both flow runtimes depend on.",
+      "claims_profile": false,
+      "claim_note": "Lacks validate, which the profile requires, and does not yet expose the canonical name from_object."
     },
     "node_red": {
       "package": "node-red-contrib-iaes",
@@ -139,7 +158,9 @@
         "from_object",
         "schema_uri_for",
         "build: completion, spare_part_usage, sensor_registration, hierarchy"
-      ]
+      ],
+      "claims_profile": null,
+      "claim_note": "Out of scope: a flow-runtime package is not a library (rfc/IAES-RFC-006.md §2). Wire-conformant; claiming no profile is not a deficiency."
     },
     "n8n": {
       "package": "n8n-nodes-iaes",
@@ -154,7 +175,9 @@
         "route",
         "schema_uri_for",
         "build: hierarchy"
-      ]
+      ],
+      "claims_profile": null,
+      "claim_note": "Out of scope: a flow-runtime package is not a library (rfc/IAES-RFC-006.md §2)."
     },
     "cpp": {
       "package": "iaes-opta-runtime",
@@ -172,7 +195,15 @@
         "build: work_order_intent, completion, spare_part_usage, sensor_registration, hierarchy",
         "vocabulary: 1 of 10 enumerations"
       ],
-      "note": "A microcontroller runtime, deliberately narrow. Its conformance is checked in its own repository's CI, not here, so tests/test_surface.py does not verify this row -- which is itself a gap, and stated rather than left implied."
+      "note": "A microcontroller runtime, deliberately narrow. Its conformance is checked in its own repository's CI, not here, so tests/test_surface.py does not verify this row -- which is itself a gap, and stated rather than left implied.",
+      "claims_profile": false,
+      "claim_note": "A deliberately narrow microcontroller runtime: two of seven builders, one of ten enumerations. Wire-conformant, and not an SDK."
     }
+  },
+  "scope": {
+    "applies_to": "a library: a package that exposes an API to code written by its user",
+    "out_of_scope": "flow-runtime packages (Node-RED nodes, n8n nodes). A different artifact class: nothing transfers between a palette and an API, which is why the measured matrix had cells that cannot be filled. They remain wire-conformant and claim no profile, which is not a deficiency.",
+    "levels": "None. With one artifact class in scope, levels would multiply what a claim can mean without making any claim more precise. A second artifact class would get its own profile, not a level of this one.",
+    "rationale": "rfc/IAES-RFC-006.md §2 and §7"
   }
 }

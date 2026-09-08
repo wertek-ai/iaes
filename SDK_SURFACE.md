@@ -1,10 +1,14 @@
 # IAES SDK Surface
 
-> **Status: normative for implementations, not for the wire.**
+> **Status: the reasoning behind the IAES SDK profile adopted by IAES 2.0.**
+> The profile itself is [`surface.json`](surface.json), which is normative for
+> the profile and not for the wire (`GOVERNANCE.md` §9.2).
 >
-> This document does not change what an IAES event is. It says what an
-> implementation that calls itself an IAES SDK must expose, so that somebody who
-> has learned one has learned them all.
+> This document does not change what an IAES event is. It says what a **library**
+> must expose to claim the profile, so that somebody who has learned one has
+> learned them all. A library that does not claim the profile is unaffected and
+> may still be wire-conformant; flow-runtime packages are out of scope
+> (`rfc/IAES-RFC-006.md` §2).
 >
 > The machine-readable form is [`surface.json`](surface.json), and
 > [`tests/test_surface.py`](tests/test_surface.py) reads it. That sentence used
