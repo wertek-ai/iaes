@@ -6,6 +6,11 @@
 > §9.2) and is what a claim is checked against. Where this document and
 > `surface.json` disagree, `surface.json` governs.
 >
+> What each implementation offers **today** is measured in
+> [`implementations.json`](implementations.json), which is not normative and
+> travels in no release. The two were one file until 2026-09-08; separating them
+> is what stops an SDK release from editing a normative artifact.
+>
 > This document does not change what an IAES event is. It says what a **library**
 > must expose to claim the profile, so that somebody who has learned one has
 > learned them all. A library that does not claim the profile is unaffected and

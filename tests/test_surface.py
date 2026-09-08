@@ -23,7 +23,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
 SURFACE = json.loads((ROOT / "surface.json").read_text(encoding="utf-8"))
-IMPLS = SURFACE["implementations"]
+REPORT = json.loads((ROOT / "implementations.json").read_text(encoding="utf-8"))
+IMPLS = REPORT["implementations"]
 PUBLISHED_TYPES = SURFACE["capabilities"]["build"]["published_types"]
 ENUM_COUNT = SURFACE["capabilities"]["vocabulary"]["count"]
 
@@ -213,3 +214,34 @@ def test_every_implementation_says_whether_it_claims_the_profile():
             continue
         assert "claims_profile" in impl, f"{name} does not say whether it claims the profile"
         assert impl.get("claim_note"), f"{name} claims nothing and gives no reason"
+
+
+def test_the_measurement_only_names_capabilities_the_profile_defines():
+    """The two files split on 2026-09-08 and can now drift apart.
+
+    A measurement that reports on a capability the profile does not define is
+    measuring something nobody asked for; one that silently renames a
+    capability makes the claim guard test a name that does not exist. Neither
+    fails on its own, which is why it is checked here.
+    """
+    defined = set(SURFACE["capabilities"])
+    for name, impl in IMPLS.items():
+        if name.startswith("$"):
+            continue
+        for entry in list(impl.get("has", [])) + list(impl.get("gaps", [])):
+            capability = entry.partition(":")[0].strip()
+            assert capability in defined, (
+                f"{name} reports on {capability!r}, which surface.json does not "
+                f"define. Either the profile gained it or the report is stale."
+            )
+
+
+def test_the_profile_carries_no_implementation_status():
+    """surface.json is normative. If an SDK release could edit it, a package
+    shipping would be a change to the standard."""
+    for key in ("implementations", "claims_profile", "measured"):
+        assert key not in SURFACE, (
+            f"surface.json carries {key!r}. The definition of the profile must "
+            f"not record who currently meets it: that belongs in "
+            f"implementations.json, which is not normative."
+        )

@@ -1,7 +1,6 @@
 {
-  "$comment": "The canonical SDK surface: what an implementation must expose to call itself an IAES SDK. SDK_SURFACE.md is the reasoning. tests/test_surface.py reads this file and fails when a declaration stops matching the code, so a gap cannot be closed or opened without the declaration moving with it.",
+  "$comment": "The IAES SDK profile: what a library must expose to claim it. Normative for the profile and not for the wire (GOVERNANCE.md §9.2); SDK_SURFACE.md is the reasoning and does not govern. What each implementation currently offers is measured in implementations.json, which is not normative and not part of a release: a file that both defined the profile and recorded who meets it would be edited every time a package shipped.",
   "iaes_spec_version": "1.4",
-  "measured": "2026-09-06",
   "status": {
     "state": "normative",
     "normative_for": "the IAES SDK profile (GOVERNANCE.md §9.2)",
@@ -110,100 +109,11 @@
     "transport_clients": "A Modbus or MQTT client is neither standard nor product -- it is generic plumbing, like an HTTP library, and claims neither side.",
     "protocol_bindings": "node-red-contrib-iaes ships an iaes-sparkplug node. A binding maps IAES onto one wire protocol; it is useful and it is not part of the surface every implementation must offer."
   },
-  "implementations": {
-    "$comment": "Declared gaps, not silent ones. An absent capability that nobody declared is indistinguishable from one nobody thought of, and that is how five platforms arrived at five different surfaces. Checked by tests/test_surface.py.",
-    "python": {
-      "package": "iaes",
-      "repo": "this",
-      "has": [
-        "build:7",
-        "from_object",
-        "validate",
-        "compute_content_hash",
-        "schema_uri_for",
-        "vocabulary:10"
-      ],
-      "gaps": [],
-      "note": "route is not a gap: a library caller uses a switch.",
-      "claims_profile": false,
-      "claim_note": "Has all six capabilities. Does not yet expose the canonical name from_object; today it is from_dict, which becomes a deprecated alias."
-    },
-    "typescript": {
-      "package": "@iaes/sdk",
-      "repo": "this",
-      "has": [
-        "build:7",
-        "from_object",
-        "compute_content_hash",
-        "schema_uri_for",
-        "vocabulary:10"
-      ],
-      "gaps": [
-        "validate"
-      ],
-      "note": "The only SDK that cannot check an event against its schema, and the one both flow runtimes depend on.",
-      "claims_profile": false,
-      "claim_note": "Lacks validate, which the profile requires, and does not yet expose the canonical name from_object."
-    },
-    "node_red": {
-      "package": "node-red-contrib-iaes",
-      "repo": "this",
-      "has": [
-        "build:3",
-        "validate",
-        "route",
-        "vocabulary:10"
-      ],
-      "gaps": [
-        "from_object",
-        "schema_uri_for",
-        "build: completion, spare_part_usage, sensor_registration, hierarchy"
-      ],
-      "claims_profile": null,
-      "claim_note": "Out of scope: a flow-runtime package is not a library (rfc/IAES-RFC-006.md §2). Wire-conformant; claiming no profile is not a deficiency."
-    },
-    "n8n": {
-      "package": "n8n-nodes-iaes",
-      "repo": "this",
-      "has": [
-        "build:6",
-        "validate",
-        "vocabulary:10"
-      ],
-      "gaps": [
-        "from_object",
-        "route",
-        "schema_uri_for",
-        "build: hierarchy"
-      ],
-      "claims_profile": null,
-      "claim_note": "Out of scope: a flow-runtime package is not a library (rfc/IAES-RFC-006.md §2)."
-    },
-    "cpp": {
-      "package": "iaes-opta-runtime",
-      "repo": "wertek-ai/iaes-opta-runtime",
-      "has": [
-        "build:2",
-        "compute_content_hash",
-        "vocabulary:1"
-      ],
-      "gaps": [
-        "validate",
-        "from_object",
-        "route",
-        "schema_uri_for",
-        "build: work_order_intent, completion, spare_part_usage, sensor_registration, hierarchy",
-        "vocabulary: 1 of 10 enumerations"
-      ],
-      "note": "A microcontroller runtime, deliberately narrow. Its conformance is checked in its own repository's CI, not here, so tests/test_surface.py does not verify this row -- which is itself a gap, and stated rather than left implied.",
-      "claims_profile": false,
-      "claim_note": "A deliberately narrow microcontroller runtime: two of seven builders, one of ten enumerations. Wire-conformant, and not an SDK."
-    }
-  },
   "scope": {
     "applies_to": "a library: a package that exposes an API to code written by its user",
     "out_of_scope": "flow-runtime packages (Node-RED nodes, n8n nodes). A different artifact class: nothing transfers between a palette and an API, which is why the measured matrix had cells that cannot be filled. They remain wire-conformant and claim no profile, which is not a deficiency.",
     "levels": "None. With one artifact class in scope, levels would multiply what a claim can mean without making any claim more precise. A second artifact class would get its own profile, not a level of this one.",
     "rationale": "rfc/IAES-RFC-006.md §2 and §7"
-  }
+  },
+  "implementation_status": "implementations.json (not normative)"
 }
