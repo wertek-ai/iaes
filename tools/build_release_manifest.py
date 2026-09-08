@@ -44,9 +44,15 @@ NORMATIVE = [
     # citation means and whether anyone can consult it. A release that did not
     # carry it would publish claims whose checkability lives outside the release.
     "references/registry.json",
-    # A release that adopts an SDK profile (GOVERNANCE.md §9.4) carries the
-    # profile's definition here, because a claim is checked against the release
-    # it names. No profile has been adopted, so nothing is listed for it yet.
+    # The adopted SDK profile (GOVERNANCE.md §9.2). A claim names a release and
+    # is checked against that release's definition, so §9.4 requires the
+    # definition to travel inside the release.
+    #
+    # SDK_SURFACE.md is deliberately NOT here. It is the reasoning behind the
+    # profile, and a reasoning that is normative alongside the definition it
+    # explains is a second authority over the same thing -- the shape RFC-000
+    # and GOVERNANCE.md §6.1 already closed for RFCs.
+    "surface.json",
 ]
 NORMATIVE_GLOBS = [
     "schema/*.schema.json",

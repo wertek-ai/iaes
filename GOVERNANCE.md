@@ -3,8 +3,8 @@
 **Status:** Normative. Applies from IAES v1.4 onward, except §3's definition of
 MAJOR, the pointer at the end of §4.2, §4.4 and item 2 of §8 -- incorporated
 from `rfc/IAES-RFC-003.md` -- and §4.5, incorporated from
-`rfc/IAES-RFC-004.md`, and §9, incorporated from `rfc/IAES-RFC-005.md`, which
-apply from **IAES 2.0**.
+`rfc/IAES-RFC-004.md`, and §9, incorporated from `rfc/IAES-RFC-005.md` and
+`rfc/IAES-RFC-006.md`, which apply from **IAES 2.0**.
 **Last updated:** 2026-09-07
 
 This document defines who maintains the Industrial Asset Event Standard, how it
@@ -474,9 +474,14 @@ A library **may claim** a profile, naming the release whose profile it meets.
 Claiming it is a statement any third party can check against that release's
 definition.
 
-This section defines the class. **It adopts no profile**: which capabilities are
-genuinely universal is a separate decision, and a release that has adopted none
-has none to claim.
+**IAES 2.0 adopts one profile**, defined by `surface.json` in this release, with
+`SDK_SURFACE.md` as its reasoning. It applies to a **library** — a package that
+exposes an API to code written by its user. Flow-runtime packages are a
+different artifact class and are out of scope; they remain wire-conformant and
+claim no profile, which §9.2 says is not a deficiency.
+
+The rationale for the scope, for the six required capabilities, and for what is
+deliberately not required is in `rfc/IAES-RFC-006.md`.
 
 **Not claiming it is not a deficiency**, and says nothing about whether the
 library is wire-conformant. A narrow runtime that emits correct events and

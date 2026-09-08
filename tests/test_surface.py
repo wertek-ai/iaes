@@ -166,3 +166,50 @@ def test_the_counts_come_from_one_place():
     assert f"vocabulary:{ENUM_COUNT}" in python_surface(), (
         f"surface.json says {ENUM_COUNT} enumerations; Python exports a "
         f"different number")
+
+
+# ─── the profile is only real if a claim can be checked ──────
+
+REQUIRED = [name for name, cap in SURFACE["capabilities"].items() if cap.get("required")]
+
+COUNTED = {"build": PUBLISHED_TYPES, "vocabulary": ENUM_COUNT}
+
+
+def _offers(impl: dict, capability: str) -> bool:
+    """`has` entries are either "name" or "name:count"."""
+    for entry in impl.get("has", []):
+        name, _, count = entry.partition(":")
+        if name != capability:
+            continue
+        needed = COUNTED.get(capability)
+        return True if needed is None else count.isdigit() and int(count) >= needed
+    return False
+
+
+@pytest.mark.parametrize("name", sorted(k for k in IMPLS if not k.startswith("$")))
+def test_a_claim_of_the_profile_is_backed_by_every_required_capability(name):
+    """Adopting a profile that nothing checks would make it decorative.
+
+    `claims_profile` is true, false, or null for an implementation the profile
+    does not apply to. Where it is true, every capability the profile requires
+    must actually be offered -- with the full count, since `build: 3` is not
+    `build`.
+    """
+    impl = IMPLS[name]
+    if impl.get("claims_profile") is not True:
+        pytest.skip(f"{name} does not claim the profile")
+    missing = [c for c in REQUIRED if not _offers(impl, c)]
+    assert not missing, (
+        f"{name} claims the IAES SDK profile and does not offer {missing}. "
+        f"Either the capability lands or the claim comes down."
+    )
+
+
+def test_every_implementation_says_whether_it_claims_the_profile():
+    """Silence would read as 'not applicable' for a library that simply has
+    not been assessed."""
+    for name, impl in IMPLS.items():
+        if name.startswith("$"):
+            continue
+        assert "claims_profile" in impl, f"{name} does not say whether it claims the profile"
+        assert impl.get("claim_note"), f"{name} claims nothing and gives no reason"
