@@ -46,6 +46,7 @@ from .models import (
     SparePartUsage,
     WorkOrderIntent,
     from_dict,
+    from_object,
 )
 from .validation import ValidationError, validate, load_schema
 from .client import Client, IaesClientError
@@ -86,6 +87,7 @@ __all__ = [
     "RelationshipType",
     "RegistrationStatus",
     # Helpers
+    "from_object",
     "from_dict",
     "validate",
     "load_schema",

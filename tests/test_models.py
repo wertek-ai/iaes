@@ -1,4 +1,4 @@
-"""Tests for IAES event models — round-trip, serialization, from_dict."""
+"""Tests for IAES event models — round-trip, serialization, from_object."""
 
 import json
 from datetime import datetime, timezone
@@ -23,7 +23,7 @@ from iaes import (
     RelationshipType,
     RegistrationStatus,
     SPEC_VERSION,
-    from_dict,
+    from_object,
 )
 
 
@@ -96,7 +96,7 @@ class TestAssetMeasurement:
             area="Zone 3",
         )
         d = e.to_dict()
-        e2 = AssetMeasurement.from_dict(d)
+        e2 = AssetMeasurement.from_object(d)
         assert e2.asset_id == "PUMP-002"
         assert e2.measurement_type == "pressure"
         assert e2.value == 3.5
@@ -148,7 +148,7 @@ class TestAssetHealth:
         )
         d = e.to_dict()
         assert d["data"]["condition_trend"] == "worsening"
-        e2 = AssetHealth.from_dict(d)
+        e2 = AssetHealth.from_object(d)
         assert e2.condition_trend == "worsening"
 
     def test_condition_trend_string(self):
@@ -190,7 +190,7 @@ class TestAssetHealth:
             rul_days=30,
         )
         d = e.to_dict()
-        e2 = AssetHealth.from_dict(d)
+        e2 = AssetHealth.from_object(d)
         assert e2.health_index == 0.5
         assert e2.failure_mode == "misalignment"
         assert e2.rul_days == 30
@@ -218,7 +218,7 @@ class TestWorkOrderIntent:
             recommended_due_days=14,
         )
         d = e.to_dict()
-        e2 = WorkOrderIntent.from_dict(d)
+        e2 = WorkOrderIntent.from_object(d)
         assert e2.title == "Inspect pump seals"
         assert e2.recommended_due_days == 14
 
@@ -244,7 +244,7 @@ class TestMaintenanceCompletion:
             completion_notes="Bearing replaced, alignment OK",
         )
         d = e.to_dict()
-        e2 = MaintenanceCompletion.from_dict(d)
+        e2 = MaintenanceCompletion.from_object(d)
         assert e2.completion_notes == "Bearing replaced, alignment OK"
 
 
@@ -271,7 +271,7 @@ class TestAssetHierarchy:
             model="6205-2RS",
         )
         d = e.to_dict()
-        e2 = AssetHierarchy.from_dict(d)
+        e2 = AssetHierarchy.from_object(d)
         assert e2.manufacturer == "SKF"
 
 
@@ -296,7 +296,7 @@ class TestSensorRegistration:
             measurement_capabilities=["vibration_velocity", "temperature"],
         )
         d = e.to_dict()
-        e2 = SensorRegistration.from_dict(d)
+        e2 = SensorRegistration.from_object(d)
         assert e2.measurement_capabilities == ["vibration_velocity", "temperature"]
 
 
@@ -324,7 +324,7 @@ class TestSparePartUsage:
             part_name="Bearing SKF 6205",
         )
         d = e.to_dict()
-        e2 = SparePartUsage.from_dict(d)
+        e2 = SparePartUsage.from_object(d)
         assert e2.part_name == "Bearing SKF 6205"
         assert e2.quantity_used == 1.5
 
@@ -337,18 +337,18 @@ class TestFromDict:
             value=80.0,
             unit="C",
         ).to_dict()
-        obj = from_dict(wire)
+        obj = from_object(wire)
         assert isinstance(obj, AssetMeasurement)
         assert obj.value == 80.0
 
     def test_dispatch_health(self):
         wire = AssetHealth(asset_id="M-001", severity="high").to_dict()
-        obj = from_dict(wire)
+        obj = from_object(wire)
         assert isinstance(obj, AssetHealth)
 
     def test_unknown_event_type(self):
         try:
-            from_dict({"event_type": "foo.bar", "data": {}})
+            from_object({"event_type": "foo.bar", "data": {}})
             assert False, "Should have raised"
         except ValueError as e:
             assert "foo.bar" in str(e)

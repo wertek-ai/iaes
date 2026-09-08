@@ -17,7 +17,7 @@ const {
   AssetHierarchy,
   SensorRegistration,
   SparePartUsage,
-  fromJSON,
+  fromObject,
   SPEC_VERSION,
 } = require("../dist/index");
 
@@ -47,7 +47,7 @@ describe("IAES TypeScript SDK", () => {
     assert.equal(wire.content_hash.length, 16);
 
     // Roundtrip
-    const event2 = AssetMeasurement.fromJSON(wire);
+    const event2 = AssetMeasurement.fromObject(wire);
     assert.equal(event2.asset_id, "MOTOR-001");
     assert.equal(event2.value, 4.2);
     assert.equal(event2.units_qualifier, "rms");
@@ -71,7 +71,7 @@ describe("IAES TypeScript SDK", () => {
     assert.equal(wire.data.iso_13374_status, "unacceptable");
     assert.equal(wire.data.iso_14224.mechanism_code, "1.1");
 
-    const event2 = AssetHealth.fromJSON(wire);
+    const event2 = AssetHealth.fromObject(wire);
     assert.equal(event2.failure_mode, "bearing_inner_race");
     assert.equal(event2.rul_days, 5);
   });
@@ -85,7 +85,7 @@ describe("IAES TypeScript SDK", () => {
     });
     const wire = event.toJSON();
     assert.equal(wire.data.condition_trend, "worsening");
-    const event2 = AssetHealth.fromJSON(wire);
+    const event2 = AssetHealth.fromObject(wire);
     assert.equal(event2.condition_trend, "worsening");
   });
 
@@ -108,7 +108,7 @@ describe("IAES TypeScript SDK", () => {
     assert.equal(wire.event_type, "maintenance.work_order_intent");
     assert.equal(wire.data.title, "Replace bearing DE");
 
-    const event2 = WorkOrderIntent.fromJSON(wire);
+    const event2 = WorkOrderIntent.fromObject(wire);
     assert.equal(event2.recommended_due_days, 7);
   });
 
@@ -122,7 +122,7 @@ describe("IAES TypeScript SDK", () => {
     const wire = event.toJSON();
 
     assert.equal(wire.event_type, "maintenance.completion");
-    const event2 = MaintenanceCompletion.fromJSON(wire);
+    const event2 = MaintenanceCompletion.fromObject(wire);
     assert.equal(event2.actual_duration_seconds, 7200);
   });
 
@@ -136,7 +136,7 @@ describe("IAES TypeScript SDK", () => {
     const wire = event.toJSON();
 
     assert.equal(wire.event_type, "asset.hierarchy");
-    const event2 = AssetHierarchy.fromJSON(wire);
+    const event2 = AssetHierarchy.fromObject(wire);
     assert.equal(event2.manufacturer, "Siemens");
   });
 
@@ -150,7 +150,7 @@ describe("IAES TypeScript SDK", () => {
     const wire = event.toJSON();
 
     assert.equal(wire.event_type, "sensor.registration");
-    const event2 = SensorRegistration.fromJSON(wire);
+    const event2 = SensorRegistration.fromObject(wire);
     assert.equal(event2.communication_protocol, "mqtt");
   });
 
@@ -166,12 +166,12 @@ describe("IAES TypeScript SDK", () => {
     const wire = event.toJSON();
 
     assert.equal(wire.event_type, "maintenance.spare_part_usage");
-    const event2 = SparePartUsage.fromJSON(wire);
+    const event2 = SparePartUsage.fromObject(wire);
     assert.equal(event2.unit_cost, 45.0);
     assert.equal(event2.currency, "USD");
   });
 
-  it("fromJSON dispatches correctly", () => {
+  it("fromObject dispatches correctly", () => {
     const wire = new AssetMeasurement({
       asset_id: "M-001",
       measurement_type: "temperature",
@@ -179,14 +179,14 @@ describe("IAES TypeScript SDK", () => {
       unit: "C",
     }).toJSON();
 
-    const obj = fromJSON(wire);
+    const obj = fromObject(wire);
     assert.ok(obj instanceof AssetMeasurement);
     assert.equal(obj.value, 80);
   });
 
-  it("fromJSON throws on unknown event_type", () => {
+  it("fromObject throws on unknown event_type", () => {
     assert.throws(
-      () => fromJSON({ event_type: "foo.bar", data: {} }),
+      () => fromObject({ event_type: "foo.bar", data: {} }),
       /Unknown IAES event_type/
     );
   });

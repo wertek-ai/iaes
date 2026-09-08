@@ -130,7 +130,7 @@ export class AssetMeasurement {
     });
   }
 
-  static fromJSON(envelope: IAESEnvelope): AssetMeasurement {
+  static fromObject(envelope: IAESEnvelope): AssetMeasurement {
     const { asset, data } = envelope;
     return new AssetMeasurement({
       asset_id: asset.asset_id,
@@ -251,7 +251,7 @@ export class AssetHealth {
     });
   }
 
-  static fromJSON(envelope: IAESEnvelope): AssetHealth {
+  static fromObject(envelope: IAESEnvelope): AssetHealth {
     const { asset, data } = envelope;
     return new AssetHealth({
       asset_id: asset.asset_id,
@@ -353,7 +353,7 @@ export class WorkOrderIntent {
     });
   }
 
-  static fromJSON(envelope: IAESEnvelope): WorkOrderIntent {
+  static fromObject(envelope: IAESEnvelope): WorkOrderIntent {
     const { asset, data } = envelope;
     return new WorkOrderIntent({
       asset_id: asset.asset_id,
@@ -467,7 +467,7 @@ export class MaintenanceCompletion {
     });
   }
 
-  static fromJSON(envelope: IAESEnvelope): MaintenanceCompletion {
+  static fromObject(envelope: IAESEnvelope): MaintenanceCompletion {
     const { asset, data } = envelope;
     return new MaintenanceCompletion({
       asset_id: asset.asset_id,
@@ -586,7 +586,7 @@ export class AssetHierarchy {
     });
   }
 
-  static fromJSON(envelope: IAESEnvelope): AssetHierarchy {
+  static fromObject(envelope: IAESEnvelope): AssetHierarchy {
     const { asset, data } = envelope;
     return new AssetHierarchy({
       asset_id: asset.asset_id,
@@ -696,7 +696,7 @@ export class SensorRegistration {
     });
   }
 
-  static fromJSON(envelope: IAESEnvelope): SensorRegistration {
+  static fromObject(envelope: IAESEnvelope): SensorRegistration {
     const { asset, data } = envelope;
     return new SensorRegistration({
       asset_id: asset.asset_id,
@@ -809,7 +809,7 @@ export class SparePartUsage {
     });
   }
 
-  static fromJSON(envelope: IAESEnvelope): SparePartUsage {
+  static fromObject(envelope: IAESEnvelope): SparePartUsage {
     const { asset, data } = envelope;
     return new SparePartUsage({
       asset_id: asset.asset_id,
@@ -838,7 +838,7 @@ export class SparePartUsage {
 
 const EVENT_TYPES: Record<
   string,
-  { fromJSON: (e: IAESEnvelope) => unknown }
+  { fromObject: (e: IAESEnvelope) => unknown }
 > = {
   "asset.measurement": AssetMeasurement,
   "asset.health": AssetHealth,
@@ -853,10 +853,59 @@ const EVENT_TYPES: Record<
  * Deserialize any IAES envelope to the corresponding model class.
  * @throws Error if event_type is not recognized
  */
-export function fromJSON(envelope: IAESEnvelope): unknown {
+export function fromObject(envelope: IAESEnvelope): unknown {
   const cls = EVENT_TYPES[envelope.event_type];
   if (!cls) {
     throw new Error(`Unknown IAES event_type: "${envelope.event_type}"`);
   }
-  return cls.fromJSON(envelope);
+  return cls.fromObject(envelope);
 }
+
+// ─── Deprecated alias ──────────────────────────────────────
+//
+// `fromObject` is the canonical name across every IAES SDK: the same word in
+// each language's convention, per surface.json. `fromJSON` was TypeScript's own
+// verb and `from_dict` was Python's, and a reader could not tell whether they
+// did the same thing without opening both.
+//
+// The old name keeps working. Removing it would break every caller and turn a
+// naming decision into a MAJOR change.
+//
+// No runtime warning, deliberately: JavaScript has no DeprecationWarning that a
+// library can raise without writing to the console of a production process, and
+// `@deprecated` is what an editor and a type-checker already act on. Python
+// warns because Python has a mechanism that is quiet by default; TypeScript
+// does not, and inventing console noise would be worse than the drift.
+
+/** @deprecated Use {@link fromObject}. Kept working; it is not going away. */
+export function fromJSON(envelope: IAESEnvelope): unknown {
+  return fromObject(envelope);
+}
+
+/** @deprecated Use AssetMeasurement.fromObject(). */
+((AssetMeasurement as unknown) as Record<string, unknown>).fromJSON =
+  AssetMeasurement.fromObject.bind(AssetMeasurement);
+
+/** @deprecated Use AssetHealth.fromObject(). */
+((AssetHealth as unknown) as Record<string, unknown>).fromJSON =
+  AssetHealth.fromObject.bind(AssetHealth);
+
+/** @deprecated Use WorkOrderIntent.fromObject(). */
+((WorkOrderIntent as unknown) as Record<string, unknown>).fromJSON =
+  WorkOrderIntent.fromObject.bind(WorkOrderIntent);
+
+/** @deprecated Use MaintenanceCompletion.fromObject(). */
+((MaintenanceCompletion as unknown) as Record<string, unknown>).fromJSON =
+  MaintenanceCompletion.fromObject.bind(MaintenanceCompletion);
+
+/** @deprecated Use AssetHierarchy.fromObject(). */
+((AssetHierarchy as unknown) as Record<string, unknown>).fromJSON =
+  AssetHierarchy.fromObject.bind(AssetHierarchy);
+
+/** @deprecated Use SensorRegistration.fromObject(). */
+((SensorRegistration as unknown) as Record<string, unknown>).fromJSON =
+  SensorRegistration.fromObject.bind(SensorRegistration);
+
+/** @deprecated Use SparePartUsage.fromObject(). */
+((SparePartUsage as unknown) as Record<string, unknown>).fromJSON =
+  SparePartUsage.fromObject.bind(SparePartUsage);

@@ -53,6 +53,7 @@ export {
   AssetHierarchy,
   SensorRegistration,
   SparePartUsage,
+  fromObject,
   fromJSON,
 } from "./models";
 
