@@ -163,8 +163,10 @@ the cut does not have to invent it under time pressure:
 1. **`spec_version` becomes `2.0`,** and 2.0 events validate against
    `/schema/v2/`. 1.x events keep validating against `/schema/v1/`.
 2. **Timestamps must be RFC 3339,** not merely ISO 8601. `IAES-RFC-007` §3.2
-   classifies this as the narrowing it is, and it is **the only change in the
-   2.0 line that can make a previously conforming producer non-conforming.**
+   classifies this as the narrowing it is, and it is **the only 2.0 change that
+   makes a previously permitted timestamp representation non-conforming** — the
+   one migration item that can invalidate an event *solely because of a value
+   already on the wire*, with no change in behaviour required to produce it.
    ⚠️ No schema enforces it in either direction — `format` is an annotation — so
    it will not surface as a validation failure. It is stated here precisely
    because nothing will catch it.
@@ -173,8 +175,27 @@ the cut does not have to invent it under time pressure:
 4. **`from_object` is the canonical constructor name.** `from_dict` and
    `fromJSON` keep working as deprecated aliases; nothing has to change on
    upgrade.
-5. **Nothing else requires an implementation to change.** Everything else in
-   2.0 is governance, provenance and annotation.
+5. **`IAES-RFC-002` changes producer and consumer behaviour**, and travels in
+   this same release. Its §9 obliges producers to stop substituting values for
+   optional fields the caller did not supply, consumers not to read an absent
+   optional field as a default, anyone rejecting an unlisted
+   `measurement_type` to relax, and anyone quoting `iso_13374_status` as ISO
+   vocabulary to stop.
+
+   **None of that invalidates a 1.4 event.** Every event schema-valid under 1.4
+   stays schema-valid, and a 1.4 producer that keeps substituting stays
+   conforming to 1.4 — it simply cannot declare 2.0. That is the distinction
+   this release depends on and it is worth restating here rather than leaving to
+   the reader of two memos:
+
+   > **Having to change code is not the same as the version being breaking.**
+
+   Item 2 changes what an existing *value* may be. This item changes what an
+   adopting implementation must *do*. They are different obligations and they
+   are classified differently — MAJOR and MINOR — for that reason.
+
+6. **Everything else in 2.0 is governance, provenance and annotation**, and
+   requires nothing of any implementation.
 
 # 5. Copies are not drift
 
@@ -230,9 +251,21 @@ independently. §4.5's release rule makes it the maximum either way.
 permanently at their published URIs, its events stay valid, and §4.3 keeps 1.x
 supported for at least 24 months — §8 item 1 keeps it resolvable beyond that.
 
-**An implementation adopting 2.0** does the four things in §4: declare `2.0`,
-point at `/schema/v2/`, emit RFC 3339 timestamps, and take the `2.0.x` packages.
-Only the third can change what it emits.
+**An implementation adopting 2.0** does everything in §4: declare `2.0`, point
+at `/schema/v2/`, emit RFC 3339 timestamps, take the `2.0.x` packages, and adopt
+the producer and consumer behaviour `IAES-RFC-002` requires.
+
+Two of those are not the same kind of obligation, and the migration statement
+separates them because a reader planning an upgrade needs the difference:
+
+```
+item 2   an existing VALUE stops conforming        no behaviour change needed
+         to produce it -- the timestamp already
+         written is the problem                    MAJOR
+
+item 5   an implementation must BEHAVE differently no 1.4 event becomes
+         to declare 2.0                            invalid                MINOR
+```
 
 # 9. Proposed incorporation
 
