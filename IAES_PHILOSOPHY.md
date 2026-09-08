@@ -34,7 +34,7 @@ equipment catalog, no commercial terms.
 ### 1. The standard depends on nothing of ours
 
 A reader must be able to implement IAES without asking us anything and without
-pointing at anything of ours. `GOVERNANCE.md` §1 states it; §1.1 makes it
+pointing at anything of ours. `GOVERNANCE.md` §1 states it; `GOVERNANCE.md` §1.1 makes it
 mechanical, and every repository carrying the IAES name runs the check.
 
 **Why it needs a check.** A violation does not look like our name in the text.
@@ -74,13 +74,13 @@ library profile, and `GOVERNANCE.md` §9.3 fixes who decides: a library *claims*
 it, anyone *checks* it against `surface.json` in the release it names, and
 **nobody grants it.**
 
-**Why.** §1 forbids a rule that needs a specific vendor's judgment to be
+**Why.** `GOVERNANCE.md` §1 forbids a rule that needs a specific vendor's judgment to be
 meaningful, and the steward is a vendor. A certification programme would
 reintroduce exactly that dependency through another door.
 
 **What it costs.** We give up the one thing a steward is usually tempted by —
 being the party who says yes. Not claiming a profile is not a deficiency
-(§9.3), and an implementation that never speaks to us is as conforming as one
+(`GOVERNANCE.md` §9.3), and an implementation that never speaks to us is as conforming as one
 that does.
 
 ### 4. Silence is not an assertion
@@ -92,7 +92,7 @@ stated in `IAES_SPEC.md` and decided in `rfc/IAES-RFC-002.md`.
 The same idea runs through the compatibility policy in the other direction:
 behaviour a version did not specify is not guaranteed across versions
 (`GOVERNANCE.md` §8), and silence in a prior version is neither permission nor
-promise (§4.4).
+promise (`GOVERNANCE.md` §4.4).
 
 **What it costs.** Substituting a plausible default is friendlier in the short
 run and produces a dataset that quietly lies. A `0.0` that means *nobody

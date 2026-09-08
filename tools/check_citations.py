@@ -28,6 +28,11 @@ Two limits, stated rather than discovered:
     and a guard that cries wolf gets disabled.
   - A bare `RFC-NNN` counts as ours only when `rfc/IAES-RFC-NNN.md` exists, so
     that IETF references like RFC-9113 are left alone.
+  - A bare "§4.4" with no document beside it is not checked, because nothing
+    says which document it belongs to. Prose that means to be verifiable
+    repeats the document name; `IAES_PHILOSOPHY.md` was rewritten to do so
+    after this limit was measured against it, and its citations went from four
+    unchecked to none.
 
 SPDX-License-Identifier: CC-BY-4.0
 """
@@ -60,7 +65,12 @@ def known_documents() -> dict:
 DOCS = known_documents()
 
 # A section number as this repository writes them: 1, 4.2, 3.2.4, 3-bis.
-NUMBER = r"[0-9]+(?:-bis)?(?:\.[0-9]+)*"
+# The suffix is matched GREEDILY, not only for the one suffix we happen to
+# use. With `(?:-bis)?` alone, "§3-ter" matched as "§3" -- a section that
+# exists -- so an invented suffix was silently truncated into a valid
+# citation and passed. Whatever follows the number is part of the name it
+# claims, and an unknown name has to be reported.
+NUMBER = r"[0-9]+(?:-[a-z]+)?(?:\.[0-9]+)*"
 
 # `GOVERNANCE.md` §4.2 · GOVERNANCE.md) §1 · RFC-000 §4, item 2 ·
 # SDK_SURFACE.md section 3. A marker is required; see the limits above.
