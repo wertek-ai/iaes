@@ -1,0 +1,96 @@
+{
+  "$comment": "What each implementation offers today. NOT NORMATIVE and deliberately not part of any release: surface.json defines the IAES SDK profile, and this file records how far each implementation is from it. They were one file until 2026-09-08, which meant an SDK release would have edited a normative artifact -- the implementation moving the standard, which is the boundary backwards. tests/test_surface.py checks this file against the code, and checks that every capability it names exists in surface.json.",
+  "measures": "the IAES SDK profile defined in surface.json",
+  "not_normative": "Nothing here requires anything of anyone. A library's claim to the profile lives in that library's own published documentation (rfc/IAES-RFC-006.md §6); `claims_profile` here records whether such a claim has been made, and is not itself the claim.",
+  "measured": "2026-09-06",
+  "implementations": {
+    "$comment": "Declared gaps, not silent ones. An absent capability that nobody declared is indistinguishable from one nobody thought of, and that is how five platforms arrived at five different surfaces. Checked by tests/test_surface.py.",
+    "python": {
+      "package": "iaes",
+      "repo": "this",
+      "has": [
+        "build:7",
+        "from_object",
+        "validate",
+        "compute_content_hash",
+        "schema_uri_for",
+        "vocabulary:10"
+      ],
+      "gaps": [],
+      "note": "route is not a gap: a library caller uses a switch.",
+      "claims_profile": false,
+      "claim_note": "Has all six capabilities. Does not yet expose the canonical name from_object; today it is from_dict, which becomes a deprecated alias."
+    },
+    "typescript": {
+      "package": "@iaes/sdk",
+      "repo": "this",
+      "has": [
+        "build:7",
+        "from_object",
+        "compute_content_hash",
+        "schema_uri_for",
+        "vocabulary:10"
+      ],
+      "gaps": [
+        "validate"
+      ],
+      "note": "The only SDK that cannot check an event against its schema, and the one both flow runtimes depend on.",
+      "claims_profile": false,
+      "claim_note": "Lacks validate, which the profile requires, and does not yet expose the canonical name from_object."
+    },
+    "node_red": {
+      "package": "node-red-contrib-iaes",
+      "repo": "this",
+      "has": [
+        "build:3",
+        "validate",
+        "route",
+        "vocabulary:10"
+      ],
+      "gaps": [
+        "from_object",
+        "schema_uri_for",
+        "build: completion, spare_part_usage, sensor_registration, hierarchy"
+      ],
+      "claims_profile": null,
+      "claim_note": "Out of scope: a flow-runtime package is not a library (rfc/IAES-RFC-006.md §2). Wire-conformant; claiming no profile is not a deficiency."
+    },
+    "n8n": {
+      "package": "n8n-nodes-iaes",
+      "repo": "this",
+      "has": [
+        "build:6",
+        "validate",
+        "vocabulary:10"
+      ],
+      "gaps": [
+        "from_object",
+        "route",
+        "schema_uri_for",
+        "build: hierarchy"
+      ],
+      "claims_profile": null,
+      "claim_note": "Out of scope: a flow-runtime package is not a library (rfc/IAES-RFC-006.md §2)."
+    },
+    "cpp": {
+      "package": "iaes-opta-runtime",
+      "repo": "wertek-ai/iaes-opta-runtime",
+      "has": [
+        "build:2",
+        "compute_content_hash",
+        "vocabulary:1"
+      ],
+      "gaps": [
+        "validate",
+        "from_object",
+        "route",
+        "schema_uri_for",
+        "build: work_order_intent, completion, spare_part_usage, sensor_registration, hierarchy",
+        "vocabulary: 1 of 10 enumerations"
+      ],
+      "note": "A microcontroller runtime, deliberately narrow. Its conformance is checked in its own repository's CI, not here, so tests/test_surface.py does not verify this row -- which is itself a gap, and stated rather than left implied.",
+      "claims_profile": false,
+      "claim_note": "A deliberately narrow microcontroller runtime: two of seven builders, one of ten enumerations. Wire-conformant, and not an SDK."
+    }
+  }
+}
