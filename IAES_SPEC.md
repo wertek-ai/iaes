@@ -36,7 +36,7 @@ Every IAES event shares this envelope:
 
 ```json
 {
-  "spec_version": "1.3",
+  "spec_version": "2.0",
   "event_type": "asset.health",
   "event_id": "uuid",
   "correlation_id": "uuid",
@@ -60,7 +60,7 @@ Every IAES event shares this envelope:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `spec_version` | string | yes | IAES spec version (`"1.0"` through `"1.4"`) |
+| `spec_version` | string | yes | IAES spec version. This release is `"2.0"`; each major's envelope accepts that major's versions and no others |
 | `dataschema` | URI | no | Canonical URI of the schema the `data` payload was written against (v1.4) |
 | `event_type` | string | yes | Dot-notation event type, matching `^[a-z][a-z0-9_]*\.[a-z][a-z0-9_.]*$`. Open: a producer MAY define its own (v1.4) |
 | `event_id` | UUID | yes | Unique identifier for this event |

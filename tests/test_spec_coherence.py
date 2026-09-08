@@ -29,6 +29,12 @@ def spec_text():
     return SPEC.read_text(encoding="utf-8")
 
 
+def spec_version():
+    """The full version the specification titles itself, in one place."""
+    title = spec_text().splitlines()[0]
+    return re.search(r"v(\d+\.\d+)\s*$", title).group(1)
+
+
 def spec_major():
     """The major the specification titles itself, derived in one place.
 
@@ -132,10 +138,6 @@ class TestTheSpecOnlyPointsAtThingsAReaderCanReach(unittest.TestCase):
                                 f"the public specification references {pattern!r}, which is private")
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class TestTheCanonicalUriMatchesTheMajor(unittest.TestCase):
     """The specification cannot tell a producer to point at another major.
 
@@ -176,3 +178,86 @@ class TestTheCanonicalUriMatchesTheMajor(unittest.TestCase):
             "the specification titles itself v%s and points at another major:\n  %s\n"
             "A producer following this would cross majors, which "
             "rfc/IAES-RFC-008.md forbids." % (major, "\n  ".join(offenders))))
+
+
+class TestEveryVersionSurfaceAgrees(unittest.TestCase):
+    """The version rule was enforced where it was measured and stale where it
+    was not.
+
+    Cutting 2.0 left eleven stale claims, and seven of them lived where no
+    guard runs: the n8n node package has no tests, the lockfiles are read by
+    nothing, `surface.json`'s version field had no reader, and the Python
+    client's User-Agent was checked with a substring assertion that cannot see
+    a number. The two surfaces that did have guards -- the specification's
+    title and the TypeScript SDK's version -- were correct.
+
+    So these are the readers those surfaces did not have.
+    """
+
+    def test_the_sdk_profile_names_the_current_specification(self):
+        """rfc/IAES-RFC-008.md prescribed this and the cut did not do it:
+        surface.json still said 1.4 while declaring itself the profile of 2.0."""
+        surface = json.loads((ROOT / "surface.json").read_text(encoding="utf-8"))
+        self.assertEqual(
+            surface["iaes_spec_version"], spec_version(),
+            "surface.json declares a different specification version than the "
+            "specification does",
+        )
+
+    def test_every_package_lock_agrees_with_its_package(self):
+        """A lockfile saying 1.4.0 inside a 2.0.0 package installs the wrong
+        SDK -- and therefore the wrong SPEC_VERSION -- with nothing reporting
+        it."""
+        for pkg in ("npm", "node-red", "n8n-nodes"):
+            manifest = json.loads((ROOT / pkg / "package.json").read_text(encoding="utf-8"))
+            lock_path = ROOT / pkg / "package-lock.json"
+            if not lock_path.exists():
+                continue
+            lock = json.loads(lock_path.read_text(encoding="utf-8"))
+            self.assertEqual(lock["version"], manifest["version"],
+                             f"{pkg}/package-lock.json is out of step with its package.json")
+            declared = lock.get("packages", {}).get("", {}).get("dependencies", {})
+            for name, spec in (manifest.get("dependencies") or {}).items():
+                self.assertEqual(declared.get(name), spec,
+                                 f"{pkg} locks {name} at {declared.get(name)}, "
+                                 f"package.json asks for {spec}")
+
+    def test_both_clients_report_the_published_version(self):
+        """npm had this guard and Python did not: its assertion was
+        `assertIn("iaes-python-sdk", ua)`, a substring, blind to the number."""
+        published = json.loads((ROOT / "npm" / "package.json").read_text(encoding="utf-8"))["version"]
+        ts = (ROOT / "npm" / "src" / "client.ts").read_text(encoding="utf-8")
+        py = (ROOT / "src" / "iaes" / "client.py").read_text(encoding="utf-8")
+        self.assertIn(published, ts, "the TypeScript User-Agent does not carry the published version")
+        for match in re.findall(r"iaes-python-sdk/([0-9][^\"']*)", py):
+            self.assertEqual(match, published,
+                             "the Python User-Agent would lie about which SDK made the request")
+
+    def test_no_shipped_node_hardcodes_a_major(self):
+        """Both validate nodes hardcoded `^1\.` and shipped as 2.0.0, so each
+        rejected every event the SDK beside it produces. Node-RED was fixed
+        first; n8n was found by review, because it has no tests at all."""
+        offenders = []
+        for pattern in ("node-red/nodes/*.js", "n8n-nodes/nodes/**/*.ts"):
+            for path in ROOT.glob(pattern):
+                text = path.read_text(encoding="utf-8")
+                for hit in re.findall(r"\^\?\d+\+\.", text):
+                    offenders.append(f"{path.relative_to(ROOT)}: {hit}")
+        self.assertEqual(offenders, [], (
+            "a shipped node hardcodes a specification major instead of deriving "
+            "it from the SDK's SPEC_VERSION:\n  " + "\n  ".join(offenders)))
+
+    def test_every_example_block_declares_the_current_version(self):
+        """The canonical envelope example in a 2.0 document said 1.3, with a
+        v2 dataschema beside it. A reader copying it emits an event the 2.0
+        envelope rejects."""
+        for block in re.findall(r"```jsonc?\n(.*?)```", spec_text(), re.S):
+            for declared in re.findall(r'"spec_version"\s*:\s*"([^"]+)"', block):
+                self.assertEqual(
+                    declared, spec_version(),
+                    "an example in the specification declares a different "
+                    "version than the specification itself",
+                )
+
+if __name__ == "__main__":
+    unittest.main()

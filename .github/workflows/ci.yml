@@ -5,6 +5,14 @@ on:
     branches: [main]
   pull_request:
 
+# CI runs `npm install` over a pull request's own package.json, which means it
+# executes whatever lifecycle scripts that PR author wrote. It triggers on
+# `pull_request` and never on `pull_request_target`, so a fork already gets a
+# read-only token and no secrets -- but that depended on a repository setting
+# outside this file. Stated here instead.
+permissions:
+  contents: read
+
 jobs:
   sdk-ts:
     name: "@iaes/sdk (TypeScript)"

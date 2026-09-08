@@ -23,7 +23,7 @@ export class IaesEmit implements INodeType {
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["eventType"]}}',
-		description: 'Emit an IAES v1.3 industrial asset event',
+		description: 'Emit an IAES industrial asset event',
 		defaults: { name: 'IAES Emit' },
 		inputs: ['main'],
 		outputs: ['main'],
@@ -138,7 +138,7 @@ export class IaesEmit implements INodeType {
 					{ name: 'Improving', value: 'improving' },
 				],
 				default: '',
-				description: 'IAES v1.3 — condition trend direction',
+				description: 'Condition trend direction',
 				displayOptions: { show: { eventType: ['asset.health'] } },
 			},
 			{

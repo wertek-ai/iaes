@@ -47,8 +47,15 @@ function validateIaesEvent(payload: Record<string, unknown>): ValidationResult {
 
 	// Validate spec_version
 	const specVersion = payload.spec_version as string;
-	if (specVersion && !/^1\.\d+$/.test(specVersion)) {
-		errors.push(`Invalid spec_version "${specVersion}" — must match ^1.\\d+$`);
+	// The major comes from the SDK, which this file already imports. It was
+	// hardcoded to 1, so the node shipped as 2.0.0 while rejecting every 2.0
+	// event the SDK beside it produces. The Node-RED twin derives it; this one
+	// did not, and nothing caught it because n8n-nodes has no tests.
+	const specMajor = SPEC_VERSION.split('.')[0];
+	if (specVersion && !new RegExp(`^${specMajor}\\.\\d+$`).test(specVersion)) {
+		errors.push(
+			`Invalid spec_version "${specVersion}" — must match ^${specMajor}.\\d+$`,
+		);
 	}
 
 	// Validate event_type
@@ -101,7 +108,7 @@ export class IaesValidate implements INodeType {
 		icon: 'file:iaes.svg',
 		group: ['transform'],
 		version: 1,
-		subtitle: 'Validate IAES v{{$parameter["specVersion"] || "1.3"}} event',
+		subtitle: 'Validate IAES v{{$parameter["specVersion"] || "2.0"}} event',
 		description: 'Validate an IAES event envelope against the spec',
 		defaults: { name: 'IAES Validate' },
 		inputs: ['main'],

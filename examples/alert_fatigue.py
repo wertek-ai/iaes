@@ -9,7 +9,7 @@ Traditional system:  30 alerts  -> 30 emails/notifications -> alert fatigue
 With IAES:           30 events  -> 2 correlated incidents  -> actionable
 
 The key: correlation_id groups related events into a single incident chain.
-An IncidentStateTracker (IAES v1.3) manages the state machine:
+An IncidentStateTracker manages the state machine:
     NORMAL -> ONSET -> ESCALATION -> (suppressed repeats) -> RECOVERY
 
 Run:

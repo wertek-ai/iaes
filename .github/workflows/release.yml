@@ -109,4 +109,8 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: PYTHONPATH=src python -m pytest tests/ -q -k "not cross_language"
       - run: python -m build
-      - uses: pypa/gh-action-pypi-publish@release/v1
+      # Pinned to a commit, not to the mutable `release/v1` branch. This job
+      # holds `id-token: write`, so whoever controls that branch controls a
+      # token that can publish to PyPI as us. Resolved from release/v1 on
+      # 2026-09-08, which was v1.14.2.
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33

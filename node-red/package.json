@@ -53,5 +53,11 @@
   },
   "engines": {
     "node": ">=16"
-  }
+  },
+  "files": [
+    "nodes/",
+    "examples/",
+    "README.md",
+    "LICENSE"
+  ]
 }
