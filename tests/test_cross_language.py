@@ -22,7 +22,7 @@ from iaes import (
     SensorRegistration,
     SparePartUsage,
     WorkOrderIntent,
-    from_dict,
+    from_object,
     validate,
 )
 
@@ -252,7 +252,7 @@ class TestCrossLanguageRoundtrip:
             validate(envelope)
 
             # Model deserialization
-            obj = from_dict(envelope)
+            obj = from_object(envelope)
             assert obj.asset_id == "CROSS-002", f"{name}: wrong asset_id"
             assert obj.source == "ts.test", f"{name}: wrong source"
 

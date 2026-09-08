@@ -17,9 +17,9 @@
         "vocabulary:10"
       ],
       "gaps": [],
-      "note": "route is not a gap: a library caller uses a switch.",
+      "note": "route is not a gap: a library caller uses a switch, and the profile does not require it. from_dict is kept as a deprecated alias of from_object.",
       "claims_profile": false,
-      "claim_note": "Has all six capabilities. Does not yet expose the canonical name from_object; today it is from_dict, which becomes a deprecated alias."
+      "claim_note": "Offers all six under the canonical names. Ready to claim; the claim itself goes in the package's published documentation at the 2.0 cut, not here."
     },
     "typescript": {
       "package": "@iaes/sdk",
@@ -33,9 +33,9 @@
         "vocabulary:10"
       ],
       "gaps": [],
-      "note": "Gained validate on 2026-09-08. Mirrors the Python SDK: same behaviour, same shape of failure, and a custom event_type validated against the envelope alone.",
+      "note": "Gained validate and the canonical fromObject on 2026-09-08. fromJSON is kept as a deprecated alias.",
       "claims_profile": false,
-      "claim_note": "Has all six capabilities. Does not yet expose the canonical name from_object; today it is fromJSON, which becomes a deprecated alias."
+      "claim_note": "Offers all six under the canonical names since 2026-09-08. Ready to claim; the claim itself goes in the package's published documentation at the 2.0 cut, not here."
     },
     "node_red": {
       "package": "node-red-contrib-iaes",

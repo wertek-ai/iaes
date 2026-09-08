@@ -7,6 +7,7 @@ All fields are spec-only — no vendor-specific extensions.
 import uuid
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
+import warnings
 from typing import Any, Dict, List, Optional, Union
 
 from .envelope import SPEC_VERSION, compute_content_hash, schema_uri_for
@@ -157,7 +158,7 @@ class AssetMeasurement:
         )
 
     @classmethod
-    def from_dict(cls, envelope: Dict[str, Any]) -> "AssetMeasurement":
+    def from_object(cls, envelope: Dict[str, Any]) -> "AssetMeasurement":
         """Deserialize from an IAES wire-format dict."""
         asset = envelope.get("asset", {})
         data = envelope.get("data", {})
@@ -256,7 +257,7 @@ class AssetHealth:
         )
 
     @classmethod
-    def from_dict(cls, envelope: Dict[str, Any]) -> "AssetHealth":
+    def from_object(cls, envelope: Dict[str, Any]) -> "AssetHealth":
         """Deserialize from an IAES wire-format dict."""
         asset = envelope.get("asset", {})
         data = envelope.get("data", {})
@@ -339,7 +340,7 @@ class WorkOrderIntent:
         )
 
     @classmethod
-    def from_dict(cls, envelope: Dict[str, Any]) -> "WorkOrderIntent":
+    def from_object(cls, envelope: Dict[str, Any]) -> "WorkOrderIntent":
         """Deserialize from an IAES wire-format dict."""
         asset = envelope.get("asset", {})
         data = envelope.get("data", {})
@@ -429,7 +430,7 @@ class MaintenanceCompletion:
         )
 
     @classmethod
-    def from_dict(cls, envelope: Dict[str, Any]) -> "MaintenanceCompletion":
+    def from_object(cls, envelope: Dict[str, Any]) -> "MaintenanceCompletion":
         """Deserialize from an IAES wire-format dict."""
         asset = envelope.get("asset", {})
         data = envelope.get("data", {})
@@ -519,7 +520,7 @@ class AssetHierarchy:
         )
 
     @classmethod
-    def from_dict(cls, envelope: Dict[str, Any]) -> "AssetHierarchy":
+    def from_object(cls, envelope: Dict[str, Any]) -> "AssetHierarchy":
         """Deserialize from an IAES wire-format dict."""
         asset = envelope.get("asset", {})
         data = envelope.get("data", {})
@@ -606,7 +607,7 @@ class SensorRegistration:
         )
 
     @classmethod
-    def from_dict(cls, envelope: Dict[str, Any]) -> "SensorRegistration":
+    def from_object(cls, envelope: Dict[str, Any]) -> "SensorRegistration":
         """Deserialize from an IAES wire-format dict."""
         asset = envelope.get("asset", {})
         data = envelope.get("data", {})
@@ -692,7 +693,7 @@ class SparePartUsage:
         )
 
     @classmethod
-    def from_dict(cls, envelope: Dict[str, Any]) -> "SparePartUsage":
+    def from_object(cls, envelope: Dict[str, Any]) -> "SparePartUsage":
         """Deserialize from an IAES wire-format dict."""
         asset = envelope.get("asset", {})
         data = envelope.get("data", {})
@@ -718,7 +719,7 @@ class SparePartUsage:
         )
 
 
-# ─── Lookup table for from_dict dispatch ────────────────────
+# ─── Lookup table for from_object dispatch ─────────────────
 
 EVENT_TYPES = {
     "asset.measurement": AssetMeasurement,
@@ -731,7 +732,7 @@ EVENT_TYPES = {
 }
 
 
-def from_dict(envelope: Dict[str, Any]) -> Any:
+def from_object(envelope: Dict[str, Any]) -> Any:
     """Deserialize any IAES envelope dict to the corresponding model.
 
     Args:
@@ -747,4 +748,47 @@ def from_dict(envelope: Dict[str, Any]) -> Any:
     cls = EVENT_TYPES.get(event_type)  # type: ignore[arg-type]
     if cls is None:
         raise ValueError(f"Unknown IAES event_type: {event_type!r}")
-    return cls.from_dict(envelope)
+    return cls.from_object(envelope)
+
+
+# ─── Deprecated alias ──────────────────────────────────────
+#
+# `from_object` is the canonical name across every IAES SDK: the same word in
+# each language's convention, per surface.json. `from_dict` was Python's own
+# verb and `fromJSON` was TypeScript's, and a reader could not tell whether
+# they did the same thing without opening both.
+#
+# The old name keeps working. Removing it would break every caller and turn a
+# naming decision into a MAJOR change, which would teach that tidying the
+# surface is expensive. The warning is how a deprecation actually reaches
+# somebody; DeprecationWarning is silent by default outside __main__ and test
+# runners, so it informs without shouting.
+
+
+def _install_deprecated_alias(cls: Any) -> None:
+    def from_dict(inner_cls, envelope: Dict[str, Any]):  # type: ignore[no-untyped-def]
+        warnings.warn(
+            f"{inner_cls.__name__}.from_dict() is deprecated; use from_object(). "
+            "It is the canonical name in every IAES SDK and from_dict keeps working.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return inner_cls.from_object(envelope)
+
+    from_dict.__doc__ = f"Deprecated alias for {cls.__name__}.from_object()."
+    setattr(cls, "from_dict", classmethod(from_dict))
+
+
+for _model in EVENT_TYPES.values():
+    _install_deprecated_alias(_model)
+
+
+def from_dict(envelope: Dict[str, Any]) -> Any:
+    """Deprecated alias for :func:`from_object`."""
+    warnings.warn(
+        "from_dict() is deprecated; use from_object(). It is the canonical name "
+        "in every IAES SDK and from_dict keeps working.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return from_object(envelope)

@@ -42,7 +42,18 @@ def python_surface() -> set[str]:
     builders = [n for n, o in vars(models).items()
                 if inspect.isclass(o) and hasattr(o, "to_dict") and not n.startswith("_")]
     found.add(f"build:{len(builders)}")
-    if any(hasattr(getattr(models, b), "from_dict") for b in builders):
+    # The CANONICAL name, not whichever name happens to work. surface.json
+    # requires from_object; from_dict is a deprecated alias, and a detector
+    # that accepted either would let an SDK claim the profile while exposing
+    # only the old verb -- which is the drift the profile exists to end.
+    # Defined on the models AND reachable from the package root. Either alone
+    # is not the capability: a classmethod nobody can import is not there for
+    # the caller, and surface.json says so in its own words -- Python once had
+    # schema_uri_for without exporting it, and that was fixed rather than
+    # declared. An earlier version of this check accepted either, so removing
+    # from_object from __init__ left it green.
+    on_models = all(hasattr(getattr(models, b), "from_object") for b in builders)
+    if on_models and hasattr(iaes, "from_object"):
         found.add("from_object")
     if callable(getattr(validation, "validate", None)):
         found.add("validate")
@@ -84,7 +95,10 @@ def typescript_surface() -> set[str]:
     models = (ROOT / "npm" / "src" / "models.ts").read_text(encoding="utf-8")
     classes = set(re.findall(r"export class (\w+)", models))
     found.add(f"build:{len(classes)}")
-    if "fromJSON" in src:
+    # The canonical name, reachable from the package root -- see the note in
+    # python_surface(). `fromJSON` remains as a deprecated alias and does not
+    # satisfy the profile on its own.
+    if "fromObject" in src and "fromObject" in exported:
         found.add("from_object")
     # Defined AND reachable from the package root. Defining it is not enough:
     # a caller writes `import { validate } from "@iaes/sdk"`, and a function
@@ -267,3 +281,54 @@ def test_the_profile_carries_no_implementation_status():
             f"not record who currently meets it: that belongs in "
             f"implementations.json, which is not normative."
         )
+
+
+# ─── the deprecated aliases have to keep working ─────────────
+
+def test_the_python_alias_still_works_and_says_it_is_deprecated():
+    """Renaming without keeping the old name would break every caller and make
+    a naming decision into a MAJOR change (rfc/IAES-RFC-006.md §4)."""
+    import warnings
+
+    import iaes
+
+    event = {
+        "spec_version": "1.4", "event_type": "asset.health",
+        "event_id": "x", "correlation_id": "x",
+        "timestamp": "2026-09-08T12:00:00Z", "source": "acme.d",
+        "asset": {"asset_id": "M1"},
+        "data": {"health_index": 0.5, "severity": "medium"},
+    }
+
+    canonical = iaes.from_object(event)
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        alias = iaes.from_dict(event)
+        assert any(issubclass(w.category, DeprecationWarning) for w in caught), (
+            "the alias works and never says it is deprecated, so nobody moves"
+        )
+    assert type(alias) is type(canonical)
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        on_class = iaes.AssetHealth.from_dict(event)
+        assert any(issubclass(w.category, DeprecationWarning) for w in caught)
+    assert type(on_class) is type(canonical)
+
+
+def test_the_typescript_alias_is_declared_deprecated_rather_than_deleted():
+    """TypeScript has no quiet runtime deprecation channel, so the marker is
+    `@deprecated`, which an editor and a type-checker already act on. What is
+    checked here is that the alias exists and is marked -- deleting it would be
+    the MAJOR change §4 avoids, and keeping it unmarked would say nothing."""
+    models = (ROOT / "npm" / "src" / "models.ts").read_text(encoding="utf-8")
+    assert "export function fromJSON" in models, "the alias was deleted"
+    assert re.search("@deprecated" + chr(46) + "*fromObject", models), (
+        "the alias exists and is not marked deprecated, so nobody moves"
+    )
+    index = (ROOT / "npm" / "src" / "index.ts").read_text(encoding="utf-8")
+    assert "fromJSON" in index and "fromObject" in index, (
+        "both names must be reachable: the canonical one to satisfy the "
+        "profile, the alias so existing callers keep working"
+    )
