@@ -146,10 +146,16 @@ export function validate(event: Record<string, unknown>): void {
 
   const envelopeSchema = loadEnvelopeSchema();
 
-  let eventSchema: Record<string, unknown>;
-  try {
-    eventSchema = loadSchema(eventType);
-  } catch {
+  // Membership, not exceptions. An earlier version wrapped loadSchema in a
+  // bare `catch`, which caught every failure -- a missing file, corrupt JSON,
+  // an unreadable disk -- and degraded a PUBLISHED type to envelope-only. That
+  // turns a fault in the SDK into permissiveness in the contract: a broken
+  // asset.health schema would have meant every asset.health payload passes.
+  //
+  // Only "this type has no published schema" takes the custom path. Any real
+  // failure below propagates, which is what the Python SDK does by raising
+  // ValueError for the unmapped case alone.
+  if (SCHEMA_FILES[eventType] === undefined) {
     const check = ajv.compile(envelopeSchema);
     if (!check(event)) {
       const errors = check.errors ?? [];
@@ -164,6 +170,8 @@ export function validate(event: Record<string, unknown>): void {
     }
     return;
   }
+
+  const eventSchema = loadSchema(eventType);
 
   // Event schemas carry a relative $ref to "iaes-envelope.schema.json", which
   // resolves against the event schema's own $id base -- not against the
