@@ -390,13 +390,13 @@ Systems that emit IAES events MUST follow these rules:
 3. **An absent optional field is not an assertion.** A producer MUST omit an optional field it was not given rather than substitute a value for it. Writing `anomaly_score: 0.0` for a score nobody computed states something the producer does not know, and a consumer cannot tell it apart from a measured zero. Consumers MUST NOT read an absent optional field as a default.
 4. **A custom `event_type` is allowed, and must look like one.** The published types are the interoperability defaults, not the limit: a producer MAY emit its own, provided it matches the dot-notation shape. Use a namespace you control (`acme.press_stroke`, not `asset.something`), and omit `dataschema`, since no schema is published for it.
 
-4. **Set `dataschema` to the schema the payload was written against.** Producers SHOULD include it. The schema for a published event type is always `https://iaes.dev/schema/v<major>/<event_type>` for the major the event declares — `https://iaes.dev/schema/v2/<event_type>` in this release, so an SDK can derive it rather than ask for it. A producer using a custom `event_type` with no published schema MUST omit the field rather than point at a URI that does not resolve.
+5. **Set `dataschema` to the schema the payload was written against.** Producers SHOULD include it. The schema for a published event type is always `https://iaes.dev/schema/v<major>/<event_type>` for the major the event declares — `https://iaes.dev/schema/v2/<event_type>` in this release, so an SDK can derive it rather than ask for it. A producer using a custom `event_type` with no published schema MUST omit the field rather than point at a URI that does not resolve.
 
-5. **Compute `content_hash` for deduplication.** Producers SHOULD compute `content_hash` as the first 16 characters of the SHA-256 hex digest of the serialized `data` payload (canonical JSON, sorted keys).
+6. **Compute `content_hash` for deduplication.** Producers SHOULD compute `content_hash` as the first 16 characters of the SHA-256 hex digest of the serialized `data` payload (canonical JSON, sorted keys).
 
-4. **Include `asset_name`, `plant`, and `area` when available.** These fields are optional but significantly improve human readability in logs, dashboards, and audit trails.
+7. **Include `asset_name`, `plant`, and `area` when available.** These fields are optional but significantly improve human readability in logs, dashboards, and audit trails.
 
-5. **Use standard `failure_mode` values when possible.** Common values: `bearing_inner_race`, `bearing_outer_race`, `misalignment`, `unbalance`, `looseness`, `cavitation`, `overheating`, `electrical_fault`. Custom values are allowed.
+8. **Use standard `failure_mode` values when possible.** Common values: `bearing_inner_race`, `bearing_outer_race`, `misalignment`, `unbalance`, `looseness`, `cavitation`, `overheating`, `electrical_fault`. Custom values are allowed.
 
 ## Consumer Guidelines
 
@@ -406,7 +406,7 @@ Systems that receive IAES events MUST follow these rules:
 
 1. **Tolerate unknown fields.** Consumers MUST ignore fields in `data` that they do not recognize. Never reject an event because it contains extra fields. This is essential for forward compatibility.
 
-3. **Tolerate unknown `event_type` values.** If a consumer receives an event with an `event_type` it does not support — a type published after it was built, or a producer's own — it MUST NOT error. It MAY log the event and skip processing.
+2. **Tolerate unknown `event_type` values.** If a consumer receives an event with an `event_type` it does not support — a type published after it was built, or a producer's own — it MUST NOT error. It MAY log the event and skip processing.
 
 3. **Validate `spec_version`.** Consumers SHOULD check `spec_version` and MAY reject events from unsupported major versions.
 
@@ -416,11 +416,11 @@ Systems that receive IAES events MUST follow these rules:
 
 2. **Deduplicate using `content_hash`.** Consumers SHOULD detect duplicate events using the combination of `content_hash` + `asset.asset_id` + `event_type`. If `content_hash` is not present, fall back to `event_id` uniqueness.
 
-2. **Use `correlation_id` to reconstruct flows.** Consumers that display or analyze event chains SHOULD group events by `correlation_id` and order them by `timestamp`.
+3. **Use `correlation_id` to reconstruct flows.** Consumers that display or analyze event chains SHOULD group events by `correlation_id` and order them by `timestamp`.
 
-3. **Use `source_event_id` for traceability.** When displaying a work order intent, consumers SHOULD link back to the health event that triggered it (via `source_event_id`).
+4. **Use `source_event_id` for traceability.** When displaying a work order intent, consumers SHOULD link back to the health event that triggered it (via `source_event_id`).
 
-4. **Map severity to your own priority scale.** Consumers that create native objects (work orders, notifications) SHOULD map IAES `severity` **to their own priority system**. The table below is a mapping *from* IAES severity *to* a target system's scale — it is **not** an equivalence between the two IAES catalogs, which are distinct. A suggested default:
+5. **Map severity to your own priority scale.** Consumers that create native objects (work orders, notifications) SHOULD map IAES `severity` **to their own priority system**. The table below is a mapping *from* IAES severity *to* a target system's scale — it is **not** an equivalence between the two IAES catalogs, which are distinct. A suggested default:
 
 | IAES severity | SAP PM | MaintainX | Odoo | General |
 |---------------|--------|-----------|------|---------|
@@ -430,7 +430,7 @@ Systems that receive IAES events MUST follow these rules:
 | `high` | Priority 2 | HIGH | 2 (Urgent) | High |
 | `critical` | Priority 1 | HIGH | 3 (Very Urgent) | Critical |
 
-5. **Respect intent semantics.** A `maintenance.work_order_intent` is a suggestion, not a command. Consumers MAY apply filters, rules, or approval workflows before creating native work orders. The consumer is the authority on what gets created in its system.
+6. **Respect intent semantics.** A `maintenance.work_order_intent` is a suggestion, not a command. Consumers MAY apply filters, rules, or approval workflows before creating native work orders. The consumer is the authority on what gets created in its system.
 
 ## Typical Flow
 
