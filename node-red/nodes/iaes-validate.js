@@ -1,5 +1,5 @@
 module.exports = function (RED) {
-  const { fromJSON } = require("@iaes/sdk");
+  const { fromJSON, SPEC_VERSION } = require("@iaes/sdk");
 
   // Mirrors schema/iaes-envelope.schema.json + the per-type data schemas.
   // Kept as a table here because the JSON schemas live outside this npm
@@ -29,7 +29,12 @@ module.exports = function (RED) {
     ],
   };
 
-  const SPEC_VERSION_RE = /^1\.[0-9]+$/;
+  // The major comes from the SDK, not from a copy here. This was
+  // /^1\.[0-9]+$/ hardcoded -- a fourth place where the version rule lived,
+  // outside the schema that defines it, and it went stale the moment 2.0 was
+  // cut: the node rejected every event the SDK it ships with produces.
+  const SPEC_MAJOR = SPEC_VERSION.split(".")[0];
+  const SPEC_VERSION_RE = new RegExp("^" + SPEC_MAJOR + "\.[0-9]+$");
   const SOURCE_RE = /^[a-z][a-z0-9_.]+$/;
   const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -50,7 +55,7 @@ module.exports = function (RED) {
 
     if (envelope.spec_version != null && !SPEC_VERSION_RE.test(envelope.spec_version)) {
       errors.push(
-        'spec_version "' + envelope.spec_version + '" does not match 1.x'
+        'spec_version "' + envelope.spec_version + '" does not match ' + SPEC_MAJOR + '.x'
       );
     }
 

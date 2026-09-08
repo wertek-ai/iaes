@@ -275,7 +275,7 @@ describe("iaes-validate node", () => {
 
     const { outputs } = sendInput(node, {
       payload: {
-        spec_version: "1.3",
+        spec_version: "2.0",
         event_type: "asset.measurement",
         event_id: "11111111-2222-3333-4444-555555555555",
         correlation_id: "11111111-2222-3333-4444-555555555555",
