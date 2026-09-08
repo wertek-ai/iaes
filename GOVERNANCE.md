@@ -450,9 +450,17 @@ no qualifier.
 
 ### 9.1 Wire conformance
 
-A system is **wire-conformant** when the events it produces validate against the
-published schemas and it observes the obligations this specification places on
-producers and consumers.
+An implementation is **wire-conformant** when each event it produces satisfies
+the applicable IAES validation rules -- including envelope-only validation for a
+permitted custom `event_type` with no published payload schema -- and it
+observes the producer or consumer obligations applicable to its role.
+
+The qualifier is not a loophole. The specification already permits a producer to
+emit an `event_type` in a namespace it controls and to omit `dataschema`,
+because no schema is published for it; there the envelope is what applies, and
+an unknown type is not an invalid event. A definition that said *validates
+against the published schemas* would have made a capability the wire already has
+into non-conformance.
 
 Nothing about a system's internal API bears on this. A gateway that emits
 correct events conforms to IAES.

@@ -16,7 +16,7 @@ ISSN: N/A
 This memo proposes a new section of `GOVERNANCE.md`. It defines no wire format,
 changes no schema, and adopts no SDK profile.
 
-**State: Review**, per `GOVERNANCE.md` §6, at the steward's request.
+**State: Accepted**, per `GOVERNANCE.md` §6.
 **Compatibility: MINOR, derived under §4.5 (R3). Target version: IAES 2.0.**
 Distribution is unlimited.
 
@@ -82,10 +82,19 @@ normative in a way nobody can verify.** That is the defect, stated once.
 
 # 2. Two classes, and why the first is not enough
 
-> **Wire conformance** is what *conforms to IAES* means with no qualifier. A
-> system is wire-conformant when the events it produces validate against the
-> published schemas and it observes the obligations the specification places on
-> producers and consumers.
+> **Wire conformance** is what *conforms to IAES* means with no qualifier. An
+> implementation is wire-conformant when each event it produces satisfies the
+> applicable IAES validation rules — including envelope-only validation for a
+> permitted custom `event_type` with no published payload schema — and it
+> observes the producer or consumer obligations applicable to its role.
+
+**The qualifier is load-bearing, and an earlier draft omitted it.** *Validates
+against the published schemas* reads as complete and is not: the specification
+permits a producer to emit an `event_type` in a namespace it controls and to
+omit `dataschema`, since no schema is published for it. There the envelope is
+what applies. This repository has already made that mistake once in code — a
+validator that treated an unknown type as invalid — and writing it into the
+definition of conformance would have promoted a fixed bug to a normative rule.
 
 That is the whole of conformance today, and it should stay the whole of it. A
 sensor gateway that emits correct events conforms to IAES. Nothing about its
