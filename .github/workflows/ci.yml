@@ -36,10 +36,17 @@ jobs:
       - name: Build the local SDK
         run: npm ci && npm run build
         working-directory: npm
+      # The local SDK goes in FIRST. `npm ci` resolves every dependency from
+      # the registry before anything else runs, so with @iaes/sdk pinned to a
+      # range this release has not published yet it fails on ETARGET -- the
+      # opposite of what "against the local SDK" promises. Installing the local
+      # copy first satisfies the range from THIS commit, which is what the
+      # lockstep in GOVERNANCE.md 3.1 requires of a family that versions
+      # together: it has to be buildable before it is published.
       - name: Install nodes against the local SDK
         run: |
-          npm ci
           npm install --no-save ../npm
+          npm install --no-save
         working-directory: node-red
       - run: npm test
         working-directory: node-red
@@ -57,8 +64,8 @@ jobs:
         working-directory: npm
       - name: Type-check and build
         run: |
-          npm ci
           npm install --no-save ../npm
+          npm install --no-save
           npm run build
         working-directory: n8n-nodes
 

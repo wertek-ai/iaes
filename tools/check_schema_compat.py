@@ -226,6 +226,34 @@ def check_property(old, new, where, breaks):
 
 # --------------------------------------------------------------------------- #
 
+def major_bump(baseline):
+    """(old, new) if the specification's MAJOR moved since the baseline.
+
+    A guard that has to be handed --allow-major by a person is a guard that
+    gets that flag left on. The specification already says which major it is,
+    in its own title, so the guard reads it instead of being told: breaking
+    schema changes are exactly what a MAJOR release is for, and the release
+    announces itself.
+    """
+    def title(ref):
+        if ref in ("", "HEAD"):
+            with open(SPEC_FILE, encoding="utf-8") as fh:
+                text = fh.readline()
+        else:
+            out = subprocess.run(["git", "show", "%s:%s" % (ref, SPEC_FILE)],
+                                 capture_output=True)
+            if out.returncode != 0:
+                return None
+            text = out.stdout.decode("utf-8").splitlines()[0]
+        m = re.search(r"v(\d+)\.(\d+)\s*$", text.strip())
+        return m.group(1) if m else None
+
+    old, new = title(baseline), title("HEAD")
+    if old and new and old != new:
+        return old, new
+    return None
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -295,14 +323,25 @@ def main():
         print("      why it breaks: %s" % why)
         print("")
 
+    declared = major_bump(args.baseline)
+    if declared:
+        old, new = declared
+        print("The specification declares a MAJOR bump: %s -> %s." % (old, new))
+        print("Breaking schema changes are what a MAJOR release is for, so these")
+        print("are reported and not blocking. Confirm the version history")
+        print("announces the migration, which GOVERNANCE.md 8 item 3 requires.")
+        return 0
+
     if args.allow_major:
         print("--allow-major given: reported, not blocking. Confirm that the")
         print("version history announces the MAJOR bump and the migration.")
         return 0
 
     print("Blocked. Per GOVERNANCE.md 4.2 these are MAJOR changes.")
-    print("Either keep the change backward compatible, or bump the major version,")
-    print("announce it in the version history, and re-run with --allow-major.")
+    print("Either keep the change backward compatible, or bump the major version")
+    print("in the specification title and announce it in the version history.")
+    print("The bump is what unblocks this; --allow-major exists for the case")
+    print("where the schemas move before the title does, and is not the norm.")
     return 1
 
 
