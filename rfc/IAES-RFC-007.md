@@ -176,7 +176,7 @@ is deliberately not in this memo.
 | ISO 13374 → "ISO 13374 series" (5 places) | **MINOR, steward's decision** | a normative annotation and a claim of provenance, which §4 still has no test for — the same class as RFC-002 decisions 1 to 3, and classified the same way for the same stated reason |
 | 3 schema `description` strings | **MINOR, steward's decision** | same class: `ISO 8601` → `RFC 3339` in two, and `wertek.ai.diagnosis` → `acme.diagnostics` in one |
 | `## References` (new section) | **split** — see §4 | the RFC 3339 rows inherit §3.2's MAJOR; the rest is provenance and disclosure, **MINOR, steward's decision** |
-| examples: `Pesqueria` → `Planta Norte`, `Wertek MCSA` → `Acme MCSA` | **PATCH** | editorial companion edits; no rule changes |
+| examples: deployment-specific names → vendor-neutral names | **PATCH** | editorial companion edits; no rule changes |
 | "reference implementations, none privileged" | **PATCH** | restates `GOVERNANCE.md` §2, which already says a reference implementation confers no normative authority |
 
 The two `steward's decision` rows are marked that way rather than derived,
