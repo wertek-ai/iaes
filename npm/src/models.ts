@@ -130,6 +130,11 @@ export class AssetMeasurement {
     });
   }
 
+  /** @deprecated Use AssetMeasurement.fromObject(). Kept working; it is not going away. */
+  static fromJSON(envelope: IAESEnvelope): AssetMeasurement {
+    return AssetMeasurement.fromObject(envelope);
+  }
+
   static fromObject(envelope: IAESEnvelope): AssetMeasurement {
     const { asset, data } = envelope;
     return new AssetMeasurement({
@@ -251,6 +256,11 @@ export class AssetHealth {
     });
   }
 
+  /** @deprecated Use AssetHealth.fromObject(). Kept working; it is not going away. */
+  static fromJSON(envelope: IAESEnvelope): AssetHealth {
+    return AssetHealth.fromObject(envelope);
+  }
+
   static fromObject(envelope: IAESEnvelope): AssetHealth {
     const { asset, data } = envelope;
     return new AssetHealth({
@@ -351,6 +361,11 @@ export class WorkOrderIntent {
         triggered_by: this.triggered_by,
       },
     });
+  }
+
+  /** @deprecated Use WorkOrderIntent.fromObject(). Kept working; it is not going away. */
+  static fromJSON(envelope: IAESEnvelope): WorkOrderIntent {
+    return WorkOrderIntent.fromObject(envelope);
   }
 
   static fromObject(envelope: IAESEnvelope): WorkOrderIntent {
@@ -465,6 +480,11 @@ export class MaintenanceCompletion {
         iso_14224: this.iso_14224,
       },
     });
+  }
+
+  /** @deprecated Use MaintenanceCompletion.fromObject(). Kept working; it is not going away. */
+  static fromJSON(envelope: IAESEnvelope): MaintenanceCompletion {
+    return MaintenanceCompletion.fromObject(envelope);
   }
 
   static fromObject(envelope: IAESEnvelope): MaintenanceCompletion {
@@ -586,6 +606,11 @@ export class AssetHierarchy {
     });
   }
 
+  /** @deprecated Use AssetHierarchy.fromObject(). Kept working; it is not going away. */
+  static fromJSON(envelope: IAESEnvelope): AssetHierarchy {
+    return AssetHierarchy.fromObject(envelope);
+  }
+
   static fromObject(envelope: IAESEnvelope): AssetHierarchy {
     const { asset, data } = envelope;
     return new AssetHierarchy({
@@ -694,6 +719,11 @@ export class SensorRegistration {
         communication_protocol: this.communication_protocol,
       },
     });
+  }
+
+  /** @deprecated Use SensorRegistration.fromObject(). Kept working; it is not going away. */
+  static fromJSON(envelope: IAESEnvelope): SensorRegistration {
+    return SensorRegistration.fromObject(envelope);
   }
 
   static fromObject(envelope: IAESEnvelope): SensorRegistration {
@@ -809,6 +839,11 @@ export class SparePartUsage {
     });
   }
 
+  /** @deprecated Use SparePartUsage.fromObject(). Kept working; it is not going away. */
+  static fromJSON(envelope: IAESEnvelope): SparePartUsage {
+    return SparePartUsage.fromObject(envelope);
+  }
+
   static fromObject(envelope: IAESEnvelope): SparePartUsage {
     const { asset, data } = envelope;
     return new SparePartUsage({
@@ -861,7 +896,7 @@ export function fromObject(envelope: IAESEnvelope): unknown {
   return cls.fromObject(envelope);
 }
 
-// ─── Deprecated alias ──────────────────────────────────────
+// ─── Deprecated aliases ────────────────────────────────────
 //
 // `fromObject` is the canonical name across every IAES SDK: the same word in
 // each language's convention, per surface.json. `fromJSON` was TypeScript's own
@@ -871,41 +906,20 @@ export function fromObject(envelope: IAESEnvelope): unknown {
 // The old name keeps working. Removing it would break every caller and turn a
 // naming decision into a MAJOR change.
 //
-// No runtime warning, deliberately: JavaScript has no DeprecationWarning that a
-// library can raise without writing to the console of a production process, and
-// `@deprecated` is what an editor and a type-checker already act on. Python
-// warns because Python has a mechanism that is quiet by default; TypeScript
-// does not, and inventing console noise would be worse than the drift.
+// The class aliases are declared INSIDE each class on purpose. An earlier
+// version assigned them after the fact --
+// `(AssetMeasurement as ...).fromJSON = AssetMeasurement.fromObject.bind(...)`
+// -- which preserves the runtime and NOT the published type surface: a property
+// added outside the class body never reaches dist/models.d.ts, so
+// `AssetMeasurement.fromJSON(...)` would keep running and stop compiling. An
+// alias that breaks the build is not an alias.
+//
+// No runtime warning, deliberately: JavaScript has no deprecation channel a
+// library can use without writing to a production console, and `@deprecated` is
+// what an editor and the type-checker already act on. Python warns because
+// Python has a mechanism that is quiet by default.
 
 /** @deprecated Use {@link fromObject}. Kept working; it is not going away. */
 export function fromJSON(envelope: IAESEnvelope): unknown {
   return fromObject(envelope);
 }
-
-/** @deprecated Use AssetMeasurement.fromObject(). */
-((AssetMeasurement as unknown) as Record<string, unknown>).fromJSON =
-  AssetMeasurement.fromObject.bind(AssetMeasurement);
-
-/** @deprecated Use AssetHealth.fromObject(). */
-((AssetHealth as unknown) as Record<string, unknown>).fromJSON =
-  AssetHealth.fromObject.bind(AssetHealth);
-
-/** @deprecated Use WorkOrderIntent.fromObject(). */
-((WorkOrderIntent as unknown) as Record<string, unknown>).fromJSON =
-  WorkOrderIntent.fromObject.bind(WorkOrderIntent);
-
-/** @deprecated Use MaintenanceCompletion.fromObject(). */
-((MaintenanceCompletion as unknown) as Record<string, unknown>).fromJSON =
-  MaintenanceCompletion.fromObject.bind(MaintenanceCompletion);
-
-/** @deprecated Use AssetHierarchy.fromObject(). */
-((AssetHierarchy as unknown) as Record<string, unknown>).fromJSON =
-  AssetHierarchy.fromObject.bind(AssetHierarchy);
-
-/** @deprecated Use SensorRegistration.fromObject(). */
-((SensorRegistration as unknown) as Record<string, unknown>).fromJSON =
-  SensorRegistration.fromObject.bind(SensorRegistration);
-
-/** @deprecated Use SparePartUsage.fromObject(). */
-((SparePartUsage as unknown) as Record<string, unknown>).fromJSON =
-  SparePartUsage.fromObject.bind(SparePartUsage);
