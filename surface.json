@@ -4,9 +4,10 @@
   "measured": "2026-09-06",
   "status": {
     "state": "draft",
-    "normative_for": "implementations",
+    "normative_for": null,
     "normative_for_the_wire": false,
-    "notice": "Changing this file does not change what an IAES event is. It changes what an implementation must offer to call itself an IAES SDK."
+    "notice": "This file is not normative. It is a measurement of what five implementations expose and a proposal for what an IAES SDK profile could require. GOVERNANCE.md §9 defines the profile as a class of conformance; no profile has been adopted, and adopting one -- deciding which capabilities are genuinely universal -- is a separate change with its own memo.",
+    "why_not_normative_yet": "The list is measured, not designed. Making this file normative would adopt it as the definition of the profile, which is a decision nobody has taken."
   },
   "naming": {
     "rule": "The same word, in each language's convention. Never a different verb.",

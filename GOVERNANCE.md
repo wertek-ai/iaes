@@ -3,7 +3,8 @@
 **Status:** Normative. Applies from IAES v1.4 onward, except §3's definition of
 MAJOR, the pointer at the end of §4.2, §4.4 and item 2 of §8 -- incorporated
 from `rfc/IAES-RFC-003.md` -- and §4.5, incorporated from
-`rfc/IAES-RFC-004.md`, which apply from **IAES 2.0**.
+`rfc/IAES-RFC-004.md`, and §9, incorporated from `rfc/IAES-RFC-005.md`, which
+apply from **IAES 2.0**.
 **Last updated:** 2026-09-07
 
 This document defines who maintains the Industrial Asset Event Standard, how it
@@ -441,6 +442,76 @@ defines a process for adding new data elements rather than forbidding extension.
    available for at least 24 months, and states the migration.
 4. Vendor-specific requirements will not appear in normative text.
 5. The CC BY 4.0 licence on every published version is irrevocable.
+
+## 9. Conformance
+
+There are two classes, and only the first is what *conforms to IAES* means with
+no qualifier.
+
+### 9.1 Wire conformance
+
+An implementation is **wire-conformant** when each event it produces satisfies
+the applicable IAES validation rules -- including envelope-only validation for a
+permitted custom `event_type` with no published payload schema -- and it
+observes the producer or consumer obligations applicable to its role.
+
+The qualifier is not a loophole. The specification already permits a producer to
+emit an `event_type` in a namespace it controls and to omit `dataschema`,
+because no schema is published for it; there the envelope is what applies, and
+an unknown type is not an invalid event. A definition that said *validates
+against the published schemas* would have made a capability the wire already has
+into non-conformance.
+
+Nothing about a system's internal API bears on this. A gateway that emits
+correct events conforms to IAES.
+
+### 9.2 The IAES SDK profile
+
+An **IAES SDK profile** is a set of capabilities a library exposes, adopted by a
+release and defined there in machine-readable form.
+
+A library **may claim** a profile, naming the release whose profile it meets.
+Claiming it is a statement any third party can check against that release's
+definition.
+
+This section defines the class. **It adopts no profile**: which capabilities are
+genuinely universal is a separate decision, and a release that has adopted none
+has none to claim.
+
+**Not claiming it is not a deficiency**, and says nothing about whether the
+library is wire-conformant. A narrow runtime that emits correct events and
+exposes no general-purpose API is wire-conformant and is not an SDK.
+
+### 9.3 The profile is claimed and checked, never granted
+
+**The steward does not grant a profile, and no one else does either.** The
+definition is published, versioned and machine-readable, so a claim is checkable
+by someone who has never spoken to the steward.
+
+This follows from §1: a rule that needs a specific vendor's judgment to be
+meaningful is not part of IAES, and a steward-granted profile would need exactly
+that. It would also make the steward the gatekeeper of a term its competitors
+need, while being a vendor with SDKs of its own. §2 already refuses the weaker
+form of the same thing -- a reference implementation confers no normative
+authority -- and certification would reintroduce it by another door.
+
+### 9.4 A profile's definition travels inside its release
+
+A claim names a release and is checked against that release's definition, so
+**a release that adopts a profile carries the definition in its normative set**.
+
+A definition kept outside the release would be normative in a way nobody can
+verify: the claim would name an object that does not contain what the claim is
+measured by. This is stated now, before any profile exists, so that adopting one
+cannot leave its definition outside the thing it is adopted into.
+
+### 9.5 What this standard cannot do about the name
+
+IAES asserts no trademark. This standard cannot prevent anyone from calling a
+library an IAES SDK; it makes the claim mean something checkable, which is what
+a vendor-neutral standard is entitled to do.
+
+The rationale is in `rfc/IAES-RFC-005.md`.
 
 ---
 
