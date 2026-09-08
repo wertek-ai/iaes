@@ -71,12 +71,19 @@ jobs:
         run: npm ci && npm run build
         working-directory: npm
 
-      - name: Install and test
+      - name: Install, build and test
         run: |
           npm ci
           if [ "${{ steps.pick.outputs.dir }}" != "npm" ]; then
             npm install --no-save ../npm
           fi
+          # Build before testing. n8n-nodes compiles to dist/ and its suite
+          # loads the COMPILED artifact -- which is what the package publishes,
+          # and checking the TypeScript instead would pass over a build that
+          # never emitted the fix. This step used to test without building,
+          # which nothing noticed because n8n-nodes had no tests at all until
+          # 2.0. `prepublishOnly` builds too, but that runs after the tests.
+          npm run build --if-present
           npm test --if-present
         working-directory: ${{ steps.pick.outputs.dir }}
 
