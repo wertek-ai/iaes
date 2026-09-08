@@ -3,12 +3,11 @@
   "iaes_spec_version": "1.4",
   "measured": "2026-09-06",
   "status": {
-    "state": "normative",
-    "normative_for": "the IAES SDK profile (GOVERNANCE.md §9.2)",
+    "state": "draft",
+    "normative_for": null,
     "normative_for_the_wire": false,
-    "profile_of": "IAES 2.0",
-    "notice": "Changing this file does not change what an IAES event is. It changes what a library must expose to claim the IAES SDK profile. A library that does not claim the profile is unaffected, and may still be wire-conformant.",
-    "claimed_not_granted": "No one grants this profile. A library claims it, naming the release whose profile it meets, and any third party checks the claim against this file. See GOVERNANCE.md §9.3 for why the steward must not be the grantor."
+    "notice": "This file is not normative. It is a measurement of what five implementations expose and a proposal for what an IAES SDK profile could require. GOVERNANCE.md §9 defines the profile as a class of conformance; no profile has been adopted, and adopting one -- deciding which capabilities are genuinely universal -- is a separate change with its own memo.",
+    "why_not_normative_yet": "The list is measured, not designed. Making this file normative would adopt it as the definition of the profile, which is a decision nobody has taken."
   },
   "naming": {
     "rule": "The same word, in each language's convention. Never a different verb.",

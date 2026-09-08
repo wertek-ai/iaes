@@ -13,9 +13,8 @@ ISSN: N/A
 > it. It is **not** normative authority for how IAES behaves. The applicable
 > normative artifacts, as released, govern IAES. See `GOVERNANCE.md` §6.1.
 
-This memo proposes a new section of `GOVERNANCE.md` and moves two existing
-files into the published release. It defines no wire format and changes no
-schema.
+This memo proposes a new section of `GOVERNANCE.md`. It defines no wire format,
+changes no schema, and adopts no SDK profile.
 
 **State: Review**, per `GOVERNANCE.md` §6, at the steward's request.
 **Compatibility: MINOR, derived under §4.5 (R3). Target version: IAES 2.0.**
@@ -40,15 +39,19 @@ Two classes: **wire conformance**, which is what conformance to IAES means
 unqualified, and a claimable **SDK profile**, which a library may assert and
 anyone may check. The steward does not grant the second, and §1 is the reason.
 
+**This memo adopts no profile.** It defines the class and the rules a profile
+must obey; deciding *which capabilities* one requires is a separate change with
+its own memo, for the reason given in §4.
+
 # Table of Contents
 
     1. What raised it
     2. Two classes, and why the first is not enough
-    3. Who grants the profile
+    3. Who grants a profile
        3.1. Why it cannot be the steward
-    4. What the profile requires
+    4. What a profile requires — and why this memo does not say
     5. What this standard cannot do about the name
-    6. The steward's own SDK does not meet the profile
+    6. What the steward's own SDKs look like today
     7. Compatibility level of this change
     8. Effect on existing implementers
     9. What this memo does not decide
@@ -98,10 +101,11 @@ for, because that question is not about events:
 
 So a second class, and it is **claimable rather than imposed**:
 
-> **The IAES SDK profile** is a set of capabilities a library exposes. A library
-> **may claim** the profile. Claiming it is a statement anyone can check against
-> the published definition. Not claiming it is not a deficiency, and says
-> nothing about whether the library is wire-conformant.
+> **An IAES SDK profile** is a set of capabilities a library exposes, adopted by
+> a release and defined there. A library **may claim** a profile, naming the
+> release whose profile it meets; the claim is a statement anyone can check
+> against that release's definition. Not claiming one is not a deficiency, and
+> says nothing about whether the library is wire-conformant.
 
 This is the distinction that keeps everything already built where it belongs. A
 third party that emits correct events and exposes no `from_object` **is not
@@ -111,11 +115,11 @@ runtime for a microcontroller, wire-conformant, and not an SDK. Under a single
 class of conformance it would have to be described as deficient, which would be
 false.
 
-# 3. Who grants the profile
+# 3. Who grants a profile
 
 > **Nobody grants it. It is claimed and it is checkable.**
 >
-> A library claims the profile by stating which release's profile it meets. The
+> A library claims a profile by stating which release's profile it meets. The
 > definition is published in that release, in machine-readable form. Any third
 > party can check the claim without asking anyone, and the steward has no
 > privileged role in the checking.
@@ -141,26 +145,40 @@ implementation.
 So the definition has to be **self-assessable**: published, versioned,
 machine-readable, and checkable by someone who has never spoken to us.
 
-# 4. What the profile requires
+# 4. What a profile requires — and why this memo does not say
 
-The definition is `surface.json`, and `SDK_SURFACE.md` is its reasoning. This
-memo does not restate the capability list; restating it would create a second
-copy that drifts, which is the defect the file was written to end.
+An earlier draft of this memo did two things at once, and they were
+incompatible.
 
-Three consequences follow, and they are the substance of this memo:
+It said, in §9, that it *does not decide whether the capability list is right —
+it is measured, not designed*. And its incorporation made `surface.json`
+normative and put it in the release manifest, which **is** deciding: a normative
+`surface.json` is the definition of the profile, and its entries already say
+`required: true`.
 
-1. **`surface.json` stops being a draft.** Its `state` becomes `normative` for
-   the profile, and it says which release's profile it defines.
-2. **Both files enter the release manifest.** A definition that a claim is
-   checked against must travel inside the object the claim names, or the claim
-   names nothing. This is the point the measurement in §1 makes.
-3. **The naming rule is part of the profile**, not a style note:
+Prose that disclaims a decision does not undo an incorporation that makes it.
+Had this shipped, *closing the matrix* would have stopped being implementation
+work and become **implementing normative requirements nobody ever adopted** —
+`validate` in the TypeScript SDK would have been mandatory because a measurement
+was promoted, not because anyone judged it universal.
 
-   > The same word, in each language's convention. Never a different verb.
+So this memo is authority only:
 
-   `compute_content_hash` and `computeContentHash` are one capability spelled by
-   two languages. `from_dict` and `fromJSON` are two verbs, and a reader cannot
-   tell whether they do the same thing without opening both.
+> **[TEXT]** A profile is adopted by a release, which carries its definition.
+> This memo adopts none. `surface.json` stays a **draft measurement** and stays
+> outside the normative set.
+
+What the next memo has to decide, and this one deliberately does not:
+
+- **Which capabilities are genuinely universal.** The list was measured across
+  five implementations, and the shape of its gaps says where attention went, not
+  what an SDK needs. `route` is already marked *not a gap* for libraries, which
+  is a hint that the list is a starting point.
+- **Whether a profile has levels.** A flow-runtime node package and a
+  general-purpose library may not owe the same surface.
+- **What `required: true` costs.** Each one makes some existing implementation
+  non-conforming to the profile on the day it is adopted, including the
+  steward's own (§6).
 
 # 5. What this standard cannot do about the name
 
@@ -177,7 +195,12 @@ published, verifiable fact, rather than a difference of opinion.
 That is weaker than certification and it is what a vendor-neutral standard is
 entitled to.
 
-# 6. The steward's own SDK does not meet the profile
+# 6. What the steward's own SDKs look like today
+
+Not a conformance finding: no profile is adopted, so nothing here is
+non-conforming to anything. It is recorded because it is the fact most likely to
+bend the next memo, and it should be visible before that memo is written rather
+than discovered after.
 
 Measured 2026-09-06 and unchanged at the time of writing:
 
@@ -195,14 +218,16 @@ Measured 2026-09-06 and unchanged at the time of writing:
 both flow runtimes depend on.** Neither SDK uses the canonical name
 `from_object`.
 
-This is published rather than worked around. The alternative — writing the
-profile so that whatever the steward ships today happens to satisfy it — would
-be a vendor-specific requirement in normative text wearing a general shape, and
-§8 item 4 says those will not appear.
+This is published rather than worked around, because the pressure runs in one
+direction and it is worth naming in advance: **writing the profile so that
+whatever the steward ships today happens to satisfy it** would be a
+vendor-specific requirement in normative text wearing a general shape, and §8
+item 4 says those will not appear.
 
-The gaps close before the release the profile is defined in, or the release
-publishes the profile and the steward's own non-compliance with it. Both are
-honest; the first is better; neither is a reason to weaken the definition.
+When a profile is adopted, the gaps close before the release that adopts it, or
+that release publishes the profile alongside the steward's own non-compliance
+with it. Both are honest; the first is better; neither is a reason to weaken the
+definition.
 
 # 7. Compatibility level of this change
 
@@ -214,9 +239,10 @@ R1  reduction?      No. No guarantee is withdrawn or conditioned. Wire
                     nothing that conforms today stops conforming.
 R2  classification  No. This memo states no rule about how future changes
     only?           are classified.
-R3  addition?       Yes. It adds an obligation of the steward -- to publish
-                    the profile definition inside every release that defines
-                    one -- and reduces nothing.  ->  MINOR
+R3  addition?       Yes. It adds a conformance class nobody is obliged to
+                    claim, and one conditional obligation of the steward: a
+                    release that adopts a profile carries its definition.
+                    Reduces nothing.  ->  MINOR
 ```
 
 This is the first memo in this series whose own level is **derived rather than
@@ -238,27 +264,27 @@ check, without asking the steward, whether their library qualifies.
 
 # 9. What this memo does not decide
 
-- **Whether the capability list is right.** It is measured, not designed, and
-  the shape of its gaps says where attention went rather than what an SDK needs.
-  Revising which capabilities the profile requires is a change to
-  `surface.json`, classified when it is proposed.
-- **How a profile change is classified.** Once `surface.json` is normative,
-  adding a required capability makes previously conforming libraries
-  non-conforming to the profile. That is the shape §4.4 was written for, and it
-  should be confirmed against §4.4 rather than assumed — in the memo that first
-  proposes such a change, not here.
+- **Which capabilities a profile requires**, and therefore whether the measured
+  list in `surface.json` is the right one. §4 says why that is a separate
+  decision rather than a detail of this one.
+- **How a change to an adopted profile is classified.** Once a profile is
+  normative, adding a required capability makes previously conforming libraries
+  non-conforming to it. That is the shape §4.4 was written for, and it should be
+  confirmed against §4.4 rather than assumed — in the memo that first proposes
+  such a change.
 - **Anything about the wire.** No field, no schema, no obligation on any
   producer or consumer.
 
 # 10. Proposed incorporation
 
-1. **§2 and §3 of this memo as a new `GOVERNANCE.md` §9**, titled *Conformance*,
-   defining the two classes and stating that the profile is claimed and checked
-   rather than granted.
-2. **`SDK_SURFACE.md` and `surface.json` added to the release manifest's
-   normative set**, so the definition travels inside the release a claim names.
-3. **`surface.json`'s `state` becomes `normative`**, naming the release whose
-   profile it defines.
+§2, §3 and §5 of this memo as a new `GOVERNANCE.md` §9, titled *Conformance*:
+the two classes, the rule that a profile is claimed and checked rather than
+granted, the rule that a release adopting a profile carries its definition, and
+the limit on what the standard can do about the name.
+
+**Nothing else.** `surface.json` stays a draft measurement, outside the
+normative set, and the manifest is unchanged except for a comment recording
+where an adopted profile's definition would go.
 
 §1 through §8 of `GOVERNANCE.md` are unchanged.
 

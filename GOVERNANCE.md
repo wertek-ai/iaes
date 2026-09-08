@@ -459,13 +459,16 @@ correct events conforms to IAES.
 
 ### 9.2 The IAES SDK profile
 
-The **IAES SDK profile** is a set of capabilities a library exposes, defined by
-`surface.json` in the release that publishes it. `SDK_SURFACE.md` is its
-reasoning.
+An **IAES SDK profile** is a set of capabilities a library exposes, adopted by a
+release and defined there in machine-readable form.
 
-A library **may claim** the profile, naming the release whose profile it meets.
-Claiming it is a statement any third party can check against the published
+A library **may claim** a profile, naming the release whose profile it meets.
+Claiming it is a statement any third party can check against that release's
 definition.
+
+This section defines the class. **It adopts no profile**: which capabilities are
+genuinely universal is a separate decision, and a release that has adopted none
+has none to claim.
 
 **Not claiming it is not a deficiency**, and says nothing about whether the
 library is wire-conformant. A narrow runtime that emits correct events and
@@ -473,7 +476,7 @@ exposes no general-purpose API is wire-conformant and is not an SDK.
 
 ### 9.3 The profile is claimed and checked, never granted
 
-**The steward does not grant the profile, and no one else does either.** The
+**The steward does not grant a profile, and no one else does either.** The
 definition is published, versioned and machine-readable, so a claim is checkable
 by someone who has never spoken to the steward.
 
@@ -484,10 +487,17 @@ need, while being a vendor with SDKs of its own. §2 already refuses the weaker
 form of the same thing -- a reference implementation confers no normative
 authority -- and certification would reintroduce it by another door.
 
-Because the definition is what a claim is checked against, it travels **inside**
-the release: `SDK_SURFACE.md` and `surface.json` are part of the normative set
-of every release that defines a profile. A definition outside the release would
-be normative in a way nobody can verify.
+### 9.4 A profile's definition travels inside its release
+
+A claim names a release and is checked against that release's definition, so
+**a release that adopts a profile carries the definition in its normative set**.
+
+A definition kept outside the release would be normative in a way nobody can
+verify: the claim would name an object that does not contain what the claim is
+measured by. This is stated now, before any profile exists, so that adopting one
+cannot leave its definition outside the thing it is adopted into.
+
+### 9.5 What this standard cannot do about the name
 
 IAES asserts no trademark. This standard cannot prevent anyone from calling a
 library an IAES SDK; it makes the claim mean something checkable, which is what
