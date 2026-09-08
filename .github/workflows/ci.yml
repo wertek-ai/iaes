@@ -78,6 +78,11 @@ jobs:
           npm install --no-save
           npm run build
         working-directory: n8n-nodes
+      # The package shipped a whole major with no suite, and it cost two
+      # defects: a hardcoded specification major, and a closed event_type
+      # catalog. Both were found by review because nothing ran.
+      - run: npm test
+        working-directory: n8n-nodes
 
   sdk-python:
     name: iaes (Python)

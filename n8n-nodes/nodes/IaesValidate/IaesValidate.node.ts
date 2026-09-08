@@ -7,6 +7,10 @@ import type {
 
 import { SPEC_VERSION } from '@iaes/sdk';
 
+// Dot-notation, mirroring the specification's own pattern. The published types
+// below are the interoperability defaults, not the limit.
+const EVENT_TYPE_PATTERN = /^[a-z][a-z0-9_]*\.[a-z][a-z0-9_.]*$/;
+
 const VALID_EVENT_TYPES = [
 	'asset.measurement',
 	'asset.health',
@@ -58,10 +62,19 @@ function validateIaesEvent(payload: Record<string, unknown>): ValidationResult {
 		);
 	}
 
-	// Validate event_type
+	// Validate event_type — SHAPE, not membership.
+	//
+	// The catalog is OPEN. The specification lets a producer emit its own
+	// event_type in a namespace it controls, and tells consumers they MUST NOT
+	// error on one they do not recognise. This rejected every custom type: the
+	// same defect 1.4 corrected in the schema, reintroduced in an official
+	// implementation of it. VALID_EVENT_TYPES is still used below to decide
+	// which payloads have a published schema to be judged against.
 	const eventType = payload.event_type as string;
-	if (eventType && !VALID_EVENT_TYPES.includes(eventType)) {
-		errors.push(`Unknown event_type "${eventType}" — valid: ${VALID_EVENT_TYPES.join(', ')}`);
+	if (eventType && !EVENT_TYPE_PATTERN.test(eventType)) {
+		errors.push(
+			`event_type "${eventType}" must be lowercase dot-notation (e.g. acme.press_stroke)`,
+		);
 	}
 
 	// Validate asset object

@@ -326,3 +326,50 @@ describe("iaes-validate node", () => {
     assert.equal(outputs[0][0].iaes_event_type, "asset.measurement");
   });
 });
+
+// --- an open catalog must stay open ---
+
+describe("iaes-validate keeps the catalog open", () => {
+  // IAES_SPEC.md: a producer MAY emit its own event_type in a namespace it
+  // controls, and a consumer "MUST NOT error" on one it does not recognise.
+  // Both flow validators closed the catalog the standard opens — the exact
+  // defect 1.4 corrected in the schema, reintroduced in the implementations.
+  //
+  // Node-RED had two of them: the REQUIRED_DATA_FIELDS lookup, and then
+  // fromJSON() called as "the last word", whose typed dispatcher does not know
+  // custom types and turned a wire-valid event back into an error.
+  const custom = {
+    spec_version: SPEC_VERSION,
+    event_type: "acme.press_stroke",
+    event_id: "550e8400-e29b-41d4-a716-446655440000",
+    correlation_id: "550e8400-e29b-41d4-a716-446655440000",
+    timestamp: "2026-09-08T12:00:00Z",
+    source: "acme.press",
+    asset: { asset_id: "PRESS-01" },
+    data: { stroke: 42 },
+  };
+
+  it("accepts a custom event_type with no dataschema", () => {
+    const node = createNode(RED, "iaes-validate", {});
+    const { outputs } = sendInput(node, { payload: custom });
+
+    const [valid, invalid] = outputs[0];
+    assert.equal(
+      invalid, null,
+      "a custom event_type was rejected: " +
+        JSON.stringify(invalid && invalid.iaes_errors),
+    );
+    assert.ok(valid, "the event should leave by the valid output");
+  });
+
+  it("still rejects an event_type that is not dot-notation", () => {
+    // The door opens for a namespaced type, not for anything at all.
+    const node = createNode(RED, "iaes-validate", {});
+    const { outputs } = sendInput(node, {
+      payload: { ...custom, event_type: "NotDotNotation" },
+    });
+    const [valid, invalid] = outputs[0];
+    assert.equal(valid, null, "a malformed event_type must not pass");
+    assert.ok(invalid, "it should leave by the invalid output");
+  });
+});

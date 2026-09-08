@@ -28,7 +28,8 @@
     "build": "tsc && npm run copy-icons",
     "copy-icons": "node -e \"const fs=require('fs');const p=require('path');['IaesEmit','IaesValidate','IaesLifecycle'].forEach(n=>{const s=p.join('nodes',n,'iaes.svg');const d=p.join('dist','nodes',n,'iaes.svg');fs.mkdirSync(p.dirname(d),{recursive:true});fs.copyFileSync(s,d)})\"",
     "prepublishOnly": "npm run build",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "node --test test/*.test.js"
   },
   "n8n": {
     "n8nNodesApiVersion": 1,
