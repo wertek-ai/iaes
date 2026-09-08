@@ -7,7 +7,7 @@ that the schema will demand, or trusts a list the schema never agreed to.
 
 Measured 2026-09-06, they disagree in both directions at once:
 
-    triggered_by      closed in the schema, no enumeration published
+    triggered_by      closed in the schema, no SDK constant for it
     MeasurementType   published by the SDKs, open in the schema
 
 Neither is a bug to fix here. Both are decisions for IAES 1.5, and each is
@@ -45,8 +45,10 @@ PAIRS = {
 # Closed in the schema, with no enumeration for a producer to read.
 UNPUBLISHED = {
     "triggered_by": {
-        "why": "A producer must send one of five values and has no published "
-               "list to read them from. Closed in the schema since 1.0.",
+        "why": "Closed in the schema since 1.0, with no convenience constant "
+               "in either SDK. This is ergonomics, not a wire defect: the "
+               "schema publishes the five values and a producer reading it "
+               "has everything it needs -- an SDK convenience, not a wire defect.",
         "resolve_in": "1.5",
     },
 }
@@ -132,7 +134,8 @@ def test_every_closed_schema_enum_is_paired_or_declared():
     unaccounted = set(SCHEMA) - set(PAIRS) - set(UNPUBLISHED)
     assert not unaccounted, (
         f"closed in a schema and neither published nor declared: "
-        f"{sorted(unaccounted)}. A producer has no list to read them from.")
+        f"{sorted(unaccounted)}. The schema is the list; this is about "
+        f"whether the SDKs offer it as a constant.")
 
 
 def test_every_sdk_enum_is_paired_or_declared_advisory():
