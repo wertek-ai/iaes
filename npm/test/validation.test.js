@@ -96,7 +96,7 @@ test("every published event type has a loadable schema", () => {
   const { PUBLISHED_EVENT_TYPES } = require("../dist/index.js");
   for (const type of PUBLISHED_EVENT_TYPES) {
     const schema = loadSchema(type);
-    assert.equal(schema.$id, `https://iaes.dev/schema/v1/${type}`);
+    assert.equal(schema.$id, `https://iaes.dev/schema/v2/${type}`);
   }
   assert.ok(loadEnvelopeSchema().$id, "the envelope schema loads");
 });
