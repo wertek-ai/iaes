@@ -1,6 +1,6 @@
 {
   "$comment": "The IAES SDK profile: what a library must expose to claim it. Normative for the profile and not for the wire (GOVERNANCE.md §9.2); SDK_SURFACE.md is the reasoning and does not govern. What each implementation currently offers is measured in implementations.json, which is not normative and not part of a release: a file that both defined the profile and recorded who meets it would be edited every time a package shipped.",
-  "iaes_spec_version": "1.4",
+  "iaes_spec_version": "2.0",
   "status": {
     "state": "normative",
     "normative_for": "the IAES SDK profile (GOVERNANCE.md §9.2)",

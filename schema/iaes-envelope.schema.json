@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://iaes.dev/schema/v1/envelope",
+  "$id": "https://iaes.dev/schema/v2/envelope",
   "title": "IAES Common Envelope",
-  "description": "Base envelope shared by all IAES v1 events",
+  "description": "Base envelope shared by all IAES v2 events",
   "type": "object",
   "required": [
     "spec_version",
@@ -17,15 +17,15 @@
   "properties": {
     "spec_version": {
       "type": "string",
-      "pattern": "^1\\.[0-9]+$",
-      "description": "IAES specification version (any 1.x minor version)"
+      "pattern": "^2\\.[0-9]+$",
+      "description": "IAES specification version (any 2.x minor version). Each major's envelope accepts that major's versions and no others; a 1.x event validates against the 1.x schemas, which resolve permanently."
     },
     "dataschema": {
       "type": "string",
       "format": "uri",
       "description": "Canonical URI of the JSON Schema the `data` payload was written against. Optional. Producers SHOULD set it; consumers MUST NOT reject an event for its absence.",
       "examples": [
-        "https://iaes.dev/schema/v1/asset.measurement"
+        "https://iaes.dev/schema/v2/asset.measurement"
       ]
     },
     "event_type": {

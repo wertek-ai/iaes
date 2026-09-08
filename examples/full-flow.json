@@ -1,7 +1,7 @@
 [
   {
     "_comment": "Step 1: Sensor reading arrives",
-    "spec_version": "1.0",
+    "spec_version": "2.0",
     "event_type": "asset.measurement",
     "event_id": "d1e2f3a4-b5c6-7d8e-9f0a-1b2c3d4e5f6a",
     "correlation_id": "3b2f9d8c-1c33-4a8a-9b77-54d11b2efc12",
@@ -24,7 +24,7 @@
   },
   {
     "_comment": "Step 2: AI diagnosis produces health event (same correlation_id)",
-    "spec_version": "1.0",
+    "spec_version": "2.0",
     "event_type": "asset.health",
     "event_id": "a9e3c4b2-9d3a-4a12-b1f3-2e44a1caa8a1",
     "correlation_id": "3b2f9d8c-1c33-4a8a-9b77-54d11b2efc12",
@@ -51,7 +51,7 @@
   },
   {
     "_comment": "Step 3: System declares intent to create work order (same correlation_id, references health event)",
-    "spec_version": "1.0",
+    "spec_version": "2.0",
     "event_type": "maintenance.work_order_intent",
     "event_id": "e2f3a4b5-c6d7-8e9f-0a1b-2c3d4e5f6a7b",
     "correlation_id": "3b2f9d8c-1c33-4a8a-9b77-54d11b2efc12",

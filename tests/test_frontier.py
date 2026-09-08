@@ -29,7 +29,7 @@ def kinds(tmp_path, name, body):
     # Opta shipped this as the broker in three examples.
     ("m.cpp", 'const char* BROKER = "mqtt.wertek.ai";', "host"),
     # The base that never resolved, left behind in a comment after 1.4.
-    ("v.py", "# $id is like https://iaes.wertek.ai/schema/v1/asset.measurement", "host"),
+    ("v.py", "# $id is like https://iaes.wertek.ai/schema/v2/asset.measurement", "host"),
     # The normative schema taught our namespace as what a producer looks like.
     ("s.json", '"description": "producer identity (e.g. wertek.ai.diagnosis)"', "namespace"),
     ("e.json", '"source": "wertek.energy.cdr_rules"', "namespace"),
@@ -54,7 +54,7 @@ def test_catches_it_inside_a_markdown_code_fence(tmp_path):
     # The changelog's job is to record which of our defaults were removed.
     "`httpEndpoint` defaulted to `https://api.wertek.ai/iaes/ingest` -- removed in 0.2.0.",
     # The specification's history says which host never resolved.
-    "The schemas declared `$id` under `https://iaes.wertek.ai/schema/v1/`, which never resolved.",
+    "The schemas declared `$id` under `https://iaes.wertek.ai/schema/v2/`, which never resolved.",
 ])
 def test_leaves_prose_alone(tmp_path, body):
     assert kinds(tmp_path, "PROSE.md", body) == set()

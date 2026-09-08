@@ -11,8 +11,8 @@ IAES Industrial Asset Event Standard nodes for [n8n](https://n8n.io) — emit, v
 ## Part of IAES
 
 The standard ships as four packages that version together. **The first two
-numbers of a package version are the specification it implements** — `1.4.x`
-implements IAES 1.4.
+numbers of a package version are the specification it implements** — `2.0.x`
+implements IAES 2.0.
 
 | Runtime | Package | Install |
 |---|---|---|
@@ -27,7 +27,7 @@ Specification, JSON Schemas and governance: **[iaes.dev](https://iaes.dev)**.
 
 ### IAES Emit
 
-Create any IAES v1.4 event type with a visual form:
+Create any IAES v2.0 event type with a visual form:
 
 - **Asset Health** — AI diagnosis, severity, condition trend, ISO 13374 status
 - **Asset Measurement** — sensor readings (vibration, temperature, current, etc.)
@@ -108,7 +108,7 @@ In the **IAES Emit** node, map the PLC fields:
 | Value | `={{ $json.message.value }}` — e.g. `4.2` |
 | Unit | `={{ $json.message.unit }}` — e.g. `mm/s` |
 
-The output is a full IAES v1.4 envelope ready to POST to any CMMS, data lake, or Wertek.
+The output is a full IAES v2.0 envelope ready to POST to any CMMS, data lake, or Wertek.
 
 > **Works with:** Allen-Bradley, Siemens S7 (via MQTT gateway), Modbus TCP (via Node-RED bridge), OPC-UA publishers, any device that can write to MQTT.
 

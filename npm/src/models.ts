@@ -1,5 +1,5 @@
 /**
- * IAES event models — 7 vendor-neutral classes for the IAES v1.3 spec.
+ * IAES event models — 7 vendor-neutral classes for the IAES v2.0 spec.
  *
  * Each model produces a spec-compliant IAES envelope via `toJSON()`.
  * All fields are spec-only — no vendor-specific extensions.

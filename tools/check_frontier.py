@@ -51,7 +51,12 @@ ROOT = Path(__file__).resolve().parent.parent
 RULES = {
     "host": [r"\b(?:mqtt|api|app|admin|iaes)\.wertek\.ai\b"],
     "namespace": [r"\bwertek\.(?:ai|edge|energy)\.[a-z_]+"],
-    "model": [r"\{org_id\}", r"\borganization_id\b"],
+    # Both spellings, deliberately. Only the snake_case form was checked, and
+    # an n8n credential field named `organizationId` sat in the public tree for
+    # months teaching a concept GOVERNANCE.md 1 says IAES does not carry. A
+    # guard that misses by one character is a guard for one language.
+    "model": [r"\{org_id\}", r"\borganization_id\b",
+              r"\borganizationId\b", r"\{organizationId\}"],
 }
 
 EXPLAIN = {

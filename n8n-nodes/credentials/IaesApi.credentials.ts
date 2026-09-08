@@ -90,13 +90,6 @@ export class IaesApi implements ICredentialType {
 				show: { transport: ['mqtt'] },
 			},
 		},
-		{
-			displayName: 'Organization ID',
-			name: 'organizationId',
-			type: 'string',
-			default: '',
-			description: 'Your organization identifier (used in MQTT topics and event metadata)',
-		},
 	];
 
 	// Injects the correct header when this credential is selected on an HTTP

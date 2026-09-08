@@ -1,16 +1,23 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://iaes.dev/schema/v1/asset.health",
+  "$id": "https://iaes.dev/schema/v2/asset.health",
   "title": "IAES asset.health",
   "description": "AI diagnosis or health state change for an industrial asset",
   "allOf": [
-    { "$ref": "iaes-envelope.schema.json" }
+    {
+      "$ref": "iaes-envelope.schema.json"
+    }
   ],
   "properties": {
-    "event_type": { "const": "asset.health" },
+    "event_type": {
+      "const": "asset.health"
+    },
     "data": {
       "type": "object",
-      "required": ["health_index", "severity"],
+      "required": [
+        "health_index",
+        "severity"
+      ],
       "properties": {
         "health_index": {
           "type": "number",
@@ -22,20 +29,36 @@
           "type": "number",
           "minimum": 0,
           "maximum": 1,
-          "description": "Probability of anomaly (0 = normal, 1 = anomalous)"
+          "description": "Probability of anomaly (0 = normal, 1 = anomalous). Absence means the producer did not supply a score; it MUST NOT be substituted with 0 or any other value, and a consumer MUST NOT read absence as a default."
         },
         "severity": {
           "type": "string",
-          "enum": ["info", "low", "medium", "high", "critical"],
-          "description": "Severity classification"
+          "enum": [
+            "info",
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ],
+          "description": "Condition of the asset. This is NOT a priority: it does not say how urgently anyone should respond. Which urgency a condition deserves is the consumer's judgment, because the consumer knows what else is running."
         },
         "failure_mode": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "Classified fault type",
           "examples": [
-            "bearing_inner_race", "bearing_outer_race", "bearing_ball",
-            "misalignment", "unbalance", "looseness", "gear_mesh",
-            "electrical_fault", "cavitation", "overheating"
+            "bearing_inner_race",
+            "bearing_outer_race",
+            "bearing_ball",
+            "misalignment",
+            "unbalance",
+            "looseness",
+            "gear_mesh",
+            "electrical_fault",
+            "cavitation",
+            "overheating"
           ]
         },
         "fault_confidence": {
@@ -45,31 +68,63 @@
           "description": "Confidence in the fault classification"
         },
         "rul_days": {
-          "type": ["integer", "null"],
+          "type": [
+            "integer",
+            "null"
+          ],
           "minimum": 0,
           "description": "Remaining Useful Life in days"
         },
         "recommended_action": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "Human-readable recommended action"
         },
         "estimated_downtime_hours": {
-          "type": ["number", "null"],
+          "type": [
+            "number",
+            "null"
+          ],
           "minimum": 0,
           "description": "Estimated repair/intervention duration in hours"
         },
         "condition_trend": {
-          "type": ["string", "null"],
-          "enum": ["worsening", "stable", "improving", null],
-          "description": "Temporal trend of the assessed condition relative to the previous assessment. Based on ISO 13374-4 §5.3 presentation states that distinguish stable from worsening conditions. (v1.3)"
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "worsening",
+            "stable",
+            "improving",
+            null
+          ],
+          "description": "Temporal trend of the assessed condition relative to the previous assessment. IAES's own vocabulary: any correspondence to an external standard is unverified and is not asserted here."
         },
         "iso_13374_status": {
-          "type": ["string", "null"],
-          "enum": ["unknown", "normal", "satisfactory", "unsatisfactory", "unacceptable", "imminent_failure", "failed", null],
-          "description": "ISO 13374-2 health status level. Complementary to severity: severity is action-oriented, iso_13374_status is condition-oriented."
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "unknown",
+            "normal",
+            "satisfactory",
+            "unsatisfactory",
+            "unacceptable",
+            "imminent_failure",
+            "failed",
+            null
+          ],
+          "description": "Health status. IAES's own vocabulary: any correspondence to an external standard is unverified and is not asserted here. The field name is retained for compatibility with 1.x."
         },
         "iso_14224": {
-          "type": ["object", "null"],
+          "type": [
+            "object",
+            "null"
+          ],
           "description": "ISO 14224 structured failure classification codes",
           "properties": {
             "mechanism_code": {

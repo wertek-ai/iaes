@@ -1,5 +1,5 @@
 module.exports = function (RED) {
-  const { fromJSON } = require("@iaes/sdk");
+  const { fromJSON, SPEC_VERSION } = require("@iaes/sdk");
 
   // Mirrors schema/iaes-envelope.schema.json + the per-type data schemas.
   // Kept as a table here because the JSON schemas live outside this npm
@@ -29,7 +29,15 @@ module.exports = function (RED) {
     ],
   };
 
-  const SPEC_VERSION_RE = /^1\.[0-9]+$/;
+  // The major comes from the SDK, not from a copy here. This was
+  // /^1\.[0-9]+$/ hardcoded -- a fourth place where the version rule lived,
+  // outside the schema that defines it, and it went stale the moment 2.0 was
+  // cut: the node rejected every event the SDK it ships with produces.
+  // Dot-notation, mirroring the specification's own pattern. The published
+  // types are the interoperability defaults, not the limit.
+  const EVENT_TYPE_RE = /^[a-z][a-z0-9_]*\.[a-z][a-z0-9_.]*$/;
+  const SPEC_MAJOR = SPEC_VERSION.split(".")[0];
+  const SPEC_VERSION_RE = new RegExp("^" + SPEC_MAJOR + "\.[0-9]+$");
   const SOURCE_RE = /^[a-z][a-z0-9_.]+$/;
   const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -50,12 +58,23 @@ module.exports = function (RED) {
 
     if (envelope.spec_version != null && !SPEC_VERSION_RE.test(envelope.spec_version)) {
       errors.push(
-        'spec_version "' + envelope.spec_version + '" does not match 1.x'
+        'spec_version "' + envelope.spec_version + '" does not match ' + SPEC_MAJOR + '.x'
       );
     }
 
-    if (envelope.event_type != null && !REQUIRED_DATA_FIELDS[envelope.event_type]) {
-      errors.push('Unknown event_type: "' + envelope.event_type + '"');
+    // The catalog is OPEN. The specification lets a producer emit its own
+    // event_type in a namespace it controls, and tells consumers they MUST NOT
+    // error on one they do not recognise. This rejected every custom type --
+    // the same defect 1.4 corrected in the schema, reintroduced in an
+    // implementation of it.
+    //
+    // So the SHAPE is checked and MEMBERSHIP is not: an unpublished type is an
+    // event whose payload cannot be judged, not an invalid event.
+    if (envelope.event_type != null && !EVENT_TYPE_RE.test(envelope.event_type)) {
+      errors.push(
+        'event_type "' + envelope.event_type +
+          '" must be lowercase dot-notation (e.g. acme.press_stroke)'
+      );
     }
 
     for (const idField of ["event_id", "correlation_id"]) {
@@ -139,12 +158,18 @@ module.exports = function (RED) {
       const errors = validateEnvelope(envelope);
 
       if (errors.length === 0) {
-        // Structure is sound; the SDK round-trip is the last word on whether
-        // the event actually deserializes.
-        try {
-          fromJSON(envelope);
-        } catch (err) {
-          errors.push(err.message);
+        // Only for the seven published types. `fromJSON`'s dispatcher is typed
+        // and does not know a custom type, so using it as "the last word" on
+        // wire validity turned every namespaced event into an error even after
+        // the membership check above was opened. A type with no published
+        // schema has nothing to deserialize against; that is not a defect in
+        // the event.
+        if (REQUIRED_DATA_FIELDS[envelope.event_type]) {
+          try {
+            fromJSON(envelope);
+          } catch (err) {
+            errors.push(err.message);
+          }
         }
       }
 

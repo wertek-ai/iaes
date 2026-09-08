@@ -17,7 +17,7 @@ const { validate, ValidationError, loadSchema, loadEnvelopeSchema } = require(".
 
 function goodEvent(overrides = {}) {
   return {
-    spec_version: "1.4",
+    spec_version: "2.0",
     event_type: "asset.health",
     event_id: "550e8400-e29b-41d4-a716-446655440000",
     correlation_id: "550e8400-e29b-41d4-a716-446655440000",
@@ -96,7 +96,7 @@ test("every published event type has a loadable schema", () => {
   const { PUBLISHED_EVENT_TYPES } = require("../dist/index.js");
   for (const type of PUBLISHED_EVENT_TYPES) {
     const schema = loadSchema(type);
-    assert.equal(schema.$id, `https://iaes.dev/schema/v1/${type}`);
+    assert.equal(schema.$id, `https://iaes.dev/schema/v2/${type}`);
   }
   assert.ok(loadEnvelopeSchema().$id, "the envelope schema loads");
 });

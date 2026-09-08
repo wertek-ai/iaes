@@ -23,8 +23,8 @@ describe("dataschema", () => {
       value: 4.2,
       unit: "mm/s",
     }).toJSON();
-    assert.equal(e.dataschema, "https://iaes.dev/schema/v1/asset.measurement");
-    assert.equal(e.spec_version, "1.4");
+    assert.equal(e.dataschema, "https://iaes.dev/schema/v2/asset.measurement");
+    assert.equal(e.spec_version, "2.0");
   });
 
   it("the URI is the base plus the event type", () => {
@@ -55,7 +55,7 @@ describe("dataschema", () => {
     for (const t of published) {
       const uri = schemaUriFor(t);
       assert.ok(uri, `${t} should derive a URI`);
-      assert.ok(uri.startsWith("https://iaes.dev/schema/v1/"), "canonical base");
+      assert.ok(uri.startsWith("https://iaes.dev/schema/v2/"), "canonical base");
       assert.equal(uri.split("/").pop(), t, "the slug IS the event type");
     }
   });

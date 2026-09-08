@@ -13,8 +13,8 @@ Create, validate, route, and bridge Sparkplug B industrial asset events — no c
 ## Part of IAES
 
 The standard ships as four packages that version together. **The first two
-numbers of a package version are the specification it implements** — `1.4.x`
-implements IAES 1.4.
+numbers of a package version are the specification it implements** — `2.0.x`
+implements IAES 2.0.
 
 | Runtime | Package | Install |
 |---|---|---|

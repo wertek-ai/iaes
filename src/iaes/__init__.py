@@ -1,7 +1,7 @@
 """IAES — Industrial Asset Event Standard.
 
 A vendor-neutral Python SDK for creating, serializing, and validating
-industrial asset events per the IAES v1.3 specification.
+industrial asset events per the IAES v2.0 specification.
 
 Usage::
 
@@ -57,7 +57,7 @@ try:
 except ImportError:
     pass
 
-__version__ = "1.4.1"
+__version__ = "2.0.0"
 
 __all__ = [
     # Version

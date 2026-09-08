@@ -1,4 +1,4 @@
-"""IAES event models — 7 vendor-neutral dataclasses for the IAES v1.3 spec.
+"""IAES event models — 7 vendor-neutral dataclasses for the IAES v2.0 spec.
 
 Each model produces a spec-compliant IAES envelope via ``to_dict()``.
 All fields are spec-only — no vendor-specific extensions.
@@ -210,7 +210,7 @@ class AssetHealth:
     iso_13374_status: Optional[Union[str, ISO13374Status]] = None
     iso_14224: Optional[Dict[str, Any]] = None
 
-    # State transition intelligence (v1.3)
+    # State transition intelligence (v2.0)
     condition_trend: Optional[Union[str, ConditionTrend]] = None
 
     # Asset identity

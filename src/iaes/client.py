@@ -90,7 +90,7 @@ class Client:
             method="POST",
         )
         req.add_header("Content-Type", "application/json")
-        req.add_header("User-Agent", "iaes-python-sdk/0.2.0")
+        req.add_header("User-Agent", "iaes-python-sdk/2.0.0")
         if self.api_key:
             req.add_header("X-API-Key", self.api_key)
         for k, v in self._extra_headers.items():
@@ -187,7 +187,7 @@ try:
             self.ingest_path = ingest_path
             self._endpoint = self.base_url + self.ingest_path
 
-            h = {"Content-Type": "application/json", "User-Agent": "iaes-python-sdk/0.2.0"}
+            h = {"Content-Type": "application/json", "User-Agent": "iaes-python-sdk/2.0.0"}
             if api_key:
                 h["X-API-Key"] = api_key
             if headers:

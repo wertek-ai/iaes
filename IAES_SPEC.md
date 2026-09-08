@@ -1,4 +1,4 @@
-# IAES — Industrial Asset Event Standard v1.4
+# IAES — Industrial Asset Event Standard v2.0
 
 > A vendor-neutral event format for industrial asset intelligence.
 
@@ -36,13 +36,13 @@ Every IAES event shares this envelope:
 
 ```json
 {
-  "spec_version": "1.3",
+  "spec_version": "2.0",
   "event_type": "asset.health",
   "event_id": "uuid",
   "correlation_id": "uuid",
   "source_event_id": "uuid | null",
   "batch_id": "string | null",
-  "dataschema": "https://iaes.dev/schema/v1/asset.health",
+  "dataschema": "https://iaes.dev/schema/v2/asset.health",
   "timestamp": "RFC 3339",
   "source": "vendor.system.subsystem",
   "content_hash": "sha256_16char",
@@ -60,7 +60,7 @@ Every IAES event shares this envelope:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `spec_version` | string | yes | IAES spec version (`"1.0"` through `"1.4"`) |
+| `spec_version` | string | yes | IAES spec version. This release is `"2.0"`; each major's envelope accepts that major's versions and no others |
 | `dataschema` | URI | no | Canonical URI of the schema the `data` payload was written against (v1.4) |
 | `event_type` | string | yes | Dot-notation event type, matching `^[a-z][a-z0-9_]*\.[a-z][a-z0-9_.]*$`. Open: a producer MAY define its own (v1.4) |
 | `event_id` | UUID | yes | Unique identifier for this event |
@@ -107,7 +107,8 @@ A physical sensor reading.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `measurement_type` | string | yes | Type (vibration_velocity, temperature, current, etc.) |
+| `measurement_type` | string | yes | **Open.** Any published list of measurement types is ADVISORY and constrains nothing; a consumer MUST NOT reject an event because its value is not listed. |
+| `measurement_type` (values) | string | — | Type (vibration_velocity, temperature, current, etc.) |
 | `value` | number | yes | Numeric value |
 | `unit` | string | yes | Engineering unit |
 | `sensor_id` | string | no | Physical sensor identifier |
@@ -146,8 +147,8 @@ AI diagnosis / health state change. Includes recommended action.
 | `rul_days` | integer | no | Remaining Useful Life in days |
 | `recommended_action` | string | no | Human-readable action suggestion |
 | `estimated_downtime_hours` | float | no | Estimated repair duration |
-| `condition_trend` | string | no | Temporal trend of the condition: `worsening`, `stable`, `improving`. Indicates whether the assessed condition is deteriorating, holding steady, or getting better compared to the previous assessment. Based on ISO 13374-4 §5.3 presentation states. (v1.3) |
-| `iso_13374_status` | string | no | ISO 13374-2 health status: `unknown`, `normal`, `satisfactory`, `unsatisfactory`, `unacceptable`, `imminent_failure`, `failed` (v1.2, see Appendix C) |
+| `condition_trend` | string | no | Temporal trend of the condition: `worsening`, `stable`, `improving`. Indicates whether the assessed condition is deteriorating, holding steady, or getting better compared to the previous assessment. IAES's own vocabulary: any correspondence to an external standard is unverified and is not asserted. (v1.3; attribution withdrawn in 2.0) |
+| `iso_13374_status` | string | no | Health status: `unknown`, `normal`, `satisfactory`, `unsatisfactory`, `unacceptable`, `imminent_failure`, `failed`. IAES's own vocabulary; the field name is retained for compatibility with 1.x (v1.2, see Appendix C) |
 | `iso_14224` | object | no | ISO 14224 failure classification codes (v1.2, see Appendix B) |
 
 ### `maintenance.work_order_intent`
@@ -175,7 +176,7 @@ Declares the INTENT to create a work order. The consumer decides whether and how
 | `recommended_due_days` | integer | no | Suggested deadline in days |
 | `triggered_by` | string | no | What caused this intent: `alert`, `schedule`, `manual`, `threshold`, `ai_diagnosis` |
 
-> **Note: severity vs priority.** `severity` (on `asset.health`) describes the *condition* of the asset. `priority` (on `maintenance.work_order_intent`) describes the *urgency of response*. They are related but distinct: a critical severity typically maps to emergency priority, but the consumer decides this mapping.
+> **Note: severity is not priority.** `severity` (on `asset.health`) represents the **condition of the asset**. `priority` (on `maintenance.work_order_intent`) represents the **urgency of the proposed response**. They are different catalogs that share the values `low`, `medium` and `high`, and mean different things by them. A producer MUST NOT present one as the other. Which urgency a condition deserves is the consumer's judgment, because the consumer knows what else is running.
 
 ### `maintenance.completion` (v1.1)
 
@@ -386,15 +387,16 @@ Systems that emit IAES events MUST follow these rules:
 
 2. **Set `source_event_id` for causal chains.** When an event is caused by another event (e.g. a health assessment caused by a measurement), set `source_event_id` to the `event_id` of the cause.
 
-3. **A custom `event_type` is allowed, and must look like one.** The published types are the interoperability defaults, not the limit: a producer MAY emit its own, provided it matches the dot-notation shape. Use a namespace you control (`acme.press_stroke`, not `asset.something`), and omit `dataschema`, since no schema is published for it.
+3. **An absent optional field is not an assertion.** A producer MUST omit an optional field it was not given rather than substitute a value for it. Writing `anomaly_score: 0.0` for a score nobody computed states something the producer does not know, and a consumer cannot tell it apart from a measured zero. Consumers MUST NOT read an absent optional field as a default.
+4. **A custom `event_type` is allowed, and must look like one.** The published types are the interoperability defaults, not the limit: a producer MAY emit its own, provided it matches the dot-notation shape. Use a namespace you control (`acme.press_stroke`, not `asset.something`), and omit `dataschema`, since no schema is published for it.
 
-4. **Set `dataschema` to the schema the payload was written against.** Producers SHOULD include it. The schema for a published event type is always `https://iaes.dev/schema/v1/<event_type>`, so an SDK can derive it rather than ask for it. A producer using a custom `event_type` with no published schema MUST omit the field rather than point at a URI that does not resolve.
+5. **Set `dataschema` to the schema the payload was written against.** Producers SHOULD include it. The schema for a published event type is always `https://iaes.dev/schema/v<major>/<event_type>` for the major the event declares — `https://iaes.dev/schema/v2/<event_type>` in this release, so an SDK can derive it rather than ask for it. A producer using a custom `event_type` with no published schema MUST omit the field rather than point at a URI that does not resolve.
 
-5. **Compute `content_hash` for deduplication.** Producers SHOULD compute `content_hash` as the first 16 characters of the SHA-256 hex digest of the serialized `data` payload (canonical JSON, sorted keys).
+6. **Compute `content_hash` for deduplication.** Producers SHOULD compute `content_hash` as the first 16 characters of the SHA-256 hex digest of the serialized `data` payload (canonical JSON, sorted keys).
 
-4. **Include `asset_name`, `plant`, and `area` when available.** These fields are optional but significantly improve human readability in logs, dashboards, and audit trails.
+7. **Include `asset_name`, `plant`, and `area` when available.** These fields are optional but significantly improve human readability in logs, dashboards, and audit trails.
 
-5. **Use standard `failure_mode` values when possible.** Common values: `bearing_inner_race`, `bearing_outer_race`, `misalignment`, `unbalance`, `looseness`, `cavitation`, `overheating`, `electrical_fault`. Custom values are allowed.
+8. **Use standard `failure_mode` values when possible.** Common values: `bearing_inner_race`, `bearing_outer_race`, `misalignment`, `unbalance`, `looseness`, `cavitation`, `overheating`, `electrical_fault`. Custom values are allowed.
 
 ## Consumer Guidelines
 
@@ -404,7 +406,7 @@ Systems that receive IAES events MUST follow these rules:
 
 1. **Tolerate unknown fields.** Consumers MUST ignore fields in `data` that they do not recognize. Never reject an event because it contains extra fields. This is essential for forward compatibility.
 
-3. **Tolerate unknown `event_type` values.** If a consumer receives an event with an `event_type` it does not support — a type published after it was built, or a producer's own — it MUST NOT error. It MAY log the event and skip processing.
+2. **Tolerate unknown `event_type` values.** If a consumer receives an event with an `event_type` it does not support — a type published after it was built, or a producer's own — it MUST NOT error. It MAY log the event and skip processing.
 
 3. **Validate `spec_version`.** Consumers SHOULD check `spec_version` and MAY reject events from unsupported major versions.
 
@@ -414,11 +416,11 @@ Systems that receive IAES events MUST follow these rules:
 
 2. **Deduplicate using `content_hash`.** Consumers SHOULD detect duplicate events using the combination of `content_hash` + `asset.asset_id` + `event_type`. If `content_hash` is not present, fall back to `event_id` uniqueness.
 
-2. **Use `correlation_id` to reconstruct flows.** Consumers that display or analyze event chains SHOULD group events by `correlation_id` and order them by `timestamp`.
+3. **Use `correlation_id` to reconstruct flows.** Consumers that display or analyze event chains SHOULD group events by `correlation_id` and order them by `timestamp`.
 
-3. **Use `source_event_id` for traceability.** When displaying a work order intent, consumers SHOULD link back to the health event that triggered it (via `source_event_id`).
+4. **Use `source_event_id` for traceability.** When displaying a work order intent, consumers SHOULD link back to the health event that triggered it (via `source_event_id`).
 
-4. **Map severity to native priority.** Consumers that create native objects (work orders, notifications) SHOULD map IAES severity levels to their native priority system. A suggested default mapping:
+5. **Map severity to your own priority scale.** Consumers that create native objects (work orders, notifications) SHOULD map IAES `severity` **to their own priority system**. The table below is a mapping *from* IAES severity *to* a target system's scale — it is **not** an equivalence between the two IAES catalogs, which are distinct. A suggested default:
 
 | IAES severity | SAP PM | MaintainX | Odoo | General |
 |---------------|--------|-----------|------|---------|
@@ -428,7 +430,7 @@ Systems that receive IAES events MUST follow these rules:
 | `high` | Priority 2 | HIGH | 2 (Urgent) | High |
 | `critical` | Priority 1 | HIGH | 3 (Very Urgent) | Critical |
 
-5. **Respect intent semantics.** A `maintenance.work_order_intent` is a suggestion, not a command. Consumers MAY apply filters, rules, or approval workflows before creating native work orders. The consumer is the authority on what gets created in its system.
+6. **Respect intent semantics.** A `maintenance.work_order_intent` is a suggestion, not a command. Consumers MAY apply filters, rules, or approval workflows before creating native work orders. The consumer is the authority on what gets created in its system.
 
 ## Typical Flow
 
@@ -535,6 +537,7 @@ IAES uses semantic versioning for the specification itself:
 | 1.2 | March 2026 | ISO alignment: `units_qualifier`, `sampling_rate_hz`, `acquisition_duration_s` on asset.measurement (ISO 17359); `iso_13374_status` on asset.health (ISO 13374); `iso_14224` object on asset.health + maintenance.completion (ISO 14224). All new fields optional — full backward compatibility. Appendix B (ISO 14224 codes), Appendix C (ISO 13374 mapping). |
 | 1.3 | March 2026 | State transition model: `condition_trend` field on asset.health (`worsening`, `stable`, `improving`) based on ISO 13374-4 §5.3. Formalized recovery event pattern. State Transition Guidance in Architecture Guide (ISO 13374-4, ISO 17359, ISO 14224, ISO 55000). Recovery event example. All new fields optional — full backward compatibility. |
 | 1.4 | September 2026 | **Governance and compatibility policy become normative** ([GOVERNANCE.md](GOVERNANCE.md)): stated stewardship, BACKWARD compatibility as the default mode, a 24-month support window, canonical and resolvable `$id` versioned by URI, and an RFC-based change process. Scope boundaries made explicit: IAES defines no asset hierarchy, no equipment catalog, and no commercial terms. **No schema changed in this release.** **Schema identity corrected** under GOVERNANCE.md §5.1: the eight schemas declared `$id` under `https://iaes.wertek.ai/schema/v1/`, a host that has never resolved (verified 2026-09-03: no DNS answer). They now declare `https://iaes.dev/schema/v1/`, which is served. The old base is permanently reserved and will not be reassigned. Schema content is otherwise unchanged. **New optional envelope field `dataschema`**: the canonical URI of the schema the payload was written against, following the CloudEvents attribute of the same name. Derivable from `event_type`, so both SDKs set it automatically for published event types and omit it otherwise. Optional and additive: fully backward compatible. **`event_type` opened**: it was a closed enumeration of seven values while this same document ordered consumers to tolerate values they do not recognise — a contradiction that made unknown types impossible to produce. It is now a dot-notation pattern with the published types as examples. Widening, therefore backward compatible: every previously valid value still validates, and the compatibility guard verifies that rather than assuming it. |
+| 2.0 | September 2026 | **First MAJOR release.** Two things make it major, and only one can affect a producer's existing output. **(1) Timestamps must be RFC 3339**, not merely ISO 8601 — a narrowing, since ordinal dates, week dates and some offset forms are valid ISO 8601 and not valid RFC 3339. No schema enforces it in either direction, because `format` is an annotation in Draft 2020-12, so it will not surface as a validation failure. **(2) The eight schemas publish under `https://iaes.dev/schema/v2/`**, and the envelope constrains `spec_version` to `^2\.[0-9]+$`. The eight `/schema/v1/` URIs continue to resolve, permanently, to the schemas the 1.x line published: a representation served under a major's URI stays that major's and is never regenerated from a later release. A consumer validates an event against the schemas of the major the event declares, which is how a 2.0 consumer reads a 1.4 event. **Wire contract stabilized** (`rfc/IAES-RFC-002.md`): `severity` is not `priority` and neither may be presented as the other; the ISO 13374 attributions on `iso_13374_status` and `condition_trend` are **withdrawn** — the values are IAES's own and the field names are kept for compatibility; an **absent optional field is not an assertion**, so a producer MUST omit rather than substitute and a consumer MUST NOT read absence as a default; `measurement_type` is **open** and any published list is advisory. None of those invalidates a 1.4 event: everything schema-valid under 1.4 stays schema-valid, and a 1.4 producer that keeps substituting stays conforming to 1.4 — it simply cannot declare 2.0. **Governance became testable** (RFC-003 through RFC-007): a criterion for changes to producer and consumer obligations (§4.4), one for changes to the policy itself and the rule that a release takes the maximum level of the changes it carries (§4.5), two classes of conformance with an SDK profile that is claimed and checked rather than granted (§9), and the ratification of everything that had accumulated since 1.4. **Migration:** declare `2.0`, point at `/schema/v2/`, emit RFC 3339 timestamps, take the `2.0.x` packages, and stop substituting values for optional fields the caller did not supply. `from_object` is the canonical constructor name; `from_dict` and `fromJSON` keep working as deprecated aliases. |
 
 ## References
 
@@ -609,9 +612,9 @@ The ISO 13374 entries say *series* rather than a part on purpose. The
 unqualified citations cover at least two different subjects — health status
 levels and a six-block processing model — which cannot both be the same part,
 and the editor holds only ISO 13374-4. A citation that does not identify a
-document cannot be checked. `rfc/IAES-RFC-002.md` proposes withdrawing the
-ISO 13374 attributions; it is Draft, so this table records what the
-specification says today.
+document cannot be checked. `rfc/IAES-RFC-002.md` withdrew the ISO 13374 attributions in 2.0; the
+field names are retained for compatibility with 1.x, and the values are
+declared as IAES's own.
 
 ## Appendix A: Failure Mode Taxonomy
 
@@ -714,7 +717,7 @@ The `iso_14224` object coexists with the `failure_mode` field from Appendix A. `
 
 ## Appendix C: ISO 13374 series Health Status Mapping
 
-The `iso_13374_status` field on `asset.health` carries the ISO 13374-2 health status level. This is **complementary** to the IAES `severity` field:
+The `iso_13374_status` field on `asset.health` carries a health status level from **IAES's own vocabulary**. The attribution to ISO 13374-2 was withdrawn in 2.0: the citation did not identify a part, and the correspondence was never verified against the document. The field name is retained for compatibility with 1.x. It is **complementary** to the IAES `severity` field:
 
 - **`severity`** is ACTION-oriented: what should we DO about this? (info → critical)
 - **`iso_13374_status`** is CONDITION-oriented: what IS the current state? (unknown → failed)
@@ -775,7 +778,7 @@ IAES is an open specification licensed under [CC BY 4.0](https://creativecommons
 
 ---
 
-*IAES v1.4 — September 2026*
+*IAES v2.0 — September 2026*
 *Created by the [Wertek AI](https://wertek.ai) team.*
 *Implementations are listed in [README.md](README.md). None of them is
 privileged: conformance is measured on the wire, not against any one of

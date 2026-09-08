@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-iaes",
-  "version": "1.4.1",
+  "version": "2.0.0",
   "description": "IAES Industrial Asset Event Standard nodes for Node-RED — create, validate, route, publish, and bridge Sparkplug B industrial asset events",
   "keywords": [
     "node-red",
@@ -28,7 +28,7 @@
     "directory": "node-red"
   },
   "dependencies": {
-    "@iaes/sdk": "^1.4.0"
+    "@iaes/sdk": "^2.0.0"
   },
   "optionalDependencies": {
     "sparkplug-payload": "^1.0.2"
@@ -53,5 +53,11 @@
   },
   "engines": {
     "node": ">=16"
-  }
+  },
+  "files": [
+    "nodes/",
+    "examples/",
+    "README.md",
+    "LICENSE"
+  ]
 }

@@ -2,7 +2,7 @@
 
 import { createHash, randomUUID } from "crypto";
 
-export const SPEC_VERSION = "1.4";
+export const SPEC_VERSION = "2.0";
 
 /**
  * Canonical base for schema identity. Every schema is served at
@@ -10,7 +10,7 @@ export const SPEC_VERSION = "1.4";
  * instead of asked for: the event type already determines the contract.
  * See GOVERNANCE.md §5.
  */
-export const SCHEMA_BASE = "https://iaes.dev/schema/v1/";
+export const SCHEMA_BASE = "https://iaes.dev/schema/v2/";
 
 /**
  * Event types whose schema is published. `dataschema` is only emitted for
