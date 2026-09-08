@@ -42,7 +42,7 @@ Every IAES event shares this envelope:
   "correlation_id": "uuid",
   "source_event_id": "uuid | null",
   "batch_id": "string | null",
-  "dataschema": "https://iaes.dev/schema/v1/asset.health",
+  "dataschema": "https://iaes.dev/schema/v2/asset.health",
   "timestamp": "RFC 3339",
   "source": "vendor.system.subsystem",
   "content_hash": "sha256_16char",
@@ -390,7 +390,7 @@ Systems that emit IAES events MUST follow these rules:
 3. **An absent optional field is not an assertion.** A producer MUST omit an optional field it was not given rather than substitute a value for it. Writing `anomaly_score: 0.0` for a score nobody computed states something the producer does not know, and a consumer cannot tell it apart from a measured zero. Consumers MUST NOT read an absent optional field as a default.
 4. **A custom `event_type` is allowed, and must look like one.** The published types are the interoperability defaults, not the limit: a producer MAY emit its own, provided it matches the dot-notation shape. Use a namespace you control (`acme.press_stroke`, not `asset.something`), and omit `dataschema`, since no schema is published for it.
 
-4. **Set `dataschema` to the schema the payload was written against.** Producers SHOULD include it. The schema for a published event type is always `https://iaes.dev/schema/v1/<event_type>`, so an SDK can derive it rather than ask for it. A producer using a custom `event_type` with no published schema MUST omit the field rather than point at a URI that does not resolve.
+4. **Set `dataschema` to the schema the payload was written against.** Producers SHOULD include it. The schema for a published event type is always `https://iaes.dev/schema/v<major>/<event_type>` for the major the event declares — `https://iaes.dev/schema/v2/<event_type>` in this release, so an SDK can derive it rather than ask for it. A producer using a custom `event_type` with no published schema MUST omit the field rather than point at a URI that does not resolve.
 
 5. **Compute `content_hash` for deduplication.** Producers SHOULD compute `content_hash` as the first 16 characters of the SHA-256 hex digest of the serialized `data` payload (canonical JSON, sorted keys).
 

@@ -263,7 +263,7 @@ Every event serializes to the same envelope structure:
 ```json
 {
   "spec_version": "2.0",
-  "dataschema": "https://iaes.dev/schema/v1/asset.measurement",
+  "dataschema": "https://iaes.dev/schema/v2/asset.measurement",
   "event_type": "asset.measurement",
   "event_id": "a9e3c4b2-...",
   "correlation_id": "3b2f9d8c-...",

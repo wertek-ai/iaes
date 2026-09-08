@@ -29,6 +29,17 @@ def spec_text():
     return SPEC.read_text(encoding="utf-8")
 
 
+def spec_major():
+    """The major the specification titles itself, derived in one place.
+
+    Every check that needs it reads it from here. It used to be written into
+    each check as `v1`, which made the version rule live in five places and
+    guaranteed that a major bump would leave some of them behind — which is
+    exactly what happened when 2.0 was cut.
+    """
+    return re.search(r"v(\d+)\.\d+\s*$", spec_text().split("\n", 1)[0]).group(1)
+
+
 class TestSpecDeclaresTheVersionTheCodeEmits(unittest.TestCase):
     def _spec_version_from_sdk(self):
         # The Python SDK is the reference; the TS SDK is checked against it
@@ -84,7 +95,10 @@ class TestExamplesObeyTheRulesTheyDemonstrate(unittest.TestCase):
                 continue
             checked += 1
             self.assertEqual(
-                ds.group(1), f"https://iaes.dev/schema/v1/{et.group(1)}",
+                # Derived, not written here. Hardcoding `v1` made this the
+                # fifth place the version rule lived, and it went stale the
+                # moment 2.0 was cut.
+                ds.group(1), f"https://iaes.dev/schema/v{spec_major()}/{et.group(1)}",
                 f"example declares {et.group(1)} but points dataschema elsewhere",
             )
         self.assertGreater(checked, 0, "no example carries both fields — did the check stop finding them?")
@@ -120,3 +134,45 @@ class TestTheSpecOnlyPointsAtThingsAReaderCanReach(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestTheCanonicalUriMatchesTheMajor(unittest.TestCase):
+    """The specification cannot tell a producer to point at another major.
+
+    IAES 2.0 shipped for a moment with its title at 2.0, its SDK emitting
+    `/schema/v2/`, and its Producer Guidelines still saying "the schema for a
+    published event type is always https://iaes.dev/schema/v1/<event_type>".
+    An implementer following the specification would have emitted
+    `spec_version: "2.0"` with a v1 `dataschema` -- the crossing of majors that
+    rfc/IAES-RFC-008.md exists to forbid.
+
+    The release accounting gate was green over it, correctly: every normative
+    change had an Accepted decision behind it. What it cannot see is whether
+    two normative lines inside one change agree. That is this.
+
+    The version history is exempt by construction: it describes what earlier
+    releases did, and 2.0's own row says the v1 URIs keep resolving, which is
+    the rule rather than a violation of it.
+    """
+
+    def test_the_guidelines_name_the_current_major(self):
+        spec = (ROOT / "IAES_SPEC.md").read_text(encoding="utf-8")
+        major = re.search(r"v(\d+)\.\d+\s*$", spec.split("\n", 1)[0]).group(1)
+
+        offenders = []
+        in_history = False
+        for number, line in enumerate(spec.split("\n"), 1):
+            if line.startswith("## Version History"):
+                in_history = True
+            elif in_history and line.startswith("## "):
+                in_history = False
+            if in_history or line.lstrip().startswith("|"):
+                continue
+            for found in re.findall(r"https://iaes\.dev/schema/v(\d+)/", line):
+                if found != major:
+                    offenders.append(f"line {number}: v{found} (spec is v{major})")
+
+        self.assertEqual(offenders, [], (
+            "the specification titles itself v%s and points at another major:\n  %s\n"
+            "A producer following this would cross majors, which "
+            "rfc/IAES-RFC-008.md forbids." % (major, "\n  ".join(offenders))))
