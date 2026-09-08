@@ -1,0 +1,18 @@
+{
+  "$comment": "Release engineering, NOT normative. It carries no meaning: the normative artifacts carry that and the RFCs carry the rationale. It answers one question -- do we have an Accepted decision for every normative modification this release is about to publish? Checked by tools/check_release_accounting.py.",
+  "base": "spec-v1.4",
+  "target": "2.0",
+  "rfc": {
+    "003": ["GOVERNANCE.md"],
+    "004": ["GOVERNANCE.md"],
+    "005": ["GOVERNANCE.md"],
+    "006": ["GOVERNANCE.md", "surface.json"],
+    "007": [
+      "GOVERNANCE.md",
+      "IAES_SPEC.md",
+      "references/registry.json",
+      "schema/iaes-envelope.schema.json",
+      "schema/sensor-registration.schema.json"
+    ]
+  }
+}
