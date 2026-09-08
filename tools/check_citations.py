@@ -102,17 +102,25 @@ def scan() -> list:
     problems = []
     for path in files_to_scan():
         text = path.read_text(encoding="utf-8", errors="replace")
-        for n, line in enumerate(text.split("\n"), 1):
-            for m in CITATION.finditer(line):
-                doc, number = m.group("doc"), m.group("number")
-                if number in SECTIONS[doc]:
-                    continue
-                parent = number.rsplit(".", 1)[0] if "." in number else None
-                hint = ""
-                if parent and parent in SECTIONS[doc]:
-                    hint = (f" §{parent} exists; if you meant a numbered item "
-                            f"inside it, write \"§{parent}, item N\".")
-                problems.append((path.relative_to(ROOT).as_posix(), n, doc, number, hint))
+        # Scanned whole, not line by line. Markdown wraps, so a citation whose
+        # document name ends one line and whose number begins the next was
+        # invisible to this check -- and the pattern always allowed it, since
+        # `\s*` matches a newline. Measured when the gap was found: 2 of 104
+        # citations in this repository had never been checked, one of them in
+        # an accepted RFC. Both happened to be valid, which is luck, not a
+        # result. The line number is derived from the match offset, because a
+        # number that points at the wrong line is worse than none.
+        for m in CITATION.finditer(text):
+            doc, number = m.group("doc"), m.group("number")
+            if number in SECTIONS[doc]:
+                continue
+            n = text.count("\n", 0, m.start()) + 1
+            parent = number.rsplit(".", 1)[0] if "." in number else None
+            hint = ""
+            if parent and parent in SECTIONS[doc]:
+                hint = (f" §{parent} exists; if you meant a numbered item "
+                        f"inside it, write \"§{parent}, item N\".")
+            problems.append((path.relative_to(ROOT).as_posix(), n, doc, number, hint))
     return problems
 
 
