@@ -56,9 +56,29 @@ def python_surface() -> set[str]:
     return found
 
 
+def typescript_root_exports() -> set[str]:
+    """What `import { x } from "@iaes/sdk"` actually reaches.
+
+    surface.json's own rule: a capability that exists but cannot be reached
+    idiomatically does not count. Until 2026-09-08 this file grepped every
+    file under npm/src for the definition, so a function that was never
+    re-exported from index.ts counted anyway -- the same defect the rule was
+    written about, one language over.
+    """
+    index = (ROOT / "npm" / "src" / "index.ts").read_text(encoding="utf-8")
+    names: set[str] = set()
+    for block in re.findall(r"export\s*\{([^}]*)\}", index):
+        for part in block.split(","):
+            name = part.split(" as ")[-1].strip()
+            if name and not name.startswith("type "):
+                names.add(name)
+    return names
+
+
 def typescript_surface() -> set[str]:
     src = " ".join(p.read_text(encoding="utf-8")
                    for p in (ROOT / "npm" / "src").glob("*.ts"))
+    exported = typescript_root_exports()
     found = set()
     # Event builders live in models.ts; client.ts holds the client and its error.
     models = (ROOT / "npm" / "src" / "models.ts").read_text(encoding="utf-8")
@@ -66,12 +86,14 @@ def typescript_surface() -> set[str]:
     found.add(f"build:{len(classes)}")
     if "fromJSON" in src:
         found.add("from_object")
-    # A validator, not the word: the SDK has no schema checker today.
-    if re.search(r"export function validate\w*\(", src):
+    # Defined AND reachable from the package root. Defining it is not enough:
+    # a caller writes `import { validate } from "@iaes/sdk"`, and a function
+    # that index.ts never re-exports is not there as far as they are concerned.
+    if re.search(r"export function validate\w*\(", src) and "validate" in exported:
         found.add("validate")
-    if "computeContentHash" in src:
+    if "computeContentHash" in src and "computeContentHash" in exported:
         found.add("compute_content_hash")
-    if "schemaUriFor" in src:
+    if "schemaUriFor" in src and "schemaUriFor" in exported:
         found.add("schema_uri_for")
     # Idiomatic modern TypeScript: a frozen object plus a type of the same
     # name, not `export enum`. Counting the keyword would have reported zero.
