@@ -27,6 +27,19 @@ function failureConfirmed(raw: unknown): boolean | undefined {
 	return undefined;
 }
 
+/**
+ * An optional numeric field whose schema allows zero. The sentinel for "not
+ * specified" has to live OUTSIDE the field's domain: `|| undefined` collapsed
+ * a legitimate 0 -- RUL zero, due now, zero seconds -- into "not given", and
+ * the schema's `minimum: 0` says 0 is an answer. -1 (the form's default) is
+ * not a value any of these fields can carry, so it is the one that means
+ * "say nothing".
+ */
+function optionalNumber(raw: unknown): number | undefined {
+	if (typeof raw !== 'number' || !Number.isFinite(raw) || raw < 0) return undefined;
+	return raw;
+}
+
 export class IaesEmit implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'IAES Emit',
@@ -165,8 +178,8 @@ export class IaesEmit implements INodeType {
 				displayName: 'RUL (Days)',
 				name: 'rulDays',
 				type: 'number',
-				default: 0,
-				description: 'Remaining useful life in days (0 = not set)',
+				default: -1,
+				description: 'Remaining useful life in days. 0 is a valid answer (no life left); -1 = not specified, the field is omitted.',
 				displayOptions: { show: { eventType: ['asset.health'] } },
 			},
 			{
@@ -306,8 +319,8 @@ export class IaesEmit implements INodeType {
 				displayName: 'Recommended Due (Days)',
 				name: 'recommendedDueDays',
 				type: 'number',
-				default: 0,
-				description: 'Days until the work should be done (0 = not specified, the field is omitted)',
+				default: -1,
+				description: 'Days until the work should be done. 0 is a valid answer (due now); -1 = not specified, the field is omitted.',
 				displayOptions: { show: { eventType: ['maintenance.work_order_intent'] } },
 			},
 
@@ -337,7 +350,8 @@ export class IaesEmit implements INodeType {
 				displayName: 'Duration (Seconds)',
 				name: 'durationSeconds',
 				type: 'number',
-				default: 0,
+				default: -1,
+				description: 'Actual duration of the work. 0 is a valid answer; -1 = not specified, the field is omitted.',
 				displayOptions: { show: { eventType: ['maintenance.completion'] } },
 			},
 			{
@@ -446,7 +460,7 @@ export class IaesEmit implements INodeType {
 						severity: this.getNodeParameter('severity', i) as string,
 						condition_trend: (this.getNodeParameter('conditionTrend', i) as string) || undefined,
 						failure_mode: (this.getNodeParameter('failureMode', i) as string) || undefined,
-						rul_days: (this.getNodeParameter('rulDays', i) as number) || undefined,
+						rul_days: optionalNumber(this.getNodeParameter('rulDays', i)),
 						recommended_action: (this.getNodeParameter('recommendedAction', i) as string) || undefined,
 						iso_13374_status: (this.getNodeParameter('iso13374Status', i) as string) || undefined,
 					});
@@ -475,7 +489,7 @@ export class IaesEmit implements INodeType {
 						priority: this.getNodeParameter('woPriority', i) as string,
 						description: (this.getNodeParameter('woDescription', i) as string) || undefined,
 						triggered_by: (this.getNodeParameter('triggeredBy', i) as string) || undefined,
-						recommended_due_days: (this.getNodeParameter('recommendedDueDays', i) as number) || undefined,
+						recommended_due_days: optionalNumber(this.getNodeParameter('recommendedDueDays', i)),
 					});
 					envelope = event.toJSON() as unknown as IDataObject;
 					break;
@@ -485,7 +499,7 @@ export class IaesEmit implements INodeType {
 						...base,
 						work_order_id: this.getNodeParameter('workOrderId', i) as string,
 						status: this.getNodeParameter('completionStatus', i) as string,
-						actual_duration_seconds: (this.getNodeParameter('durationSeconds', i) as number) || undefined,
+						actual_duration_seconds: optionalNumber(this.getNodeParameter('durationSeconds', i)),
 						failure_confirmed: failureConfirmed(this.getNodeParameter('failureConfirmed', i)),
 					});
 					envelope = event.toJSON() as unknown as IDataObject;

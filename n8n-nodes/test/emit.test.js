@@ -113,3 +113,54 @@ test('failure_confirmed is three-state, and an explicit "false" is still an asse
   // Workflows saved before 2.0.2 carry a boolean. It was an explicit choice.
   assert.equal((await emit({ ...base, failureConfirmed: false })).data.failure_confirmed, false);
 });
+
+// ---------------------------------------------------------------------------
+// A valid value is not a sentinel. The schemas give several optional numerics
+// `minimum: 0`, so 0 is an answer -- RUL zero, due now, zero seconds -- and the
+// form used to collapse it to "not given" with `|| undefined`. This is a
+// census: every optional numeric with minimum 0 in the six schemas is either
+// mapped to a form parameter here, where 0 must survive to the wire, or
+// declared NOT exposed. A new numeric on the form that is in neither list
+// fails the census.
+
+const EXPOSED = {
+  // schema field -> [event type, form parameter, the params that make the event valid]
+  rul_days: ['asset.health', 'rulDays', { healthIndex: 0.5, severity: 'high' }],
+  recommended_due_days: ['maintenance.work_order_intent', 'recommendedDueDays', { woTitle: 'Inspect', woPriority: 'high' }],
+  actual_duration_seconds: ['maintenance.completion', 'durationSeconds', { workOrderId: 'WO-1', completionStatus: 'completed' }],
+};
+const NOT_EXPOSED = [
+  'sampling_rate_hz', 'acquisition_duration_s', 'estimated_downtime_hours',
+  'checklist_completion_pct', 'spare_parts_count', 'unit_cost', 'total_cost',
+  // Given a default by the SDK itself, in both languages, against the
+  // specification's own example ("anomaly_score: 0.0 for a score nobody
+  // computed"). Not the form's doing; tracked for 2.0.2 in its own change.
+  'anomaly_score', 'fault_confidence',
+];
+
+test('the census of optional numerics that allow zero is complete', () => {
+  const census = new Set();
+  for (const file of fs.readdirSync(SCHEMAS).filter((f) => f.endsWith('.schema.json') && !f.startsWith('iaes-envelope') && !f.startsWith('asset-hierarchy'))) {
+    const data = JSON.parse(fs.readFileSync(path.join(SCHEMAS, file), 'utf-8')).properties.data;
+    const required = new Set(data.required || []);
+    for (const [name, def] of Object.entries(data.properties)) {
+      const types = [].concat(def.type);
+      if (!required.has(name) && def.minimum === 0 && (types.includes('number') || types.includes('integer'))) census.add(name);
+    }
+  }
+  assert.deepEqual([...census].sort(), [...Object.keys(EXPOSED), ...NOT_EXPOSED].sort(),
+    'a numeric optional that allows zero is neither mapped to the form nor declared unexposed');
+  // And the "not exposed" list must be true: none of those is a form parameter's field.
+  const params = new Set(new IaesEmit().description.properties.map((p) => p.name));
+  for (const [, [, param]] of Object.entries(EXPOSED)) assert.ok(params.has(param), `${param} is not a form parameter`);
+});
+
+for (const [field, [eventType, param, valid]] of Object.entries(EXPOSED)) {
+  test(`${field}: zero survives to the wire, unspecified is omitted`, async () => {
+    const base = { eventType, assetId: 'A-1', source: 'test', outputMode: 'envelope', ...valid };
+    assert.equal((await emit({ ...base, [param]: 0 })).data[field], 0, '0 is a valid value and must be emitted');
+    assert.equal((await emit({ ...base, [param]: 7 })).data[field], 7);
+    assert.ok(!(field in (await emit(base)).data), 'the form default must mean "not specified"');
+    assert.ok(!(field in (await emit({ ...base, [param]: -1 })).data), '-1 is the sentinel and must be omitted');
+  });
+}
