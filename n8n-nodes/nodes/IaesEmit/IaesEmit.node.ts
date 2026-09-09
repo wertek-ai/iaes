@@ -15,6 +15,18 @@ import {
 	SparePartUsage,
 } from '@iaes/sdk';
 
+/**
+ * The tri-state Failure Confirmed parameter, plus the boolean that workflows
+ * saved before 2.0.2 still carry: those were explicit choices, so they keep
+ * their meaning. Anything unspecified omits the field.
+ */
+function failureConfirmed(raw: unknown): boolean | undefined {
+	if (typeof raw === 'boolean') return raw;
+	if (raw === 'true') return true;
+	if (raw === 'false') return false;
+	return undefined;
+}
+
 export class IaesEmit implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'IAES Emit',
@@ -269,24 +281,33 @@ export class IaesEmit implements INodeType {
 				default: '',
 				displayOptions: { show: { eventType: ['maintenance.work_order_intent'] } },
 			},
+			// Optional schema fields start UNSPECIFIED. IAES_SPEC.md: "A producer
+			// MUST omit an optional field it was not given rather than substitute
+			// a value for it." A form default with a meaning -- "triggered by a
+			// threshold", "due in 7 days", "failure not confirmed" -- is exactly
+			// that substitution: the event would assert what nobody said. Found
+			// by the reference scenarios, where the n8n work order and completion
+			// carried three fields the other three implementations did not.
 			{
 				displayName: 'Triggered By',
 				name: 'triggeredBy',
 				type: 'options',
 				options: [
+					{ name: '(Not specified)', value: '' },
 					{ name: 'AI Diagnosis', value: 'ai_diagnosis' },
 					{ name: 'Threshold Alert', value: 'threshold' },
 					{ name: 'Schedule', value: 'schedule' },
 					{ name: 'Manual', value: 'manual' },
 				],
-				default: 'threshold',
+				default: '',
 				displayOptions: { show: { eventType: ['maintenance.work_order_intent'] } },
 			},
 			{
 				displayName: 'Recommended Due (Days)',
 				name: 'recommendedDueDays',
 				type: 'number',
-				default: 7,
+				default: 0,
+				description: 'Days until the work should be done (0 = not specified, the field is omitted)',
 				displayOptions: { show: { eventType: ['maintenance.work_order_intent'] } },
 			},
 
@@ -322,8 +343,16 @@ export class IaesEmit implements INodeType {
 			{
 				displayName: 'Failure Confirmed',
 				name: 'failureConfirmed',
-				type: 'boolean',
-				default: false,
+				type: 'options',
+				// Three states, not a boolean: "not confirmed" is an assertion about
+				// the predicted failure, and a form must be able to say nothing.
+				options: [
+					{ name: '(Not specified)', value: '' },
+					{ name: 'Yes, the predicted failure was confirmed', value: 'true' },
+					{ name: 'No, it was not', value: 'false' },
+				],
+				default: '',
+				description: 'Whether the predicted failure was confirmed on inspection. Left unspecified, the field is omitted.',
 				displayOptions: { show: { eventType: ['maintenance.completion'] } },
 			},
 
@@ -445,8 +474,8 @@ export class IaesEmit implements INodeType {
 						title: this.getNodeParameter('woTitle', i) as string,
 						priority: this.getNodeParameter('woPriority', i) as string,
 						description: (this.getNodeParameter('woDescription', i) as string) || undefined,
-						triggered_by: this.getNodeParameter('triggeredBy', i) as string,
-						recommended_due_days: this.getNodeParameter('recommendedDueDays', i) as number,
+						triggered_by: (this.getNodeParameter('triggeredBy', i) as string) || undefined,
+						recommended_due_days: (this.getNodeParameter('recommendedDueDays', i) as number) || undefined,
 					});
 					envelope = event.toJSON() as unknown as IDataObject;
 					break;
@@ -457,7 +486,7 @@ export class IaesEmit implements INodeType {
 						work_order_id: this.getNodeParameter('workOrderId', i) as string,
 						status: this.getNodeParameter('completionStatus', i) as string,
 						actual_duration_seconds: (this.getNodeParameter('durationSeconds', i) as number) || undefined,
-						failure_confirmed: this.getNodeParameter('failureConfirmed', i) as boolean,
+						failure_confirmed: failureConfirmed(this.getNodeParameter('failureConfirmed', i)),
 					});
 					envelope = event.toJSON() as unknown as IDataObject;
 					break;

@@ -331,8 +331,8 @@ One industrial story, told four times: a vibration model reads 4.2 mm/s RMS on a
 |---|---|---|
 | Python | [`scenarios/python/reference_scenarios.py`](scenarios/python/reference_scenarios.py) | the producer **is the model** |
 | TypeScript | [`scenarios/typescript/reference-scenarios.ts`](scenarios/typescript/reference-scenarios.ts) | the producer is a **service** |
-| Node-RED | [`scenarios/node-red/flow.json`](scenarios/node-red/flow.json) -- import it as-is | the reading is already on the wire, at the **OT boundary** |
-| n8n | [`scenarios/n8n/workflow.json`](scenarios/n8n/workflow.json) -- import it as-is | the trigger is a **webhook or a schedule** |
+| Node-RED | [`scenarios/node-red/flow.json`](scenarios/node-red/flow.json) -- the flow file; a real Node-RED loads it unchanged on every commit | the reading is already on the wire, at the **OT boundary** |
+| n8n | [`scenarios/n8n/workflow.json`](scenarios/n8n/workflow.json) -- the workflow file; `run.js` executes its IAES nodes on every commit, and importing it into an n8n instance has not yet been done | the trigger is a **webhook or a schedule** |
 
 The fixture is [`scenarios/fixture.json`](scenarios/fixture.json). It names which fields are volatile (a fresh `event_id`, the moment of emission) and why, so what is compared is what a consumer acts on.
 

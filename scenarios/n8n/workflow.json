@@ -82,8 +82,6 @@
         "woTitle": "Inspect drive-end bearing",
         "woPriority": "high",
         "woDescription": "Vibration velocity at 4.2 mm/s RMS with an outer-race signature. Inspect the drive-end bearing at the next available window.",
-        "triggeredBy": "ai_diagnosis",
-        "recommendedDueDays": 7,
         "outputMode": "envelope"
       },
       "id": "s03",
