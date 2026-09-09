@@ -290,16 +290,25 @@ Every event serializes to the same envelope structure:
 
 `content_hash` is a 16-char SHA-256 prefix of the `data` payload, computed identically in Python and TypeScript for cross-language idempotency.
 
-## ISO Standards Alignment
+## Standards referenced
 
-| Standard | IAES Fields | Purpose |
-|----------|-------------|---------|
-| **ISO 17359** | `units_qualifier`, `sampling_rate_hz`, `acquisition_duration_s` | Condition monitoring measurement metadata |
-| **ISO 13374** | `iso_13374_status` | 7-level condition status (normal to failed) |
-| **ISO 14224** | `iso_14224` object | Failure mechanism, cause, and detection codes |
-| **ISO 55000** | Architectural | Asset management principles embedded in design |
+IAES cites industrial standards where they supply context or a vocabulary
+defined outside it. **Citation is not conformance**, and IAES 2.0 claims none
+to ISO 13374, ISO 17359, ISO 14224 or ISO 55000.
 
-All ISO fields are optional. v1.0/v1.1 events remain fully valid.
+| Document | Relationship | Normative for meaning |
+|---|---|---|
+| **ISO 4217** | `currency` carries an ISO 4217 code | **Yes** — and the schema checks the shape, not the list |
+| **ISO 14224** | Context. Named for the `iso_14224` object and Appendix B | No |
+| **ISO 17359** | Context. Named for `units_qualifier` and the acquisition fields | No |
+| **ISO 13374 series** | Historical context. The attributions on `iso_13374_status` and `condition_trend` were **withdrawn in 2.0**: the values are IAES's own vocabulary and the field names are kept for 1.x compatibility | No |
+| **ISO 55000** | Context for asset management | No |
+
+Earlier IAES material described a field-level mapping to those four documents.
+IAES 2.0 withdrew that claim where the correspondence had not been verified
+against the cited document. The full table, including what the schemas do and
+do not enforce, is in `IAES_SPEC.md` under *References* — the specification
+governs. All these fields are optional; 1.x events remain valid.
 
 ## Zero Dependencies
 

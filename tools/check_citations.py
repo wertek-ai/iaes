@@ -28,6 +28,11 @@ Two limits, stated rather than discovered:
     and a guard that cries wolf gets disabled.
   - A bare `RFC-NNN` counts as ours only when `rfc/IAES-RFC-NNN.md` exists, so
     that IETF references like RFC-9113 are left alone.
+  - A bare "§4.4" with no document beside it is not checked, because nothing
+    says which document it belongs to. Prose that means to be verifiable
+    repeats the document name; `IAES_PHILOSOPHY.md` was rewritten to do so
+    after this limit was measured against it, and its citations went from four
+    unchecked to none.
 
 SPDX-License-Identifier: CC-BY-4.0
 """
@@ -60,7 +65,12 @@ def known_documents() -> dict:
 DOCS = known_documents()
 
 # A section number as this repository writes them: 1, 4.2, 3.2.4, 3-bis.
-NUMBER = r"[0-9]+(?:-bis)?(?:\.[0-9]+)*"
+# The suffix is matched GREEDILY, not only for the one suffix we happen to
+# use. With `(?:-bis)?` alone, "§3-ter" matched as "§3" -- a section that
+# exists -- so an invented suffix was silently truncated into a valid
+# citation and passed. Whatever follows the number is part of the name it
+# claims, and an unknown name has to be reported.
+NUMBER = r"[0-9]+(?:-[a-z]+)?(?:\.[0-9]+)*"
 
 # `GOVERNANCE.md` §4.2 · GOVERNANCE.md) §1 · RFC-000 §4, item 2 ·
 # SDK_SURFACE.md section 3. A marker is required; see the limits above.
@@ -98,21 +108,54 @@ def files_to_scan():
         yield path
 
 
+# A reference to one of our own RFC files, whether or not it names a section.
+RFC_FILE = re.compile(r"rfc/(IAES-RFC-[0-9]{3}\.md)")
+
+
+def missing_rfc_files() -> list:
+    """A named RFC file must exist.
+
+    `IAES_PHILOSOPHY.md` cited `rfc/IAES-RFC-009.md` as a thing the project had
+    already done, while that memo was an open pull request and the file was a
+    404 on the branch. The citation check could not see it: it carried no
+    section number, and without one there was nothing to resolve. A reference
+    to a document that does not exist is the same defect as a reference to a
+    section that does not exist, one level up.
+    """
+    out = []
+    for path in files_to_scan():
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for m in RFC_FILE.finditer(text):
+            if (ROOT / "rfc" / m.group(1)).exists():
+                continue
+            n = text.count("\n", 0, m.start()) + 1
+            out.append((path.relative_to(ROOT).as_posix(), n, m.group(1)))
+    return out
+
+
 def scan() -> list:
     problems = []
     for path in files_to_scan():
         text = path.read_text(encoding="utf-8", errors="replace")
-        for n, line in enumerate(text.split("\n"), 1):
-            for m in CITATION.finditer(line):
-                doc, number = m.group("doc"), m.group("number")
-                if number in SECTIONS[doc]:
-                    continue
-                parent = number.rsplit(".", 1)[0] if "." in number else None
-                hint = ""
-                if parent and parent in SECTIONS[doc]:
-                    hint = (f" §{parent} exists; if you meant a numbered item "
-                            f"inside it, write \"§{parent}, item N\".")
-                problems.append((path.relative_to(ROOT).as_posix(), n, doc, number, hint))
+        # Scanned whole, not line by line. Markdown wraps, so a citation whose
+        # document name ends one line and whose number begins the next was
+        # invisible to this check -- and the pattern always allowed it, since
+        # `\s*` matches a newline. Measured when the gap was found: 2 of 104
+        # citations in this repository had never been checked, one of them in
+        # an accepted RFC. Both happened to be valid, which is luck, not a
+        # result. The line number is derived from the match offset, because a
+        # number that points at the wrong line is worse than none.
+        for m in CITATION.finditer(text):
+            doc, number = m.group("doc"), m.group("number")
+            if number in SECTIONS[doc]:
+                continue
+            n = text.count("\n", 0, m.start()) + 1
+            parent = number.rsplit(".", 1)[0] if "." in number else None
+            hint = ""
+            if parent and parent in SECTIONS[doc]:
+                hint = (f" §{parent} exists; if you meant a numbered item "
+                        f"inside it, write \"§{parent}, item N\".")
+            problems.append((path.relative_to(ROOT).as_posix(), n, doc, number, hint))
     return problems
 
 
@@ -121,8 +164,14 @@ def main() -> None:
         print("error: no citable documents found", file=sys.stderr)
         raise SystemExit(1)
 
+    missing = missing_rfc_files()
+    for rel, n, name in missing:
+        print(f"error: {rel}:{n} refers to rfc/{name}, which does not exist. "
+              f"An RFC becomes citable when its file lands, not when it is "
+              f"proposed.", file=sys.stderr)
+
     problems = scan()
-    if not problems:
+    if not problems and not missing:
         total = sum(len(s) for s in SECTIONS.values())
         print(f"every section citation resolves ({len(DOCS)} citable documents, "
               f"{total} sections)")
@@ -133,7 +182,12 @@ def main() -> None:
     for rel, n, doc, number, hint in problems:
         print(f"error: {rel}:{n} cites {doc} §{number}, which does not exist.{hint}",
               file=sys.stderr)
-    print(f"\n{len(problems)} citation(s) pointing at nothing", file=sys.stderr)
+    # The count covers both kinds. A summary that reported only the section
+    # citations would print "0 citation(s) pointing at nothing" while the check
+    # was failing on a missing file -- the reader would go looking for the
+    # wrong thing, which is how a good finding gets dismissed.
+    print(f"\n{len(problems) + len(missing)} citation(s) pointing at nothing",
+          file=sys.stderr)
     raise SystemExit(1)
 
 
