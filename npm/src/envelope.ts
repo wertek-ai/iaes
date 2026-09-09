@@ -71,10 +71,58 @@ export interface IAESEnvelope {
   batch_id?: string;
   timestamp: string;
   source: string;
+  /**
+   * Always present on an envelope this SDK produced.
+   *
+   * It stays REQUIRED here, and the reason is compatibility rather than the
+   * schema: `IAESEnvelope` is what every `toJSON()` returns, so weakening it
+   * to optional breaks code that already compiles --
+   * `event.content_hash.slice(0, 8)` becomes an error on a value the SDK
+   * always sets. GOVERNANCE.md 3.1 forbids a package making a breaking API
+   * change without the specification advancing, and 2.0.1 is a platform
+   * release.
+   *
+   * The wire contract is looser: `iaes-envelope.schema.json` does not list
+   * `content_hash` in `required`, so an envelope that omits it conforms. That
+   * shape is `IAESWireEnvelope`, below.
+   */
   content_hash: string;
   asset: AssetIdentity;
   data: Record<string, unknown>;
 }
+
+/**
+ * An envelope as it may arrive ON THE WIRE, rather than as this SDK builds one.
+ *
+ * Two differences, and they are the only two. Measured by comparing every
+ * property of `iaes-envelope.schema.json` against this interface, rather than
+ * fixing them one at a time as they are noticed:
+ *
+ *   content_hash      the schema does not list it in `required`, so a
+ *                     conforming producer may omit it. `IAESEnvelope` keeps it
+ *                     required because every `toJSON()` sets it and code that
+ *                     already reads it must keep compiling.
+ *   source_event_id   the schema types it `["string", "null"]`, so an explicit
+ *                     null may appear on the wire. The specification assigns
+ *                     no meaning to it beyond that -- it says the field
+ *                     references the originating event -- so neither does this
+ *                     type. `IAESEnvelope` stays `string | undefined` because
+ *                     this SDK omits the field rather than emitting null.
+ *
+ * `tests/test_wire_type_matches_schema.py` keeps that list honest.
+ *
+ * Two types because there are two contracts, and collapsing them means either
+ * breaking existing code or lying about what an event must carry.
+ *
+ * `validate()` accepts both -- it takes `unknown`.
+ */
+export type IAESWireEnvelope = Omit<
+  IAESEnvelope,
+  "content_hash" | "source_event_id"
+> & {
+  content_hash?: string;
+  source_event_id?: string | null;
+};
 
 export function buildEnvelope(opts: {
   eventType: string;

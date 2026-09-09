@@ -28,7 +28,7 @@ export {
   schemaUriFor,
   computeContentHash,
 } from "./envelope";
-export type { IAESEnvelope, AssetIdentity } from "./envelope";
+export type { IAESEnvelope, IAESWireEnvelope, AssetIdentity } from "./envelope";
 
 export { validate, loadSchema, loadEnvelopeSchema, ValidationError } from "./validation";
 

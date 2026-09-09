@@ -592,7 +592,24 @@ class TestVersion:
         assert SPEC_VERSION == "2.0"
 
     def test_package_version(self):
-        assert iaes.__version__ == "2.0.0"
+        """Derived from pyproject, not typed here.
+
+        This asserted a literal -- "2.0.0" -- which made it a sixth copy of the
+        version and a file to edit on every platform release. A test that
+        hardcodes the number checks that somebody remembered to update the
+        test, not that the package agrees with what it publishes.
+
+        Its sibling test_reported_version_matches_the_published_one already
+        compares against pyproject.toml, so this one checks the SHAPE instead:
+        three numbers, whose first two are the specification version
+        (GOVERNANCE.md 3.1).
+        """
+        parts = iaes.__version__.split(".")
+        assert len(parts) == 3, iaes.__version__
+        assert all(p.isdigit() for p in parts), iaes.__version__
+        assert ".".join(parts[:2]) == SPEC_VERSION, (
+            f"package {iaes.__version__} does not declare spec {SPEC_VERSION}"
+        )
 
     def test_the_package_version_declares_the_spec_it_implements(self):
         """GOVERNANCE.md §3.1 — the first two numbers ARE the specification.
