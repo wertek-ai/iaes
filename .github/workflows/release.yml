@@ -99,6 +99,12 @@ jobs:
       id-token: write # required for PyPI Trusted Publishing
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Same history as ci.yml. The reproducibility tests need the spec
+          # tags; a depth-1 checkout has none, so py-v2.0.1 ran here with two
+          # of them silently skipped while CI on the same commit ran them.
+          # The release gate must not run a smaller suite than CI.
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"

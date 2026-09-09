@@ -26,6 +26,19 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
+# Reported rather than skipped: a skipped check is one that stopped checking.
+# py-v2.0.1 published from a depth-1 checkout where these two tests skipped
+# with "no specification tag in this clone", and the release gate reported
+# green on a smaller suite than CI. A clone without the tags cannot prove the
+# manifest is reproducible, and the right answer to that is a failure that
+# says how to get them.
+NO_TAGS = (
+    "no specification tag in this clone, so the manifest cannot be built for "
+    "one. This test needs the spec-v* tags: run `git fetch --tags` (in CI, "
+    "check out with fetch-depth: 0). Reported rather than skipped: a skipped "
+    "check is one that stopped checking."
+)
+
 
 def load_tool():
     spec = importlib.util.spec_from_file_location(
@@ -108,7 +121,7 @@ class TestTheDigestComesFromTheRepository(unittest.TestCase):
         tool = load_tool()
         tags = git("tag", "-l", "spec-v*").decode().split()
         if not tags:
-            self.skipTest("no specification tag in this clone")
+            self.fail(NO_TAGS)
         tag = sorted(tags)[-1]
 
         here = tool.build(tag=tag, out=None)
@@ -170,7 +183,7 @@ class TestAReleaseStaysRebuildable(unittest.TestCase):
         tags = subprocess.run(["git", "tag", "-l", "spec-v*"], cwd=ROOT,
                               capture_output=True, text=True).stdout.split()
         if not tags:
-            self.skipTest("no specification tag in this clone")
+            self.fail(NO_TAGS)
         tag = sorted(tags)[-1]
         before = subprocess.run(
             [sys.executable, "tools/build_release_manifest.py", "--tag", tag],
