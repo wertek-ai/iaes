@@ -103,9 +103,11 @@ export interface IAESEnvelope {
  *                     required because every `toJSON()` sets it and code that
  *                     already reads it must keep compiling.
  *   source_event_id   the schema types it `["string", "null"]`, so an explicit
- *                     null is a valid 2.0 event -- "this event begins a chain"
- *                     said out loud rather than by omission. The produced type
- *                     stays `string | undefined`: this SDK never emits null.
+ *                     null may appear on the wire. The specification assigns
+ *                     no meaning to it beyond that -- it says the field
+ *                     references the originating event -- so neither does this
+ *                     type. `IAESEnvelope` stays `string | undefined` because
+ *                     this SDK omits the field rather than emitting null.
  *
  * `tests/test_wire_type_matches_schema.py` keeps that list honest.
  *

@@ -68,10 +68,10 @@ const asWire: IAESWireEnvelope = built;
 // @ts-expect-error a wire envelope may omit content_hash
 const asProduced: IAESEnvelope = handWritten;
 
-// 6. An explicit null source_event_id is a valid 2.0 event: the schema types
-//    the field ["string", "null"]. Saying "this begins a chain" out loud is
-//    not the same as omitting the field, and a consumer must be able to type
-//    what it receives.
+// 6. source_event_id may be explicitly null on the wire, because the IAES 2.0
+//    schema permits it. The specification says the field references the
+//    originating event and assigns no meaning to null; a consumer still has to
+//    be able to type what it receives.
 const incoming: IAESWireEnvelope = {
   spec_version: "2.0",
   event_type: "asset.measurement",
