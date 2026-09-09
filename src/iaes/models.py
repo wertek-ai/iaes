@@ -187,6 +187,34 @@ class AssetMeasurement:
 # ─── asset.health ───────────────────────────────────────────
 
 
+class _Unsupplied(float):
+    """A score the producer never gave, that still reads as 0.0.
+
+    IAES_SPEC.md, Producers 3: "A producer MUST omit an optional field it was
+    not given rather than substitute a value for it. Writing `anomaly_score:
+    0.0` for a score nobody computed states something the producer does not
+    know." This SDK did exactly that, and RFC-002 §6 named it the real defect.
+
+    The public API is unchanged on purpose: ``AssetHealth(...).anomaly_score``
+    is still a float, still ``== 0.0`` when nothing was given, still fine in
+    arithmetic. What changed is provenance: the default is THIS type, a plain
+    float is what a producer supplied, and only ``to_dict`` tells them apart.
+    """
+
+    __slots__ = ()
+
+    def __repr__(self) -> str:  # pragma: no cover - cosmetic
+        return "0.0 (not supplied)"
+
+
+_UNSUPPLIED = _Unsupplied(0.0)
+
+
+def _supplied(value: float) -> Optional[float]:
+    """The value if a producer gave it, None (omitted on the wire) if not."""
+    return None if isinstance(value, _Unsupplied) else value
+
+
 @dataclass
 class AssetHealth:
     """IAES ``asset.health`` — AI diagnosis or expert health assessment."""
@@ -197,9 +225,9 @@ class AssetHealth:
     source: str = "diagnosis"
 
     # Fault classification
-    anomaly_score: float = 0.0
+    anomaly_score: float = _UNSUPPLIED
     failure_mode: Optional[str] = None
-    fault_confidence: float = 0.0
+    fault_confidence: float = _UNSUPPLIED
     rul_days: Optional[int] = None
 
     # Recommended action (folded into health per spec)
@@ -230,10 +258,10 @@ class AssetHealth:
         """Serialize to an IAES wire-format dict."""
         data = {
             "health_index": self.health_index,
-            "anomaly_score": self.anomaly_score,
+            "anomaly_score": _supplied(self.anomaly_score),
             "severity": _enum_val(self.severity),
             "failure_mode": self.failure_mode,
-            "fault_confidence": self.fault_confidence,
+            "fault_confidence": _supplied(self.fault_confidence),
             "rul_days": self.rul_days,
             "recommended_action": self.recommended_action,
             "estimated_downtime_hours": self.estimated_downtime_hours,
@@ -266,9 +294,9 @@ class AssetHealth:
             health_index=data.get("health_index", 1.0),
             severity=data.get("severity", "info"),
             source=envelope.get("source", "diagnosis"),
-            anomaly_score=data.get("anomaly_score", 0.0),
+            anomaly_score=data.get("anomaly_score", _UNSUPPLIED),
             failure_mode=data.get("failure_mode"),
-            fault_confidence=data.get("fault_confidence", 0.0),
+            fault_confidence=data.get("fault_confidence", _UNSUPPLIED),
             rul_days=data.get("rul_days"),
             recommended_action=data.get("recommended_action"),
             estimated_downtime_hours=data.get("estimated_downtime_hours"),

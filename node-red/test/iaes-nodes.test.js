@@ -55,6 +55,33 @@ require("../nodes/iaes-health.js")(RED);
 require("../nodes/iaes-work-order.js")(RED);
 require("../nodes/iaes-validate.js")(RED);
 
+// --- an absent optional score is not an assertion ---
+
+describe("iaes-health does not substitute scores nobody gave", () => {
+  // The editor defaulted anomalyScore and faultConfidence to "0.0" with no
+  // visible field, so every health event asserted "definitely normal" for a
+  // score nobody computed (IAES_SPEC.md, Producers 3).
+  it("omits both scores when the editor is blank and the message is silent", () => {
+    const node = createNode(RED, "iaes-health", { assetId: "M-1", anomalyScore: "", faultConfidence: "" });
+    const { outputs } = sendInput(node, { payload: { health_index: 0.4, severity: "high" } });
+    assert.ok(!("anomaly_score" in outputs[0].payload.data), JSON.stringify(outputs[0].payload.data));
+    assert.ok(!("fault_confidence" in outputs[0].payload.data));
+  });
+
+  it("a configured 0 is a score and is sent", () => {
+    const node = createNode(RED, "iaes-health", { assetId: "M-1", anomalyScore: "0", faultConfidence: "0" });
+    const { outputs } = sendInput(node, { payload: 0.4 });
+    assert.equal(outputs[0].payload.data.anomaly_score, 0);
+    assert.equal(outputs[0].payload.data.fault_confidence, 0);
+  });
+
+  it("a score in the message is sent", () => {
+    const node = createNode(RED, "iaes-health", { assetId: "M-1", anomalyScore: "" });
+    const { outputs } = sendInput(node, { payload: { health_index: 0.4, severity: "high", anomaly_score: 0.92 } });
+    assert.equal(outputs[0].payload.data.anomaly_score, 0.92);
+  });
+});
+
 // --- the chain: correlation_id travels with the message ---
 
 describe("a chain of events keeps one correlation_id", () => {

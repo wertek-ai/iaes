@@ -8,6 +8,36 @@ All three IAES packages are versioned together when a change crosses them.
 
 ---
 
+## 2026-09-09 (unreleased, for 2.0.2)
+
+### An absent score was written as 0.0 in every SDK
+
+`asset.health` events whose producer supplied neither `anomaly_score` nor
+`fault_confidence` went out with both set to `0.0` -- from the TypeScript SDK,
+the Python SDK and, through its editor defaults, the Node-RED `iaes-health`
+node. Under the fields' own meaning, `0.0` asserts *definitely normal* and
+*no confidence*. IAES_SPEC.md (Producers 3) names this exact substitution as
+the thing a producer MUST NOT do, and RFC-002 §6 recorded it as the real
+defect when the range was decided.
+
+Fixed in `npm/src/models.ts`, `src/iaes/models.py` and
+`node-red/nodes/iaes-health.js` + `.html`: a score the producer did not give
+is omitted from the wire; a supplied `0` is a score and stays. **The public
+API is unchanged**: `AssetHealth(...).anomaly_score` still reads as a number,
+`0.0` when nothing was given -- what a producer said is tracked beside the
+instance and consulted only when serialising. Found by the reference
+scenarios' cross-implementation `content_hash` check and the n8n schema-vs-
+form census, which had to declare these two fields as the SDK's business.
+
+Also in this release, from the reference scenarios: Node-RED's producer nodes
+dropped `msg.correlation_id` (a chain became three), and the n8n emit node
+could not say `units_qualifier` and gave optional fields defaults with a
+meaning (`failure_confirmed: false`, `triggered_by: "threshold"`,
+`recommended_due_days: 7`; and `0` was collapsed to "not set" for numerics
+whose schema allows zero).
+
+---
+
 ## 2026-08-14
 
 ### The ingest route was wrong in all three SDKs

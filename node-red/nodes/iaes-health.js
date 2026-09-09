@@ -45,8 +45,11 @@ module.exports = function (RED) {
           failure_mode: fields.failure_mode || msg.failure_mode || config.failureMode || undefined,
           rul_days: fields.rul_days != null ? fields.rul_days : intOrUndefined(config.rulDays),
           recommended_action: fields.recommended_action || msg.recommended_action || config.recommendedAction || undefined,
-          anomaly_score: fields.anomaly_score != null ? fields.anomaly_score : numberOr(config.anomalyScore, 0.0),
-          fault_confidence: fields.fault_confidence != null ? fields.fault_confidence : numberOr(config.faultConfidence, 0.0),
+          // Left blank in the editor and absent from the message, the score is
+          // not sent: 0.0 would assert "definitely normal" for a score nobody
+          // computed (IAES_SPEC.md, Producers 3). A configured "0" is a score.
+          anomaly_score: fields.anomaly_score != null ? fields.anomaly_score : numberOr(config.anomalyScore, undefined),
+          fault_confidence: fields.fault_confidence != null ? fields.fault_confidence : numberOr(config.faultConfidence, undefined),
           iso_13374_status: fields.iso_13374_status || msg.iso_13374_status || config.iso13374Status || undefined,
           condition_trend: fields.condition_trend || msg.condition_trend || config.conditionTrend || undefined,
           asset_name: msg.asset_name || config.assetName || undefined,
