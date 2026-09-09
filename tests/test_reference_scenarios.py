@@ -102,6 +102,29 @@ def typescript_events(tmp_path: Path) -> list:
     return json.loads(run.stdout)
 
 
+def workflow_events(tool: str) -> list:
+    """Run a workflow tool's reference scenario and return what it emitted.
+
+    The scenario for Node-RED and n8n is the importable file (flow.json,
+    workflow.json); `scenarios/<tool>/run.js` executes it and prints the
+    events. Each runner reports its own missing precondition -- the Node-RED
+    runtime, the compiled n8n nodes -- on stderr and exits non-zero, and that
+    message is the failure here. Reported rather than skipped.
+    """
+    run = subprocess.run(["node", str(ROOT / "scenarios" / tool / "run.js")],
+                         cwd=ROOT, capture_output=True, text=True, timeout=180)
+    assert run.returncode == 0, run.stderr
+    return json.loads(run.stdout)
+
+
+def nodered_events() -> list:
+    return workflow_events("node-red")
+
+
+def n8n_events() -> list:
+    return workflow_events("n8n")
+
+
 def stable(event: dict, drop: set) -> dict:
     return {k: v for k, v in event.items() if k not in drop}
 
@@ -159,23 +182,76 @@ def test_typescript_scenarios_match_the_fixture(tmp_path):
     check_against_fixture(typescript_events(tmp_path), "typescript")
 
 
-def test_both_languages_agree_on_the_content_hash(tmp_path):
+def test_nodered_scenarios_match_the_fixture():
+    check_against_fixture(nodered_events(), "node-red")
+
+
+def test_n8n_scenarios_match_the_fixture():
+    check_against_fixture(n8n_events(), "n8n")
+
+
+# The n8n emit node is a FORM, and a form has defaults: a work order intent
+# leaves it with `triggered_by` and `recommended_due_days`, a completion with
+# `failure_confirmed`, whether or not the story mentions them. The fixture does
+# not pin those fields, so the n8n events still match it -- but their
+# content_hash cannot equal the others', because the hash covers the data. The
+# set is named here so the exemption cannot widen without someone editing it,
+# and the test below insists the fields really do appear, so it cannot rot.
+N8N_FORM_DEFAULTS = {"triggered_by", "recommended_due_days", "failure_confirmed"}
+
+
+def test_implementations_agree_on_the_content_hash(tmp_path):
     """The one field derived from meaning rather than from the moment.
 
-    `content_hash` is computed from the event's content, so two implementations
-    of the same scenario must agree on it. If they ever disagree, one of them
-    is hashing something the other is not -- which is a cross-language defect
-    the per-language checks above cannot see.
+    `content_hash` is computed from the event's content, so implementations
+    that emit the same data must agree on it. If they ever disagree, one of
+    them is hashing something the other is not -- a cross-implementation
+    defect the per-implementation checks above cannot see.
+
+    Where two implementations emit DIFFERENT data, the difference must be
+    exactly the n8n form defaults named above, on the n8n side, with every
+    shared field equal. Anything else is a defect, not a form.
     """
-    py = python_events()
-    ts = typescript_events(tmp_path)
-    for a, b in zip(py, ts):
-        if "content_hash" not in a and "content_hash" not in b:
-            continue
-        assert a.get("content_hash") == b.get("content_hash"), (
-            f"{a['event_type']}: python {a.get('content_hash')} != "
-            f"typescript {b.get('content_hash')}"
-        )
+    produced = {
+        "python": python_events(),
+        "typescript": typescript_events(tmp_path),
+        "node-red": nodered_events(),
+        "n8n": n8n_events(),
+    }
+    names = list(produced)
+    seen_defaults = set()
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            for ea, eb in zip(produced[a], produced[b]):
+                if "content_hash" not in ea and "content_hash" not in eb:
+                    continue  # 05-custom: written by hand, no hash, on purpose
+                where = f"{ea['event_type']}: {a} vs {b}"
+                if ea["data"] == eb["data"]:
+                    assert ea.get("content_hash") == eb.get("content_hash"), (
+                        f"{where}: same data, different content_hash "
+                        f"({ea.get('content_hash')} != {eb.get('content_hash')})"
+                    )
+                    continue
+                shared = set(ea["data"]) & set(eb["data"])
+                differing = {k for k in shared if ea["data"][k] != eb["data"][k]}
+                assert not differing, f"{where}: shared fields differ: {sorted(differing)}"
+                extra_a = set(ea["data"]) - set(eb["data"])
+                extra_b = set(eb["data"]) - set(ea["data"])
+                extra = {"n8n": set()}
+                for name, fields in ((a, extra_a), (b, extra_b)):
+                    assert not fields or name == "n8n", (
+                        f"{where}: {name} emits fields the other does not: {sorted(fields)}"
+                    )
+                    extra["n8n"] |= fields
+                assert extra["n8n"] <= N8N_FORM_DEFAULTS, (
+                    f"{where}: n8n emits {sorted(extra['n8n'] - N8N_FORM_DEFAULTS)}, "
+                    "which is not a declared form default"
+                )
+                seen_defaults |= extra["n8n"]
+    assert seen_defaults == N8N_FORM_DEFAULTS, (
+        "the declared n8n form defaults no longer match what the node emits: "
+        f"declared {sorted(N8N_FORM_DEFAULTS)}, seen {sorted(seen_defaults)}"
+    )
 
 
 def test_the_custom_event_type_is_not_a_published_one():

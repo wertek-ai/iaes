@@ -53,6 +53,7 @@ module.exports = function (RED) {
           plant: msg.plant || config.plant || undefined,
           area: msg.area || config.area || undefined,
           source_event_id: msg.source_event_id || undefined,
+          correlation_id: msg.correlation_id || undefined,
         });
 
         msg.payload = event.toJSON();

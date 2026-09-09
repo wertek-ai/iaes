@@ -32,6 +32,7 @@ module.exports = function (RED) {
           asset_name: msg.asset_name || config.assetName || undefined,
           plant: msg.plant || config.plant || undefined,
           area: msg.area || config.area || undefined,
+          correlation_id: msg.correlation_id || undefined,
         });
 
         msg.payload = event.toJSON();

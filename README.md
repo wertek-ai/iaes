@@ -323,6 +323,19 @@ The core SDK uses only standard library. No runtime dependencies.
 
 Both SDKs produce identical wire format and identical `content_hash` for the same data. Events created in Python validate in TypeScript and vice versa. This is tested on every commit.
 
+### Reference scenarios
+
+One industrial story, told four times: a vibration model reads 4.2 mm/s RMS on a motor, concludes a bearing's outer race is degrading, asks maintenance to inspect it, and a technician closes the loop. Each implementation produces the same five events -- **the workflow changes, the event meaning does not** -- and `tests/test_reference_scenarios.py` checks all four against a single fixture on every commit.
+
+| Implementation | The scenario | Reach for it when |
+|---|---|---|
+| Python | [`scenarios/python/reference_scenarios.py`](scenarios/python/reference_scenarios.py) | the producer **is the model** |
+| TypeScript | [`scenarios/typescript/reference-scenarios.ts`](scenarios/typescript/reference-scenarios.ts) | the producer is a **service** |
+| Node-RED | [`scenarios/node-red/flow.json`](scenarios/node-red/flow.json) -- import it as-is | the reading is already on the wire, at the **OT boundary** |
+| n8n | [`scenarios/n8n/workflow.json`](scenarios/n8n/workflow.json) -- import it as-is | the trigger is a **webhook or a schedule** |
+
+The fixture is [`scenarios/fixture.json`](scenarios/fixture.json). It names which fields are volatile (a fresh `event_id`, the moment of emission) and why, so what is compared is what a consumer acts on.
+
 ## Node-RED
 
 [`node-red-contrib-iaes`](https://flows.nodered.org/node/node-red-contrib-iaes) provides 7 nodes for visual IAES workflows:

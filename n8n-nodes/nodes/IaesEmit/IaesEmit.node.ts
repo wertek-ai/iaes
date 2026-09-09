@@ -228,6 +228,15 @@ export class IaesEmit implements INodeType {
 				default: '',
 				displayOptions: { show: { eventType: ['asset.measurement'] } },
 			},
+			{
+				displayName: 'Units Qualifier',
+				name: 'unitsQualifier',
+				type: 'string',
+				default: '',
+				placeholder: 'rms, peak, peak-peak',
+				description: 'How the value was derived from the signal (optional). The schema field is units_qualifier.',
+				displayOptions: { show: { eventType: ['asset.measurement'] } },
+			},
 
 			// ── work_order_intent fields ──
 			{
@@ -422,6 +431,10 @@ export class IaesEmit implements INodeType {
 						value: this.getNodeParameter('value', i) as number,
 						unit: this.getNodeParameter('unit', i) as string,
 						sensor_id: (this.getNodeParameter('sensorId', i) as string) || undefined,
+						// Found by the reference scenarios: a 4.2 mm/s RMS reading could not
+						// say "rms" from this node, so the same story told in n8n lost a
+						// field the other three implementations carry.
+						units_qualifier: (this.getNodeParameter('unitsQualifier', i) as string) || undefined,
 					});
 					envelope = event.toJSON() as unknown as IDataObject;
 					break;
