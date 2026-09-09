@@ -108,7 +108,7 @@ In the **IAES Emit** node, map the PLC fields:
 | Value | `={{ $json.message.value }}` — e.g. `4.2` |
 | Unit | `={{ $json.message.unit }}` — e.g. `mm/s` |
 
-The output is a full IAES v2.0 envelope ready to POST to any CMMS, data lake, or Wertek.
+The output is a full IAES v2.0 envelope ready for any IAES-compatible receiver.
 
 > **Works with:** Allen-Bradley, Siemens S7 (via MQTT gateway), Modbus TCP (via Node-RED bridge), OPC-UA publishers, any device that can write to MQTT.
 

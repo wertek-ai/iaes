@@ -71,7 +71,13 @@ export interface IAESEnvelope {
   batch_id?: string;
   timestamp: string;
   source: string;
-  content_hash: string;
+  /**
+   * Optional. `iaes-envelope.schema.json` does not list it in `required`,
+   * and this type declared it mandatory -- so a hand-written envelope that
+   * is perfectly conforming did not compile. buildEnvelope() still emits
+   * one: optional on the wire does not mean the SDK stops producing it.
+   */
+  content_hash?: string;
   asset: AssetIdentity;
   data: Record<string, unknown>;
 }

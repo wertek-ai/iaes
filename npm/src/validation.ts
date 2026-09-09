@@ -136,7 +136,19 @@ function report(
  * @throws ValidationError if the event does not conform.
  * @throws Error if `ajv` is not installed.
  */
-export function validate(event: Record<string, unknown>): void {
+export function validate(input: unknown): void {
+  // `unknown`, not `Record<string, unknown>`: a validator must be able to
+  // receive something whose shape is not yet known to be valid. The narrower
+  // type rejected the SDK's OWN envelope -- IAESEnvelope has no index
+  // signature -- so `validate(buildEnvelope(...))` did not compile, and the
+  // most obvious path through this library needed a cast. It also rejected the
+  // result of JSON.parse without one. Widening a parameter is compatible:
+  // every call that compiled before still compiles.
+  if (input === null || typeof input !== "object" || Array.isArray(input)) {
+    throw new ValidationError("Event must be a JSON object");
+  }
+  const event = input as Record<string, unknown>;
+
   const ajv = loadAjv();
 
   const eventType = event["event_type"];
