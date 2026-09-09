@@ -102,6 +102,29 @@ def typescript_events(tmp_path: Path) -> list:
     return json.loads(run.stdout)
 
 
+def workflow_events(tool: str) -> list:
+    """Run a workflow tool's reference scenario and return what it emitted.
+
+    The scenario for Node-RED and n8n is the importable file (flow.json,
+    workflow.json); `scenarios/<tool>/run.js` executes it and prints the
+    events. Each runner reports its own missing precondition -- the Node-RED
+    runtime, the compiled n8n nodes -- on stderr and exits non-zero, and that
+    message is the failure here. Reported rather than skipped.
+    """
+    run = subprocess.run(["node", str(ROOT / "scenarios" / tool / "run.js")],
+                         cwd=ROOT, capture_output=True, text=True, timeout=180)
+    assert run.returncode == 0, run.stderr
+    return json.loads(run.stdout)
+
+
+def nodered_events() -> list:
+    return workflow_events("node-red")
+
+
+def n8n_events() -> list:
+    return workflow_events("n8n")
+
+
 def stable(event: dict, drop: set) -> dict:
     return {k: v for k, v in event.items() if k not in drop}
 
@@ -159,23 +182,54 @@ def test_typescript_scenarios_match_the_fixture(tmp_path):
     check_against_fixture(typescript_events(tmp_path), "typescript")
 
 
-def test_both_languages_agree_on_the_content_hash(tmp_path):
+def test_nodered_scenarios_match_the_fixture():
+    check_against_fixture(nodered_events(), "node-red")
+
+
+def test_n8n_scenarios_match_the_fixture():
+    check_against_fixture(n8n_events(), "n8n")
+
+
+def test_implementations_agree_on_the_content_hash(tmp_path):
     """The one field derived from meaning rather than from the moment.
 
-    `content_hash` is computed from the event's content, so two implementations
-    of the same scenario must agree on it. If they ever disagree, one of them
-    is hashing something the other is not -- which is a cross-language defect
-    the per-language checks above cannot see.
+    `content_hash` is computed from the event's content, so four
+    implementations of the same scenario must agree on it, event by event.
+    If one disagrees it is hashing something the others are not -- a
+    cross-implementation defect the per-implementation checks cannot see.
+
+    There is no exemption. The first version of this test exempted the n8n
+    form's defaults (`triggered_by: "threshold"`, `recommended_due_days: 7`,
+    `failure_confirmed: false`) as "what a form does". IAES_SPEC.md says
+    otherwise: a producer MUST omit an optional field it was not given rather
+    than substitute a value for it, and a default with a meaning is that
+    substitution. The exemption was institutionalising the defect the battery
+    exists to find. Only 05-custom has no hash: written by hand, on purpose.
     """
-    py = python_events()
-    ts = typescript_events(tmp_path)
-    for a, b in zip(py, ts):
-        if "content_hash" not in a and "content_hash" not in b:
-            continue
-        assert a.get("content_hash") == b.get("content_hash"), (
-            f"{a['event_type']}: python {a.get('content_hash')} != "
-            f"typescript {b.get('content_hash')}"
-        )
+    produced = {
+        "python": python_events(),
+        "typescript": typescript_events(tmp_path),
+        "node-red": nodered_events(),
+        "n8n": n8n_events(),
+    }
+    reference = produced["python"]
+    for name, events in produced.items():
+        for got, ref in zip(events, reference):
+            if "content_hash" not in ref:
+                assert "content_hash" not in got, (
+                    f"{name} / {ref['event_type']}: the hand-written custom event "
+                    "carries a content_hash the reference does not"
+                )
+                continue
+            assert got["data"] == ref["data"], (
+                f"{name} / {ref['event_type']}: data differs from python's:\n"
+                f"  {name}: {json.dumps(got['data'], sort_keys=True)}\n"
+                f"  python: {json.dumps(ref['data'], sort_keys=True)}"
+            )
+            assert got.get("content_hash") == ref["content_hash"], (
+                f"{name} / {ref['event_type']}: same data, different content_hash "
+                f"({got.get('content_hash')} != {ref['content_hash']})"
+            )
 
 
 def test_the_custom_event_type_is_not_a_published_one():

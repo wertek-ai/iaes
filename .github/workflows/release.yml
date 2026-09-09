@@ -121,6 +121,24 @@ jobs:
       - name: Build the TypeScript SDK for the cross-language tests
         run: npm ci && npm run build
         working-directory: npm
+      # The reference scenarios (tests/test_reference_scenarios.py) also run the
+      # Node-RED flow in a real Node-RED -- a dev dependency of node-red/ -- and
+      # the n8n workflow against the COMPILED n8n nodes, which is what n8n
+      # loads. Same install shape as those packages' own jobs. The range is
+      # restored afterwards so the tree pytest sees is the committed one.
+      - name: Install the Node-RED package, with its runtime, against the local SDK
+        run: |
+          npm pkg set 'dependencies.@iaes/sdk=file:../npm'
+          npm install --no-save
+          git checkout -- package.json
+        working-directory: node-red
+      - name: Build the n8n nodes against the local SDK
+        run: |
+          npm pkg set 'dependencies.@iaes/sdk=file:../npm'
+          npm install --no-save
+          npm run build
+          git checkout -- package.json
+        working-directory: n8n-nodes
 
       - name: Check the tag matches pyproject.toml
         run: |

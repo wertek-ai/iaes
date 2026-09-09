@@ -15,6 +15,31 @@ import {
 	SparePartUsage,
 } from '@iaes/sdk';
 
+/**
+ * The tri-state Failure Confirmed parameter, plus the boolean that workflows
+ * saved before 2.0.2 still carry: those were explicit choices, so they keep
+ * their meaning. Anything unspecified omits the field.
+ */
+function failureConfirmed(raw: unknown): boolean | undefined {
+	if (typeof raw === 'boolean') return raw;
+	if (raw === 'true') return true;
+	if (raw === 'false') return false;
+	return undefined;
+}
+
+/**
+ * An optional numeric field whose schema allows zero. The sentinel for "not
+ * specified" has to live OUTSIDE the field's domain: `|| undefined` collapsed
+ * a legitimate 0 -- RUL zero, due now, zero seconds -- into "not given", and
+ * the schema's `minimum: 0` says 0 is an answer. -1 (the form's default) is
+ * not a value any of these fields can carry, so it is the one that means
+ * "say nothing".
+ */
+function optionalNumber(raw: unknown): number | undefined {
+	if (typeof raw !== 'number' || !Number.isFinite(raw) || raw < 0) return undefined;
+	return raw;
+}
+
 export class IaesEmit implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'IAES Emit',
@@ -153,8 +178,8 @@ export class IaesEmit implements INodeType {
 				displayName: 'RUL (Days)',
 				name: 'rulDays',
 				type: 'number',
-				default: 0,
-				description: 'Remaining useful life in days (0 = not set)',
+				default: -1,
+				description: 'Remaining useful life in days. 0 is a valid answer (no life left); -1 = not specified, the field is omitted.',
 				displayOptions: { show: { eventType: ['asset.health'] } },
 			},
 			{
@@ -228,6 +253,15 @@ export class IaesEmit implements INodeType {
 				default: '',
 				displayOptions: { show: { eventType: ['asset.measurement'] } },
 			},
+			{
+				displayName: 'Units Qualifier',
+				name: 'unitsQualifier',
+				type: 'string',
+				default: '',
+				placeholder: 'rms, peak, peak-peak',
+				description: 'How the value was derived from the signal (optional). The schema field is units_qualifier.',
+				displayOptions: { show: { eventType: ['asset.measurement'] } },
+			},
 
 			// ── work_order_intent fields ──
 			{
@@ -260,24 +294,33 @@ export class IaesEmit implements INodeType {
 				default: '',
 				displayOptions: { show: { eventType: ['maintenance.work_order_intent'] } },
 			},
+			// Optional schema fields start UNSPECIFIED. IAES_SPEC.md: "A producer
+			// MUST omit an optional field it was not given rather than substitute
+			// a value for it." A form default with a meaning -- "triggered by a
+			// threshold", "due in 7 days", "failure not confirmed" -- is exactly
+			// that substitution: the event would assert what nobody said. Found
+			// by the reference scenarios, where the n8n work order and completion
+			// carried three fields the other three implementations did not.
 			{
 				displayName: 'Triggered By',
 				name: 'triggeredBy',
 				type: 'options',
 				options: [
+					{ name: '(Not specified)', value: '' },
 					{ name: 'AI Diagnosis', value: 'ai_diagnosis' },
 					{ name: 'Threshold Alert', value: 'threshold' },
 					{ name: 'Schedule', value: 'schedule' },
 					{ name: 'Manual', value: 'manual' },
 				],
-				default: 'threshold',
+				default: '',
 				displayOptions: { show: { eventType: ['maintenance.work_order_intent'] } },
 			},
 			{
 				displayName: 'Recommended Due (Days)',
 				name: 'recommendedDueDays',
 				type: 'number',
-				default: 7,
+				default: -1,
+				description: 'Days until the work should be done. 0 is a valid answer (due now); -1 = not specified, the field is omitted.',
 				displayOptions: { show: { eventType: ['maintenance.work_order_intent'] } },
 			},
 
@@ -307,14 +350,23 @@ export class IaesEmit implements INodeType {
 				displayName: 'Duration (Seconds)',
 				name: 'durationSeconds',
 				type: 'number',
-				default: 0,
+				default: -1,
+				description: 'Actual duration of the work. 0 is a valid answer; -1 = not specified, the field is omitted.',
 				displayOptions: { show: { eventType: ['maintenance.completion'] } },
 			},
 			{
 				displayName: 'Failure Confirmed',
 				name: 'failureConfirmed',
-				type: 'boolean',
-				default: false,
+				type: 'options',
+				// Three states, not a boolean: "not confirmed" is an assertion about
+				// the predicted failure, and a form must be able to say nothing.
+				options: [
+					{ name: '(Not specified)', value: '' },
+					{ name: 'Yes, the predicted failure was confirmed', value: 'true' },
+					{ name: 'No, it was not', value: 'false' },
+				],
+				default: '',
+				description: 'Whether the predicted failure was confirmed on inspection. Left unspecified, the field is omitted.',
 				displayOptions: { show: { eventType: ['maintenance.completion'] } },
 			},
 
@@ -408,7 +460,7 @@ export class IaesEmit implements INodeType {
 						severity: this.getNodeParameter('severity', i) as string,
 						condition_trend: (this.getNodeParameter('conditionTrend', i) as string) || undefined,
 						failure_mode: (this.getNodeParameter('failureMode', i) as string) || undefined,
-						rul_days: (this.getNodeParameter('rulDays', i) as number) || undefined,
+						rul_days: optionalNumber(this.getNodeParameter('rulDays', i)),
 						recommended_action: (this.getNodeParameter('recommendedAction', i) as string) || undefined,
 						iso_13374_status: (this.getNodeParameter('iso13374Status', i) as string) || undefined,
 					});
@@ -422,6 +474,10 @@ export class IaesEmit implements INodeType {
 						value: this.getNodeParameter('value', i) as number,
 						unit: this.getNodeParameter('unit', i) as string,
 						sensor_id: (this.getNodeParameter('sensorId', i) as string) || undefined,
+						// Found by the reference scenarios: a 4.2 mm/s RMS reading could not
+						// say "rms" from this node, so the same story told in n8n lost a
+						// field the other three implementations carry.
+						units_qualifier: (this.getNodeParameter('unitsQualifier', i) as string) || undefined,
 					});
 					envelope = event.toJSON() as unknown as IDataObject;
 					break;
@@ -432,8 +488,8 @@ export class IaesEmit implements INodeType {
 						title: this.getNodeParameter('woTitle', i) as string,
 						priority: this.getNodeParameter('woPriority', i) as string,
 						description: (this.getNodeParameter('woDescription', i) as string) || undefined,
-						triggered_by: this.getNodeParameter('triggeredBy', i) as string,
-						recommended_due_days: this.getNodeParameter('recommendedDueDays', i) as number,
+						triggered_by: (this.getNodeParameter('triggeredBy', i) as string) || undefined,
+						recommended_due_days: optionalNumber(this.getNodeParameter('recommendedDueDays', i)),
 					});
 					envelope = event.toJSON() as unknown as IDataObject;
 					break;
@@ -443,8 +499,8 @@ export class IaesEmit implements INodeType {
 						...base,
 						work_order_id: this.getNodeParameter('workOrderId', i) as string,
 						status: this.getNodeParameter('completionStatus', i) as string,
-						actual_duration_seconds: (this.getNodeParameter('durationSeconds', i) as number) || undefined,
-						failure_confirmed: this.getNodeParameter('failureConfirmed', i) as boolean,
+						actual_duration_seconds: optionalNumber(this.getNodeParameter('durationSeconds', i)),
+						failure_confirmed: failureConfirmed(this.getNodeParameter('failureConfirmed', i)),
 					});
 					envelope = event.toJSON() as unknown as IDataObject;
 					break;

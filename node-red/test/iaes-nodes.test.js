@@ -55,6 +55,42 @@ require("../nodes/iaes-health.js")(RED);
 require("../nodes/iaes-work-order.js")(RED);
 require("../nodes/iaes-validate.js")(RED);
 
+// --- the chain: correlation_id travels with the message ---
+
+describe("a chain of events keeps one correlation_id", () => {
+  // Found by the reference scenarios, not by this suite: measurement -> health
+  // -> work order produced three correlation_ids, because the health and
+  // work-order nodes forwarded msg.source_event_id and dropped
+  // msg.correlation_id. Every event pointed at its parent and none shared a
+  // chain -- a consumer could follow the links and still not group them.
+  const chain = { correlation_id: "3f2504e0-4f89-11d3-9a0c-0305e82c3303" };
+
+  it("iaes-measurement joins a chain when the message names one", () => {
+    const node = createNode(RED, "iaes-measurement", { assetId: "M-1", measurementType: "temperature", unit: "°C" });
+    const { outputs } = sendInput(node, { payload: 1, ...chain });
+    assert.equal(outputs[0].payload.correlation_id, chain.correlation_id);
+  });
+
+  it("iaes-measurement starts a fresh chain when the message names none", () => {
+    const node = createNode(RED, "iaes-measurement", { assetId: "M-1", measurementType: "temperature", unit: "°C" });
+    const { outputs } = sendInput(node, { payload: 1 });
+    assert.ok(outputs[0].payload.correlation_id);
+    assert.notEqual(outputs[0].payload.correlation_id, chain.correlation_id);
+  });
+
+  it("iaes-health carries the chain forward", () => {
+    const node = createNode(RED, "iaes-health", { assetId: "M-1", source: "test" });
+    const { outputs } = sendInput(node, { payload: { health_index: 0.5, severity: "high" }, ...chain });
+    assert.equal(outputs[0].payload.correlation_id, chain.correlation_id);
+  });
+
+  it("iaes-work-order carries the chain forward", () => {
+    const node = createNode(RED, "iaes-work-order", { assetId: "M-1", source: "test" });
+    const { outputs } = sendInput(node, { payload: { title: "Inspect", priority: "high" }, ...chain });
+    assert.equal(outputs[0].payload.correlation_id, chain.correlation_id);
+  });
+});
+
 // --- iaes-measurement (single output: send(msg)) ---
 
 describe("iaes-measurement node", () => {

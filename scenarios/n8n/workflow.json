@@ -1,0 +1,179 @@
+{
+  "name": "IAES reference scenarios",
+  "meta": {
+    "description": "One industrial story: a vibration model reads 4.2 mm/s RMS on a motor, concludes the outer race of a bearing is degrading, asks maintenance to inspect it, and a technician closes the loop. The same story is told in Python, in TypeScript and in Node-RED. The workflow changes. The event meaning does not. n8n is where IAES belongs when the TRIGGER is a webhook or a schedule: the reading arrives over HTTP or on a timer, and the job is to hand it to the CMMS as an event that means something. Every event passes through IAES Validate before the next step uses it; the invalid outputs are left unconnected and must stay empty. The reference test runs this exact file: node scenarios/n8n/run.js."
+  },
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger",
+      "name": "When clicking Execute",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "eventType": "asset.measurement",
+        "assetId": "MOTOR-001",
+        "source": "sensor.line1",
+        "assetName": "Feed Pump Motor",
+        "plant": "North Plant",
+        "area": "Pumping",
+        "measurementType": "vibration_velocity",
+        "value": 4.2,
+        "unit": "mm/s",
+        "unitsQualifier": "rms",
+        "outputMode": "envelope"
+      },
+      "id": "s01",
+      "name": "01 measurement",
+      "type": "n8n-nodes-iaes.iaesEmit",
+      "typeVersion": 1,
+      "position": [220, 300]
+    },
+    {
+      "parameters": { "inputField": "", "strictMode": false },
+      "id": "v01",
+      "name": "validate 01",
+      "type": "n8n-nodes-iaes.iaesValidate",
+      "typeVersion": 1,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "eventType": "asset.health",
+        "assetId": "MOTOR-001",
+        "source": "acme.vibration",
+        "assetName": "Feed Pump Motor",
+        "plant": "North Plant",
+        "area": "Pumping",
+        "correlationId": "={{ $json.correlation_id }}",
+        "sourceEventId": "={{ $json.event_id }}",
+        "healthIndex": 0.58,
+        "severity": "high",
+        "failureMode": "bearing_outer_race",
+        "outputMode": "envelope"
+      },
+      "id": "s02",
+      "name": "02 health",
+      "type": "n8n-nodes-iaes.iaesEmit",
+      "typeVersion": 1,
+      "position": [660, 300]
+    },
+    {
+      "parameters": { "inputField": "", "strictMode": false },
+      "id": "v02",
+      "name": "validate 02",
+      "type": "n8n-nodes-iaes.iaesValidate",
+      "typeVersion": 1,
+      "position": [880, 300]
+    },
+    {
+      "parameters": {
+        "eventType": "maintenance.work_order_intent",
+        "assetId": "MOTOR-001",
+        "source": "acme.rule_engine",
+        "assetName": "Feed Pump Motor",
+        "plant": "North Plant",
+        "area": "Pumping",
+        "correlationId": "={{ $json.correlation_id }}",
+        "sourceEventId": "={{ $json.event_id }}",
+        "woTitle": "Inspect drive-end bearing",
+        "woPriority": "high",
+        "woDescription": "Vibration velocity at 4.2 mm/s RMS with an outer-race signature. Inspect the drive-end bearing at the next available window.",
+        "outputMode": "envelope"
+      },
+      "id": "s03",
+      "name": "03 work order intent",
+      "type": "n8n-nodes-iaes.iaesEmit",
+      "typeVersion": 1,
+      "position": [1100, 300]
+    },
+    {
+      "parameters": { "inputField": "", "strictMode": false },
+      "id": "v03",
+      "name": "validate 03",
+      "type": "n8n-nodes-iaes.iaesValidate",
+      "typeVersion": 1,
+      "position": [1320, 300]
+    },
+    {
+      "parameters": {
+        "eventType": "maintenance.completion",
+        "assetId": "MOTOR-001",
+        "source": "acme.cmms",
+        "assetName": "Feed Pump Motor",
+        "plant": "North Plant",
+        "area": "Pumping",
+        "correlationId": "={{ $json.correlation_id }}",
+        "sourceEventId": "={{ $json.event_id }}",
+        "workOrderId": "WO-2026-0912",
+        "completionStatus": "completed",
+        "outputMode": "envelope"
+      },
+      "id": "s04",
+      "name": "04 completion",
+      "type": "n8n-nodes-iaes.iaesEmit",
+      "typeVersion": 1,
+      "position": [1540, 300]
+    },
+    {
+      "parameters": { "inputField": "", "strictMode": false },
+      "id": "v04",
+      "name": "validate 04",
+      "type": "n8n-nodes-iaes.iaesValidate",
+      "typeVersion": 1,
+      "position": [1760, 300]
+    },
+    {
+      "parameters": {
+        "action": "generate",
+        "dataPropertyName": "custom_event_id",
+        "encodingType": "uuid"
+      },
+      "id": "uuid",
+      "name": "a fresh event_id",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [1980, 300]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"spec_version\": {{ JSON.stringify($json.spec_version) }},\n  \"event_type\": \"acme.press_stroke\",\n  \"event_id\": {{ JSON.stringify($json.custom_event_id) }},\n  \"correlation_id\": {{ JSON.stringify($json.correlation_id) }},\n  \"timestamp\": {{ JSON.stringify($json.timestamp) }},\n  \"source\": \"acme.press_line\",\n  \"asset\": { \"asset_id\": {{ JSON.stringify($json.asset.asset_id) }} },\n  \"data\": { \"strokes\": 412, \"tonnage_peak\": 88.4 }\n}",
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "s05",
+      "name": "05 custom: an event type IAES does not publish",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2200, 300],
+      "notes": "IAES Emit is a form for the published types; it cannot emit a type it does not know, and it does not need to: the envelope is what interoperates. Written by hand, no content_hash, and IAES Validate must accept it -- the catalog is open. This is the scenario that proves IAES is not a closed catalogue of seven Wertek types."
+    },
+    {
+      "parameters": { "inputField": "", "strictMode": false },
+      "id": "v05",
+      "name": "validate 05",
+      "type": "n8n-nodes-iaes.iaesValidate",
+      "typeVersion": 1,
+      "position": [2420, 300]
+    }
+  ],
+  "connections": {
+    "When clicking Execute": { "main": [[{ "node": "01 measurement", "type": "main", "index": 0 }]] },
+    "01 measurement": { "main": [[{ "node": "validate 01", "type": "main", "index": 0 }]] },
+    "validate 01": { "main": [[{ "node": "02 health", "type": "main", "index": 0 }], []] },
+    "02 health": { "main": [[{ "node": "validate 02", "type": "main", "index": 0 }]] },
+    "validate 02": { "main": [[{ "node": "03 work order intent", "type": "main", "index": 0 }], []] },
+    "03 work order intent": { "main": [[{ "node": "validate 03", "type": "main", "index": 0 }]] },
+    "validate 03": { "main": [[{ "node": "04 completion", "type": "main", "index": 0 }], []] },
+    "04 completion": { "main": [[{ "node": "validate 04", "type": "main", "index": 0 }]] },
+    "validate 04": { "main": [[{ "node": "a fresh event_id", "type": "main", "index": 0 }], []] },
+    "a fresh event_id": { "main": [[{ "node": "05 custom: an event type IAES does not publish", "type": "main", "index": 0 }]] },
+    "05 custom: an event type IAES does not publish": { "main": [[{ "node": "validate 05", "type": "main", "index": 0 }]] },
+    "validate 05": { "main": [[], []] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

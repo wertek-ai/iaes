@@ -1,7 +1,7 @@
 {
   "name": "node-red-contrib-iaes",
   "version": "2.0.1",
-  "description": "IAES Industrial Asset Event Standard nodes for Node-RED \u2014 create, validate, route, publish, and bridge Sparkplug B industrial asset events",
+  "description": "IAES Industrial Asset Event Standard nodes for Node-RED — create, validate, route, publish, and bridge Sparkplug B industrial asset events",
   "keywords": [
     "node-red",
     "iaes",
@@ -34,7 +34,8 @@
     "sparkplug-payload": "^1.0.2"
   },
   "devDependencies": {
-    "node-red-node-test-helper": "^0.3.4"
+    "node-red": "^4.1.15",
+    "node-red-node-test-helper": "^0.3.6"
   },
   "scripts": {
     "test": "node --test test/*.test.js"
