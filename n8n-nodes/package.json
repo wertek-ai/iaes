@@ -1,7 +1,7 @@
 {
   "name": "n8n-nodes-iaes",
-  "version": "2.0.1",
-  "description": "IAES Industrial Asset Event Standard nodes for n8n \u2014 emit, validate, and track lifecycle of industrial asset events",
+  "version": "2.0.2",
+  "description": "IAES Industrial Asset Event Standard nodes for n8n — emit, validate, and track lifecycle of industrial asset events",
   "keywords": [
     "n8n-community-node-package",
     "iaes",

@@ -8,7 +8,7 @@ All three IAES packages are versioned together when a change crosses them.
 
 ---
 
-## 2026-09-09 (unreleased, for 2.0.2)
+## 2026-09-09 — 2.0.2
 
 ### An absent score was written as 0.0 in every SDK
 
