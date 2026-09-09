@@ -108,6 +108,31 @@ def files_to_scan():
         yield path
 
 
+# A reference to one of our own RFC files, whether or not it names a section.
+RFC_FILE = re.compile(r"rfc/(IAES-RFC-[0-9]{3}\.md)")
+
+
+def missing_rfc_files() -> list:
+    """A named RFC file must exist.
+
+    `IAES_PHILOSOPHY.md` cited `rfc/IAES-RFC-009.md` as a thing the project had
+    already done, while that memo was an open pull request and the file was a
+    404 on the branch. The citation check could not see it: it carried no
+    section number, and without one there was nothing to resolve. A reference
+    to a document that does not exist is the same defect as a reference to a
+    section that does not exist, one level up.
+    """
+    out = []
+    for path in files_to_scan():
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for m in RFC_FILE.finditer(text):
+            if (ROOT / "rfc" / m.group(1)).exists():
+                continue
+            n = text.count("\n", 0, m.start()) + 1
+            out.append((path.relative_to(ROOT).as_posix(), n, m.group(1)))
+    return out
+
+
 def scan() -> list:
     problems = []
     for path in files_to_scan():
@@ -139,8 +164,14 @@ def main() -> None:
         print("error: no citable documents found", file=sys.stderr)
         raise SystemExit(1)
 
+    missing = missing_rfc_files()
+    for rel, n, name in missing:
+        print(f"error: {rel}:{n} refers to rfc/{name}, which does not exist. "
+              f"An RFC becomes citable when its file lands, not when it is "
+              f"proposed.", file=sys.stderr)
+
     problems = scan()
-    if not problems:
+    if not problems and not missing:
         total = sum(len(s) for s in SECTIONS.values())
         print(f"every section citation resolves ({len(DOCS)} citable documents, "
               f"{total} sections)")
@@ -151,7 +182,12 @@ def main() -> None:
     for rel, n, doc, number, hint in problems:
         print(f"error: {rel}:{n} cites {doc} §{number}, which does not exist.{hint}",
               file=sys.stderr)
-    print(f"\n{len(problems)} citation(s) pointing at nothing", file=sys.stderr)
+    # The count covers both kinds. A summary that reported only the section
+    # citations would print "0 citation(s) pointing at nothing" while the check
+    # was failing on a missing file -- the reader would go looking for the
+    # wrong thing, which is how a good finding gets dismissed.
+    print(f"\n{len(problems) + len(missing)} citation(s) pointing at nothing",
+          file=sys.stderr)
     raise SystemExit(1)
 
 

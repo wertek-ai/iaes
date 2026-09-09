@@ -55,8 +55,11 @@ defined outside it. Naming one does not certify an implementation against it.
 `IAES_SPEC.md`, References, asks two separate questions of every reference —
 whether the value must satisfy that document for the event to conform, and
 whether the schema rejects a value that does not — and publishes where they
-disagree. Today exactly one reference is normative for meaning, and even there
-the schema checks the shape and not the list.
+disagree. Five references are normative for meaning today, and they are the ones that
+define a value's form: RFC 3339, RFC 4122, RFC 3986, RFC 2119/8174 and
+ISO 4217. **Among the ISO references, exactly one — ISO 4217 — is normative
+for meaning, and even there the schema checks the shape rather than membership
+in the list.**
 
 **What it costs.** Earlier IAES material called itself *ISO-aligned* and
 described a field-level mapping to four documents. IAES 2.0 withdrew those
@@ -127,10 +130,10 @@ A published version stays retrievable at its own URI and DOI, and a
 representation served under a major's URI stays that major's — it is never
 regenerated from a later release.
 
-**What it costs.** Fixing a typo in a published release is not possible. It
-becomes an erratum in the next one, and the wrong text stays visible with an
-explanation. We have exercised this: `rfc/IAES-RFC-009.md` corrects a
-misattribution in Appendix C and explicitly leaves 2.0 as published.
+**What it costs.** Fixing a typo in a published release is not possible. A
+defect discovered after publication is corrected in a later release; the
+published release remains unchanged, as `GOVERNANCE.md` §8 requires. The wrong
+text stays visible, with the correction recorded beside it.
 
 ### 7. Publish what the artifacts do not check
 
