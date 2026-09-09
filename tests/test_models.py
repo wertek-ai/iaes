@@ -196,6 +196,47 @@ class TestAssetHealth:
         assert e2.rul_days == 30
 
 
+    # An absent optional score is not an assertion. IAES_SPEC.md, Producers 3,
+    # names `anomaly_score: 0.0` as the example of what a producer MUST NOT
+    # write for a score nobody computed; this SDK wrote it for every health
+    # event whose producer said nothing (RFC-002 §6, "the real defect").
+
+    def test_scores_absent_when_not_supplied(self):
+        d = AssetHealth(asset_id="M-1", health_index=0.42, severity="high").to_dict()
+        assert "anomaly_score" not in d["data"], d["data"]
+        assert "fault_confidence" not in d["data"], d["data"]
+
+    def test_a_supplied_zero_is_a_score(self):
+        d = AssetHealth(asset_id="M-1", anomaly_score=0.0, fault_confidence=0.0).to_dict()
+        assert d["data"]["anomaly_score"] == 0.0
+        assert d["data"]["fault_confidence"] == 0.0
+
+    def test_a_supplied_value_stays(self):
+        d = AssetHealth(asset_id="M-1", anomaly_score=0.92, fault_confidence=0.87).to_dict()
+        assert d["data"]["anomaly_score"] == 0.92
+        assert d["data"]["fault_confidence"] == 0.87
+
+    def test_scores_are_independent(self):
+        d = AssetHealth(asset_id="M-1", anomaly_score=0.5).to_dict()
+        assert d["data"]["anomaly_score"] == 0.5
+        assert "fault_confidence" not in d["data"]
+
+    def test_round_trip_keeps_absence(self):
+        absent = AssetHealth.from_object(AssetHealth(asset_id="M-1").to_dict()).to_dict()["data"]
+        assert "anomaly_score" not in absent and "fault_confidence" not in absent
+        present = AssetHealth.from_object(AssetHealth(asset_id="M-1", anomaly_score=0.3).to_dict()).to_dict()["data"]
+        assert present["anomaly_score"] == 0.3
+
+    def test_public_api_unchanged(self):
+        # The attribute is still a float that reads 0.0 when nothing was given:
+        # a patch must not break code that reads it.
+        e = AssetHealth(asset_id="M-1")
+        assert isinstance(e.anomaly_score, float)
+        assert e.anomaly_score == 0.0
+        assert e.fault_confidence == 0.0
+        assert e.anomaly_score + 1 == 1.0
+
+
 class TestWorkOrderIntent:
     def test_basic_creation(self):
         e = WorkOrderIntent(

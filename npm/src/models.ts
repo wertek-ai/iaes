@@ -176,6 +176,21 @@ export interface AssetHealthInit extends BaseFields {
   condition_trend?: ConditionTrend | string | null;
 }
 
+/**
+ * Which optional scores the producer actually supplied, per instance.
+ *
+ * IAES_SPEC.md, Producers 3: "A producer MUST omit an optional field it was
+ * not given rather than substitute a value for it. Writing `anomaly_score:
+ * 0.0` for a score nobody computed states something the producer does not
+ * know." This SDK did exactly that, in both languages, and RFC-002 §6 named
+ * it the real defect. The public API is unchanged on purpose -- `anomaly_score`
+ * and `fault_confidence` are still `number`, still readable, still 0.0 when
+ * nothing was given (2.0.1 made a source-compatibility break in a patch and
+ * the review caught it) -- so what a producer SAID lives beside the instance,
+ * not on it, and only `toJSON()` consults it.
+ */
+const suppliedScores = new WeakMap<AssetHealth, { anomaly_score: boolean; fault_confidence: boolean }>();
+
 export class AssetHealth {
   readonly asset_id: string;
   readonly health_index: number;
@@ -208,6 +223,10 @@ export class AssetHealth {
     this.anomaly_score = init.anomaly_score ?? 0.0;
     this.failure_mode = init.failure_mode;
     this.fault_confidence = init.fault_confidence ?? 0.0;
+    suppliedScores.set(this, {
+      anomaly_score: init.anomaly_score != null,
+      fault_confidence: init.fault_confidence != null,
+    });
     this.rul_days = init.rul_days;
     this.recommended_action = init.recommended_action;
     this.estimated_downtime_hours = init.estimated_downtime_hours;
@@ -242,10 +261,12 @@ export class AssetHealth {
       },
       data: {
         health_index: this.health_index,
-        anomaly_score: this.anomaly_score,
+        // Absent unless the producer supplied it: 0.0 on the wire asserts
+        // "definitely normal", and buildEnvelope drops undefined.
+        anomaly_score: suppliedScores.get(this)?.anomaly_score ? this.anomaly_score : undefined,
         severity: this.severity,
         failure_mode: this.failure_mode,
-        fault_confidence: this.fault_confidence,
+        fault_confidence: suppliedScores.get(this)?.fault_confidence ? this.fault_confidence : undefined,
         rul_days: this.rul_days,
         recommended_action: this.recommended_action,
         estimated_downtime_hours: this.estimated_downtime_hours,
@@ -268,9 +289,10 @@ export class AssetHealth {
       health_index: data.health_index as number,
       severity: data.severity as string,
       source: envelope.source,
-      anomaly_score: data.anomaly_score as number,
+      // undefined when the wire omitted them, so a round trip keeps them absent.
+      anomaly_score: data.anomaly_score as number | undefined,
       failure_mode: data.failure_mode as string | undefined,
-      fault_confidence: data.fault_confidence as number,
+      fault_confidence: data.fault_confidence as number | undefined,
       rul_days: data.rul_days as number | undefined,
       recommended_action: data.recommended_action as string | undefined,
       estimated_downtime_hours: data.estimated_downtime_hours as
