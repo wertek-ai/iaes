@@ -102,6 +102,19 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # Same step as ci.yml. The Python suite includes the reference scenarios
+      # and the cross-language test, which compile and run the TypeScript
+      # scenario against npm/dist. Until 2.0.1 this job never built it and
+      # deselected the one test that needed it, so the publish gate ran a
+      # smaller suite than CI. py-v2.0.1 failed here on the first run because
+      # the scenarios battery does not carry the deselected name: it reports
+      # "npm/dist is not built" instead of quietly skipping.
+      - name: Build the TypeScript SDK for the cross-language tests
+        run: npm ci && npm run build
+        working-directory: npm
 
       - name: Check the tag matches pyproject.toml
         run: |
@@ -114,7 +127,7 @@ jobs:
 
       - run: pip install build
       - run: pip install -e ".[dev]"
-      - run: PYTHONPATH=src python -m pytest tests/ -q -k "not cross_language"
+      - run: PYTHONPATH=src python -m pytest tests/ -q
       - run: python -m build
       # Pinned to a commit, not to the mutable `release/v1` branch. This job
       # holds `id-token: write`, so whoever controls that branch controls a
