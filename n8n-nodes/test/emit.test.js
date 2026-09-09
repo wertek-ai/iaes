@@ -132,9 +132,9 @@ const EXPOSED = {
 const NOT_EXPOSED = [
   'sampling_rate_hz', 'acquisition_duration_s', 'estimated_downtime_hours',
   'checklist_completion_pct', 'spare_parts_count', 'unit_cost', 'total_cost',
-  // Given a default by the SDK itself, in both languages, against the
-  // specification's own example ("anomaly_score: 0.0 for a score nobody
-  // computed"). Not the form's doing; tracked for 2.0.2 in its own change.
+  // Not on the form at all. They WERE given a default by the SDK itself, in
+  // both languages, against the specification's own example; fixed in 2.0.2
+  // (npm/test/absent-scores.test.js and tests/test_models.py keep it fixed).
   'anomaly_score', 'fault_confidence',
 ];
 
