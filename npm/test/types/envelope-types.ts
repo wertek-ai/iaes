@@ -68,4 +68,36 @@ const asWire: IAESWireEnvelope = built;
 // @ts-expect-error a wire envelope may omit content_hash
 const asProduced: IAESEnvelope = handWritten;
 
-export { handWritten, built, hash, eight, asWire, asProduced };
+// 6. An explicit null source_event_id is a valid 2.0 event: the schema types
+//    the field ["string", "null"]. Saying "this begins a chain" out loud is
+//    not the same as omitting the field, and a consumer must be able to type
+//    what it receives.
+const incoming: IAESWireEnvelope = {
+  spec_version: "2.0",
+  event_type: "asset.measurement",
+  event_id: "3f2504e0-4f89-11d3-9a0c-0305e82c3303",
+  correlation_id: "3f2504e0-4f89-11d3-9a0c-0305e82c3304",
+  timestamp: "2026-09-09T05:00:00Z",
+  source: "sensor.line1",
+  source_event_id: null,
+  asset: { asset_id: "MOTOR-001" },
+  data: { measurement_type: "vibration_velocity", value: 4.2, unit: "mm/s" },
+};
+validate(incoming);
+
+// 7. And the PRODUCED type is not weakened while relaxing the wire one. This
+//    SDK never emits null, so `string | undefined` is the whole domain, and a
+//    consumer that already narrowed on it keeps compiling.
+const produced: IAESEnvelope = built;
+const sourceEventId: string | undefined = produced.source_event_id;
+
+export {
+  handWritten,
+  built,
+  hash,
+  eight,
+  asWire,
+  asProduced,
+  incoming,
+  sourceEventId,
+};

@@ -94,19 +94,32 @@ export interface IAESEnvelope {
 /**
  * An envelope as it may arrive ON THE WIRE, rather than as this SDK builds one.
  *
- * The difference is `content_hash`: the schema does not require it, so a
- * conforming producer may omit it, and a consumer must be able to type what it
- * receives. `IAESEnvelope` describes what this SDK PRODUCES and keeps the field
- * required, because every `toJSON()` sets it and thousands of lines may already
- * read it without a null check.
+ * Two differences, and they are the only two. Measured by comparing every
+ * property of `iaes-envelope.schema.json` against this interface, rather than
+ * fixing them one at a time as they are noticed:
+ *
+ *   content_hash      the schema does not list it in `required`, so a
+ *                     conforming producer may omit it. `IAESEnvelope` keeps it
+ *                     required because every `toJSON()` sets it and code that
+ *                     already reads it must keep compiling.
+ *   source_event_id   the schema types it `["string", "null"]`, so an explicit
+ *                     null is a valid 2.0 event -- "this event begins a chain"
+ *                     said out loud rather than by omission. The produced type
+ *                     stays `string | undefined`: this SDK never emits null.
+ *
+ * `tests/test_wire_type_matches_schema.py` keeps that list honest.
  *
  * Two types because there are two contracts, and collapsing them means either
  * breaking existing code or lying about what an event must carry.
  *
  * `validate()` accepts both -- it takes `unknown`.
  */
-export type IAESWireEnvelope = Omit<IAESEnvelope, "content_hash"> & {
+export type IAESWireEnvelope = Omit<
+  IAESEnvelope,
+  "content_hash" | "source_event_id"
+> & {
   content_hash?: string;
+  source_event_id?: string | null;
 };
 
 export function buildEnvelope(opts: {
