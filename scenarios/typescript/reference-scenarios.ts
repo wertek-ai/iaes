@@ -35,7 +35,7 @@ import {
   WorkOrderIntent,
   validate,
 } from "@iaes/sdk";
-import type { IAESEnvelope } from "@iaes/sdk";
+import type { IAESEnvelope, IAESWireEnvelope } from "@iaes/sdk";
 
 const ASSET = {
   asset_id: "MOTOR-001",
@@ -122,8 +122,15 @@ function scenario04Completion(intent: any): IAESEnvelope {
  * checks the envelope and stops, because a type with no published schema has
  * nothing to validate its payload against -- which is not a defect in the
  * event.
+ *
+ * Its return type is `IAESWireEnvelope`, not `IAESEnvelope`, and the compiler
+ * insists: `IAESEnvelope` describes what this SDK PRODUCES, and everything it
+ * produces carries a `content_hash`. This event was written by hand and does
+ * not. Both conform -- the schema does not require the field -- and the two
+ * types are what keeps that true without breaking code that reads the hash off
+ * an event the SDK built.
  */
-function scenario05Custom(measurement: any): IAESEnvelope {
+function scenario05Custom(measurement: any): IAESWireEnvelope {
   return {
     spec_version: measurement.spec_version,
     event_type: "acme.press_stroke",
@@ -136,7 +143,7 @@ function scenario05Custom(measurement: any): IAESEnvelope {
   };
 }
 
-export function run(): IAESEnvelope[] {
+export function run(): IAESWireEnvelope[] {
   const measurement = scenario01Measurement();
   const health = scenario02Health(measurement);
   const intent = scenario03WorkOrderIntent(health);

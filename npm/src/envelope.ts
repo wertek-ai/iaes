@@ -72,15 +72,42 @@ export interface IAESEnvelope {
   timestamp: string;
   source: string;
   /**
-   * Optional. `iaes-envelope.schema.json` does not list it in `required`,
-   * and this type declared it mandatory -- so a hand-written envelope that
-   * is perfectly conforming did not compile. buildEnvelope() still emits
-   * one: optional on the wire does not mean the SDK stops producing it.
+   * Always present on an envelope this SDK produced.
+   *
+   * It stays REQUIRED here, and the reason is compatibility rather than the
+   * schema: `IAESEnvelope` is what every `toJSON()` returns, so weakening it
+   * to optional breaks code that already compiles --
+   * `event.content_hash.slice(0, 8)` becomes an error on a value the SDK
+   * always sets. GOVERNANCE.md 3.1 forbids a package making a breaking API
+   * change without the specification advancing, and 2.0.1 is a platform
+   * release.
+   *
+   * The wire contract is looser: `iaes-envelope.schema.json` does not list
+   * `content_hash` in `required`, so an envelope that omits it conforms. That
+   * shape is `IAESWireEnvelope`, below.
    */
-  content_hash?: string;
+  content_hash: string;
   asset: AssetIdentity;
   data: Record<string, unknown>;
 }
+
+/**
+ * An envelope as it may arrive ON THE WIRE, rather than as this SDK builds one.
+ *
+ * The difference is `content_hash`: the schema does not require it, so a
+ * conforming producer may omit it, and a consumer must be able to type what it
+ * receives. `IAESEnvelope` describes what this SDK PRODUCES and keeps the field
+ * required, because every `toJSON()` sets it and thousands of lines may already
+ * read it without a null check.
+ *
+ * Two types because there are two contracts, and collapsing them means either
+ * breaking existing code or lying about what an event must carry.
+ *
+ * `validate()` accepts both -- it takes `unknown`.
+ */
+export type IAESWireEnvelope = Omit<IAESEnvelope, "content_hash"> & {
+  content_hash?: string;
+};
 
 export function buildEnvelope(opts: {
   eventType: string;

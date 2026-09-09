@@ -32,6 +32,9 @@ function envelope(extra = {}) {
   };
 }
 
+// An envelope that arrives without content_hash: an IAESWireEnvelope in type
+// terms. What the SDK BUILDS always has one -- see the last test -- and
+// IAESEnvelope keeps the field required so code that reads it keeps compiling.
 test("an envelope without content_hash is valid", () => {
   const event = envelope();
   assert.equal(event.content_hash, undefined);
