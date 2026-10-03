@@ -39,6 +39,22 @@ implements IAES 2.0.
 
 Specification, JSON Schemas and governance: **[iaes.dev](https://iaes.dev)**.
 
+## Using IAES with a coding agent
+
+The repository carries what an agent needs to work from it: the specification,
+the JSON Schemas, executable reference scenarios and the tests. You can hand it
+to a coding agent, describe the systems you need to connect, and review what
+comes back. [`INTEGRATING_WITH_AGENTS.md`](INTEGRATING_WITH_AGENTS.md) says
+where to start and what to check.
+
+What we have observed, and its limits: in four runs of one task (a gateway's
+readings turned into IAES events), the agents produced events that passed the
+validator and a separate conformance check, and listed what the specification
+does not define so a person could decide. One task, one model, four runs — it
+shows the flow works, not that it always will. A passing validator is not
+conformance (`IAES_SPEC.md`, *An event can be schema-valid and non-conforming*),
+so a person still reviews the result.
+
 ## Install
 
 ```bash
