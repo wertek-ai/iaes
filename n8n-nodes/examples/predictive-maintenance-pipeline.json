@@ -91,7 +91,7 @@
         "options": {}
       },
       "id": "persist-wo",
-      "name": "Persist to Wertek",
+      "name": "Persist to your system",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [1100, -120],
@@ -147,7 +147,7 @@
       ]
     },
     "IAES Work Order Intent": {
-      "main": [[{ "node": "Persist to Wertek", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Persist to your system", "type": "main", "index": 0 }]]
     }
   },
   "settings": {
