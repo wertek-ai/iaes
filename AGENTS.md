@@ -6,6 +6,9 @@
 > shaped this way.
 >
 > **Not normative.** `IAES_SPEC.md` and `GOVERNANCE.md` govern.
+>
+> **Connecting a system to IAES rather than changing this repository?** Read
+> `INTEGRATING_WITH_AGENTS.md`.
 
 ## Where authority lives
 
