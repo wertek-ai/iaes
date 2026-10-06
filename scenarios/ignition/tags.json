@@ -1,0 +1,44 @@
+{
+  "name": "IAES_ReferenceStory",
+  "tagType": "Folder",
+  "tags": [
+    {
+      "name": "vibration_velocity",
+      "tagType": "AtomicTag",
+      "valueSource": "memory",
+      "dataType": "Float8",
+      "value": 4.2,
+      "documentation": "mm/s RMS. In production, point this at your sensor's tag."
+    },
+    {
+      "name": "receiver_url",
+      "tagType": "AtomicTag",
+      "valueSource": "memory",
+      "dataType": "String",
+      "value": "",
+      "documentation": "Where the batch is POSTed (an IAES receiver). Empty: nothing is sent."
+    },
+    {
+      "name": "last_events",
+      "tagType": "AtomicTag",
+      "valueSource": "memory",
+      "dataType": "String",
+      "value": "",
+      "documentation": "The five events of the last run, as a JSON list."
+    },
+    {
+      "name": "run",
+      "tagType": "AtomicTag",
+      "valueSource": "memory",
+      "dataType": "Boolean",
+      "value": false,
+      "documentation": "Set to true to tell the story; the script sets it back to false.",
+      "eventScripts": [
+        {
+          "eventid": "valueChanged",
+          "script": "\t# IAES reference scenarios, told by an Ignition Gateway. Set `run` to true: the\n\t# script emits the five events of the story, sends them as ONE batch to\n\t# `receiver_url` (if set), writes them to `last_events` and sets `run` back to\n\t# false. Standard library + system.* only (Jython 2.7 and CPython).\n\tif initialChange or not currentValue.value:\n\t\treturn\n\timport datetime\n\timport hashlib\n\timport json\n\timport uuid\n\ttry:\n\t\t# In Jython a Java exception (e.g. java.io.IOException from httpClient) is NOT a Python Exception:\n\t\t# `except Exception` lets it escape. Found on a real Gateway; CPython has no `java`, so it falls back.\n\t\tfrom java.lang import Throwable as JavaThrowable\n\texcept ImportError:\n\t\tJavaThrowable = Exception\n\tlog = system.util.getLogger(\"iaes.reference_story\")\n\troot = \"[default]IAES_ReferenceStory/\"\n\treading, receiver = system.tag.readBlocking([root + \"vibration_velocity\", root + \"receiver_url\"])\n\tASSET = {\"asset_id\": \"MOTOR-001\", \"asset_name\": \"Feed Pump Motor\", \"plant\": \"North Plant\", \"area\": \"Pumping\"}\n\tSCHEMA_BASE = \"https://iaes.dev/schema/v2/\"\n\n\tdef normalize(obj):\n\t\t# Whole-number floats hash as integers, as in every other implementation.\n\t\tif isinstance(obj, float) and obj == int(obj):\n\t\t\treturn int(obj)\n\t\tif isinstance(obj, dict):\n\t\t\treturn dict((k, normalize(v)) for k, v in obj.items())\n\t\tif isinstance(obj, list):\n\t\t\treturn [normalize(v) for v in obj]\n\t\treturn obj\n\n\tdef content_hash(data):\n\t\tcanonical = json.dumps(normalize(data), sort_keys=True, separators=(\",\", \":\"))\n\t\treturn hashlib.sha256(canonical.encode(\"utf-8\")).hexdigest()[:16]\n\n\tdef stamp():\n\t\treturn datetime.datetime.utcnow().strftime(\"%Y-%m-%dT%H:%M:%S.%fZ\")\n\n\tdef published(event_type, source, data, parent=None):\n\t\tevent = {\n\t\t\t\"spec_version\": \"2.0\",\n\t\t\t\"event_type\": event_type,\n\t\t\t\"event_id\": str(uuid.uuid4()),\n\t\t\t\"correlation_id\": parent[\"correlation_id\"] if parent else str(uuid.uuid4()),\n\t\t\t\"timestamp\": stamp(),\n\t\t\t\"source\": source,\n\t\t\t\"content_hash\": content_hash(data),\n\t\t\t\"asset\": dict(ASSET),\n\t\t\t\"data\": data,\n\t\t\t\"dataschema\": SCHEMA_BASE + event_type,\n\t\t}\n\t\tif parent:\n\t\t\tevent[\"source_event_id\"] = parent[\"event_id\"]\n\t\treturn event\n\n\tdef story():\n\t\tif not reading.quality.isGood() or reading.value is None:\n\t\t\traise ValueError(\"vibration_velocity has no good-quality value\")\n\t\tmeasurement = published(\"asset.measurement\", \"sensor.line1\", {\n\t\t\t\"measurement_type\": \"vibration_velocity\", \"value\": float(reading.value), \"unit\": \"mm/s\",\n\t\t\t\"units_qualifier\": \"rms\"})\n\t\thealth = published(\"asset.health\", \"acme.vibration\", {\n\t\t\t\"health_index\": 0.58, \"severity\": \"high\", \"failure_mode\": \"bearing_outer_race\"}, measurement)\n\t\tintent = published(\"maintenance.work_order_intent\", \"acme.rule_engine\", {\n\t\t\t\"title\": \"Inspect drive-end bearing\", \"priority\": \"high\",\n\t\t\t\"description\": \"Vibration velocity at 4.2 mm/s RMS with an outer-race signature. \"\n\t\t\t               \"Inspect the drive-end bearing at the next available window.\"}, health)\n\t\tcompletion = published(\"maintenance.completion\", \"acme.cmms\", {\n\t\t\t\"work_order_id\": \"WO-2026-0912\", \"status\": \"completed\"}, intent)\n\t\t# An event type IAES does not publish, in a namespace the producer controls: written by hand, no hash.\n\t\tcustom = {\n\t\t\t\"spec_version\": \"2.0\", \"event_type\": \"acme.press_stroke\", \"event_id\": str(uuid.uuid4()),\n\t\t\t\"correlation_id\": measurement[\"correlation_id\"], \"timestamp\": measurement[\"timestamp\"],\n\t\t\t\"source\": \"acme.press_line\", \"asset\": {\"asset_id\": ASSET[\"asset_id\"]},\n\t\t\t\"data\": {\"strokes\": 412, \"tonnage_peak\": 88.4}}\n\t\treturn [measurement, health, intent, completion, custom]\n\n\tdef tell():\n\t\ttry:\n\t\t\tevents = story()\n\t\t\tbody = json.dumps(events)\n\t\t\tsystem.tag.writeBlocking([root + \"last_events\"], [body])\n\t\t\turl = (receiver.value or \"\").strip() if receiver.quality.isGood() else \"\"\n\t\t\tif url:\n\t\t\t\tresponse = system.net.httpClient(timeout=20000).post(\n\t\t\t\t\turl, data=body, headers={\"Content-Type\": \"application/json\"})\n\t\t\t\tlog.info(\"told the story: %d events to %s -> HTTP %s\" % (len(events), url, response.statusCode))\n\t\t\telse:\n\t\t\t\tlog.info(\"told the story: %d events (no receiver_url: written to last_events only)\" % len(events))\n\t\texcept (Exception, JavaThrowable) as e:\n\t\t\tlog.error(\"the story failed: %s\" % e)\n\t\tfinally:\n\t\t\tsystem.tag.writeBlocking([root + \"run\"], [False])\n\n\tsystem.util.invokeAsynchronous(tell)"
+        }
+      ]
+    }
+  ]
+}
