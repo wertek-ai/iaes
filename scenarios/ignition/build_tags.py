@@ -30,6 +30,12 @@ import datetime
 import hashlib
 import json
 import uuid
+try:
+	# In Jython a Java exception (e.g. java.io.IOException from httpClient) is NOT a Python Exception:
+	# `except Exception` lets it escape. Found on a real Gateway; CPython has no `java`, so it falls back.
+	from java.lang import Throwable as JavaThrowable
+except ImportError:
+	JavaThrowable = Exception
 log = system.util.getLogger("iaes.reference_story")
 root = "[default]__FOLDER__/"
 reading, receiver = system.tag.readBlocking([root + "vibration_velocity", root + "receiver_url"])
@@ -104,7 +110,7 @@ def tell():
 			log.info("told the story: %d events to %s -> HTTP %s" % (len(events), url, response.statusCode))
 		else:
 			log.info("told the story: %d events (no receiver_url: written to last_events only)" % len(events))
-	except Exception as e:
+	except (Exception, JavaThrowable) as e:
 		log.error("the story failed: %s" % e)
 	finally:
 		system.tag.writeBlocking([root + "run"], [False])

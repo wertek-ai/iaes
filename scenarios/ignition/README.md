@@ -51,7 +51,32 @@ it, that is a gap in the standard, and the way to close it is an RFC (`GOVERNANC
   The test compares the five events with `scenarios/fixture.json` and their `content_hash` with the other
   implementations'.
 - **What that does not prove** -- that Jython 2.7 produces the same bytes (the hash depends on `json.dumps` and float
-  formatting), that the tag types import, and that the Gateway fires the script. Those need a real Gateway; see below.
+  formatting), that the tag types import, and that the Gateway fires the script. Those need a real Gateway:
+
+### On a real Gateway (2026-10-06, Ignition 8.3.9 standard, trial, Docker on Ubuntu 22.04)
+
+Imported through the Gateway API, `run` set to `true` by a separate helper tag (not part of this scenario), and the events
+read back from `last_events` with a tag export:
+
+```
+import tags.json            -> successCount 5, failureCount 0
+iaes.reference_story INFO   -> told the story: 5 events (no receiver_url: written to last_events only)
+against the fixture         -> OK: 5 events, one correlation_id, source_event_id chained
+asset.measurement           -> content_hash 6a4999e46c5621fd == python · valid against its schema
+asset.health                -> content_hash b5c85a495ef1dccb == python · valid against its schema
+maintenance.work_order_intent -> content_hash b5b85716c4bc4864 == python · valid against its schema
+maintenance.completion      -> content_hash 1e330e8f91ead8f2 == python · valid against its schema
+acme.press_stroke           -> no content_hash, as the reference
+with receiver_url set       -> told the story: 5 events to <an IAES receiver> -> HTTP 401 (POSTed; no credentials, nothing stored)
+```
+
+So Jython 2.7 hashes byte-for-byte like CPython. Its timestamps carry milliseconds (`.527000Z`): `%f` on Jython is
+millisecond-precise; the timestamp is volatile and still a valid date-time.
+
+**What the real Gateway found that the stand-in could not:** in Jython a **Java** exception (here `java.io.IOException`
+from `httpClient`, a receiver the Gateway could not reach) is not a Python `Exception`, so `except Exception` let it
+escape and the script's own error line never appeared. The script now also catches `java.lang.Throwable`; re-run on the
+Gateway it logs `the story failed: java.io.IOException: Unable to POST …` and still sets `run` back to `false`.
 
 ## Contract
 
@@ -68,5 +93,8 @@ DO NOT INFER  · that your provider is called `default`
               · Ignition versions other than 8.3.x
 IDEMPOTENCY   every run emits new event ids and a new correlation_id
 ACCEPTANCE    python scenarios/ignition/run.py, and tests/test_reference_scenarios.py on every commit
-STATUS        CPython with a stand-in for system.* on every commit. Real Gateway: see the line below.
+STATUS        verified 2026-10-06 · on every commit: CPython with a stand-in for system.* · once on a real Ignition 8.3.9
+              Gateway (trial, Docker): the five events match the fixture, their content_hash equals python's, the four
+              published ones validate, and the batch POSTs. Not verified: Ignition on Windows, a licensed Gateway,
+              the Designer, a receiver that accepts the batch (the one reached answered 401: no credentials).
 ```
