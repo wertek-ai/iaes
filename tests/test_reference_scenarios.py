@@ -2,8 +2,8 @@
 
 That is the whole claim of the battery -- **the workflow changes, the event
 meaning does not** -- and it is worth nothing unless something checks it. So
-this runs the Python and TypeScript scenarios and compares both against
-`scenarios/fixture.json`.
+this runs every scenario -- Python, TypeScript, Node-RED, n8n and Ignition -- and
+compares each against `scenarios/fixture.json`.
 
 What is compared is what a consumer acts on. `event_id` is a fresh UUID and
 `timestamp` is the moment of emission: two correct implementations differ there
@@ -125,6 +125,19 @@ def n8n_events() -> list:
     return workflow_events("n8n")
 
 
+def ignition_events() -> list:
+    """Run the Ignition scenario: the `run` tag's script in `tags.json`, unchanged.
+
+    `scenarios/ignition/run.py` executes it on CPython with a stand-in for
+    Ignition's `system.*` (CI cannot run a Gateway); what that leaves unproven is
+    written in run.py and in scenarios/ignition/README.md.
+    """
+    run = subprocess.run([sys.executable, str(ROOT / "scenarios" / "ignition" / "run.py")],
+                         cwd=ROOT, capture_output=True, text=True, timeout=60)
+    assert run.returncode == 0, run.stderr
+    return json.loads(run.stdout)
+
+
 def stable(event: dict, drop: set) -> dict:
     return {k: v for k, v in event.items() if k not in drop}
 
@@ -190,11 +203,31 @@ def test_n8n_scenarios_match_the_fixture():
     check_against_fixture(n8n_events(), "n8n")
 
 
+def test_ignition_scenarios_match_the_fixture():
+    check_against_fixture(ignition_events(), "ignition")
+
+
+def test_the_ignition_tag_file_is_what_its_builder_writes():
+    """`tags.json` is the artifact; `build_tags.py` is where its script is readable.
+
+    If someone edits one and not the other, the file an integrator imports and
+    the script a reviewer reads have diverged.
+    """
+    sys.path.insert(0, str(ROOT / "scenarios" / "ignition"))
+    import build_tags
+
+    on_disk = json.loads((ROOT / "scenarios" / "ignition" / "tags.json").read_text(encoding="utf-8"))
+    assert on_disk == build_tags.build(), (
+        "scenarios/ignition/tags.json differs from build_tags.py: run "
+        "`python scenarios/ignition/build_tags.py`"
+    )
+
+
 def test_implementations_agree_on_the_content_hash(tmp_path):
     """The one field derived from meaning rather than from the moment.
 
-    `content_hash` is computed from the event's content, so four
-    implementations of the same scenario must agree on it, event by event.
+    `content_hash` is computed from the event's content, so every
+    implementation of the same scenario must agree on it, event by event.
     If one disagrees it is hashing something the others are not -- a
     cross-implementation defect the per-implementation checks cannot see.
 
@@ -211,6 +244,7 @@ def test_implementations_agree_on_the_content_hash(tmp_path):
         "typescript": typescript_events(tmp_path),
         "node-red": nodered_events(),
         "n8n": n8n_events(),
+        "ignition": ignition_events(),
     }
     reference = produced["python"]
     for name, events in produced.items():
