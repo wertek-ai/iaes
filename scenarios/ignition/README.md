@@ -67,7 +67,8 @@ asset.health                -> content_hash b5c85a495ef1dccb == python · valid 
 maintenance.work_order_intent -> content_hash b5b85716c4bc4864 == python · valid against its schema
 maintenance.completion      -> content_hash 1e330e8f91ead8f2 == python · valid against its schema
 acme.press_stroke           -> no content_hash, as the reference
-with receiver_url set       -> told the story: 5 events to <an IAES receiver> -> HTTP 401 (POSTed; no credentials, nothing stored)
+with receiver_url set       -> told the story: 5 events to <a test receiver on the Gateway's host> -> HTTP 202
+what the receiver got       -> ONE POST with the 5 events: match the fixture, content_hash == python, valid
 ```
 
 So Jython 2.7 hashes byte-for-byte like CPython. Its timestamps carry milliseconds (`.527000Z`): `%f` on Jython is
@@ -95,6 +96,6 @@ IDEMPOTENCY   every run emits new event ids and a new correlation_id
 ACCEPTANCE    python scenarios/ignition/run.py, and tests/test_reference_scenarios.py on every commit
 STATUS        verified 2026-10-06 · on every commit: CPython with a stand-in for system.* · once on a real Ignition 8.3.9
               Gateway (trial, Docker): the five events match the fixture, their content_hash equals python's, the four
-              published ones validate, and the batch POSTs. Not verified: Ignition on Windows, a licensed Gateway,
-              the Designer, a receiver that accepts the batch (the one reached answered 401: no credentials).
+              published ones validate, and the batch arrives at a receiver as ONE POST identical to what was emitted. Not
+              verified: Ignition on Windows, a licensed Gateway, the Designer.
 ```
