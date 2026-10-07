@@ -33,6 +33,11 @@ Numbered 010 because an open draft already holds 009 (the Appendix C memo).
 - `active_repair_seconds` moves to the next major, because it is MAJOR (§7).
 - No edit to any published 2.x schema (§8).
 
+**Revised 2026-10-07**, in Review: the open questions are closed (§13). The
+name stays `asset.state`; a producer that starts without knowing the previous
+state now SHOULD say so (§6 rule 8); reserve is left to the producer and the
+consumer, and §12 now says so; Option A is not part of 2.1.
+
 # Copyright Notice
 
 Copyright (c) 2026 Wertek AI. This document is made available under the
@@ -68,7 +73,7 @@ into MTBF or MTTR stays the consumer's, as `GOVERNANCE.md` §1 requires.
     10. Effect on existing implementers
     11. Proposed incorporation
     12. What this memo does not decide
-    13. Open questions
+    13. Open questions, closed
 
 # 1. The problem, measured against the specification
 
@@ -301,6 +306,14 @@ ones (`GOVERNANCE.md` §7), and a consumer MUST tolerate any other and treat it 
    their own. A work order keeps its own chain (intent → completion,
    `IAES_SPEC.md` *Typical Flow*); the link between a down interval and its work
    order is `work_order_id`, not the chain.
+8. **Start, and losing track.** A producer that starts, or that loses sight of
+   the asset and regains it, and does not know the state before that instant
+   SHOULD emit the state it sees with `previous_state: unknown`, rather than
+   stay silent until the first transition. A consumer MUST NOT extend the
+   previous state across that event: the span before it, back to the last
+   event it has from that `source`, is a gap under rule 4. This event is not a
+   transition in the sense of rule 1, and rule 2 still applies: its
+   `timestamp` is the instant the producer learned the state.
 
 **Worked example.** A pump trips at 06:10. At 06:40 an inspection finds a bearing
 that needs replacing, so the outage becomes corrective maintenance under a work
@@ -482,32 +495,38 @@ When Accepted, in the same change (precedent: RFC-008):
 
 - Any formula for MTBF, MTTR, MTTRes, MRT or availability, and any threshold.
 - Which up modes count as operating time.
+- Whether reserve is down time or up time (§13 item 5).
 - Which states a given equipment class can have, or how a producer infers them.
 - A published catalog for `detail` (`GOVERNANCE.md` §7).
 - Partial work-order status updates, which `IAES_SPEC.md` lists as not yet
   supported.
 
-# 13. Open questions
+# 13. Open questions, closed
 
-1. **Name.** `asset.state` or `asset.availability`? The first names what is
-   declared; the second names one use of it.
-2. **Unknown at start.** When a producer starts and does not know the previous
-   state, does it emit its current state with `previous_state: unknown`, or
-   stay silent until the first transition? Recommended: emit it with
-   `previous_state: unknown`, so that the first span is visibly not trusted
-   rather than silently missing.
-3. **Several producers.** Answered in this revision by §6 rule 6, which is
-   normative: one timeline per (asset, `source`), and a consumer MUST NOT merge
-   them without stating the precedence. Still open: whether a later memo
-   publishes a non-normative example of a merge.
-4. **Option A as a fallback?** Is there a producer that can send completions with
-   the down interval but cannot emit `asset.state` (a CMMS with no SCADA behind
-   it)?
-5. **Reserve: up or down?** Table 4 note a puts reserve under planned down time;
-   3.38 makes idle a "non-operating up state during non-required time". This
-   memo lets the producer declare what it sees (`down` with
-   `down_cause: other_planned, detail: reserve`, or `up` with `up_mode: idle`)
-   and does not choose between them. Should it?
+Closed by the steward on 2026-10-07, while in Review. Comments may still reopen
+any of them before the memo is Accepted.
+
+1. **Name.** `asset.state`. It names what is declared; `asset.availability`
+   names one use of it, and availability is an indicator, which §3 keeps out
+   of IAES.
+2. **Unknown at start.** Emit it, with `previous_state: unknown`. Now normative
+   as §6 rule 8: the first span is visibly not trusted rather than silently
+   missing.
+3. **Several producers.** §6 rule 6 stands. This memo publishes no example of a
+   merge; if one is wanted, it is informative and goes in a reference scenario
+   or a later memo, never in the specification.
+4. **Option A as a fallback?** Not in 2.1. No producer has been identified that
+   can send completions with the down interval but cannot emit `asset.state`.
+   If one appears, Option A's fields are proposed by their own RFC, with the
+   rule for which source wins. By §7's reasoning on `active_repair_seconds`,
+   typed fields on `maintenance.completion` narrow that schema and are MAJOR,
+   so they would wait for the next major.
+5. **Reserve: up or down?** IAES does not choose. ISO 14224:2016 itself places
+   it in two readings (Table 4 note a; 3.38), and choosing would put a
+   classification into the standard, which §3 forbids. The producer declares
+   what it sees (`down` with `down_cause: other_planned, detail: reserve`, or
+   `up` with `up_mode: idle`); the consumer states how it classifies either.
+   §12 now lists it.
 
 # Author
 
