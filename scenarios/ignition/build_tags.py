@@ -90,7 +90,7 @@ def jcs_string(s):
 	return u"".join(out)
 
 def jcs_number(x):
-	# The ECMAScript form: repr gives the shortest round-trip digits, laid out as ECMAScript does.
+	# The ECMAScript form: the shortest round-trip digits, laid out as ECMAScript does.
 	from decimal import Decimal
 	if isinstance(x, INTEGERS):
 		# RFC 8785 works on IEEE-754 doubles: an integer is the double nearest to it, as JSON.parse
@@ -104,7 +104,14 @@ def jcs_number(x):
 	if x == 0:
 		return u"0"
 	sign = u"-" if x < 0 else u""
-	t = Decimal(repr(abs(x))).normalize().as_tuple()
+	# Not repr: in Jython it is Java's Double.toString, which is not the shortest form (1e23 comes out
+	# as 9.999999999999999e+22, 5e-324 as 4.9e-324; measured on a Gateway, 2026-10-07). The fewest
+	# correctly rounded digits that read back as the same double are the shortest, in any Python.
+	for p in range(1, 18):
+		shortest = "%.*e" % (p - 1, abs(x))
+		if float(shortest) == abs(x):
+			break
+	t = Decimal(shortest).normalize().as_tuple()
 	digits = u"".join([TEXT(d) for d in t.digits])
 	k = len(digits)
 	n = t.exponent + k

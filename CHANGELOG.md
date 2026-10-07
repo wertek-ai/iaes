@@ -51,9 +51,11 @@ declares 2.0, and keeps its 2.0 hash.
   SDKs and checked with its timestamps (`scenarios/fixture-asset-state.json`).
 - **Ignition scenario:** declares 2.1 and serialises by RFC 8785 itself, since
   `json.dumps` is not JCS. Reproduces every shared JCS vector on CPython
-  (`tests/test_ignition_jcs.py`: 34 accepted, 3 refused). The 14 vectors that
-  existed on 2026-10-07 were also reproduced in Jython on a real Ignition 8.3.9
-  Gateway; the vectors added by the pre-cut review have not been run there yet.
+  (`tests/test_ignition_jcs.py`: 34 accepted, 3 refused), and all 37 in Jython
+  on a real Ignition 8.3.9 Gateway (2026-10-07). That Gateway run found that
+  Jython's `repr(float)` is Java's `Double.toString`, not the shortest form
+  (`1e23` → `9.999999999999999e+22`); the serialiser now takes the fewest
+  correctly rounded digits that read back as the same double.
 
 ### Migration for consumers on a 2.0.x SDK
 

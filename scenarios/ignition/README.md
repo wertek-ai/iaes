@@ -106,6 +106,19 @@ the story at 2.1         -> 5 events, match the fixture; the four published ones
 
 The helper tag is not part of the scenario.
 
+**Re-measured after the pre-cut review (2026-10-07, same Gateway), over all 37 cases of `conformance/content_hash.json`:**
+
+```
+first run                -> 34 of 37: 5e-324, 2e23 and 1e23 hashed differently. In Jython repr(float) is Java's
+                            Double.toString, which is not the shortest form: repr(1e23) = 9.999999999999999e+22,
+                            repr(5e-324) = 4.9e-324, repr(2e23) = 1.9999999999999998e+23
+after the fix            -> 37 of 37. The serialiser now takes the fewest correctly rounded digits that read back as
+                            the same double ("%.*e"), which is the shortest form in CPython and in Jython alike
+refusals                 -> the integer beyond the largest double is refused by the serialiser; the two lone
+                            surrogates are refused one step earlier, by Jython's own json.loads ("Unpaired high
+                            surrogate"), so they never reach it on the normal path
+```
+
 **What the real Gateway found that the stand-in could not:** in Jython a **Java** exception (here `java.io.IOException`
 from `httpClient`, a receiver the Gateway could not reach) is not a Python `Exception`, so `except Exception` let it
 escape and the script's own error line never appeared. The script now also catches `java.lang.Throwable`; re-run on the
@@ -130,6 +143,6 @@ STATUS        verified 2026-10-06 · on every commit: CPython with a stand-in fo
               Gateway (trial, Docker): the five events match the fixture, their content_hash equals python's, the four
               published ones validate, and the batch arrives at a receiver as ONE POST identical to what was emitted. Not
               verified: Ignition on Windows, a licensed Gateway, the Designer. The 2.1 script (its RFC 8785
-              serialiser) verified on the same Gateway on 2026-10-07: 14 of 14 shared JCS vectors in Jython. Not yet
-              run in Jython: the 20 vectors and 3 refusals added by the pre-cut review the same day.
+              serialiser) verified on the same Gateway on 2026-10-07: 37 of 37 shared JCS vectors in Jython,
+              including the 20 vectors and 3 refusals added by the pre-cut review.
 ```
