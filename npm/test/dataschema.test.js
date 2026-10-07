@@ -24,7 +24,7 @@ describe("dataschema", () => {
       unit: "mm/s",
     }).toJSON();
     assert.equal(e.dataschema, "https://iaes.dev/schema/v2/asset.measurement");
-    assert.equal(e.spec_version, "2.0");
+    assert.equal(e.spec_version, "2.1");
   });
 
   it("the URI is the base plus the event type", () => {

@@ -243,8 +243,8 @@ class TheManifestDescribesItsOwnRelease(unittest.TestCase):
             predates = f"rfc/{path.name}" in tool.PREDATE_THE_STATE_LINE
             self.assertEqual(path.name in rationale, accepted or predates, path.name)
         # Negative control: main holds at least one memo that is not Accepted
-        # (RFC-010, a Draft), and it must be out.
-        self.assertNotIn("IAES-RFC-010.md", rationale)
+        # (RFC-012, Rejected; until 2.1 it was RFC-010 in Review), and it must be out.
+        self.assertNotIn("IAES-RFC-012.md", rationale)
         self.assertIn("IAES-RFC-000.md", rationale)
         self.assertIn("IAES-RFC-002.md", rationale)
 
