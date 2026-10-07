@@ -38,7 +38,7 @@ Say this to whoever reviews the result, because an agent will not volunteer it.
 | What IAES deliberately does not define | `GOVERNANCE.md` §1, and `IAES_PHILOSOPHY.md` |
 | What may change between versions | `GOVERNANCE.md` §4 |
 | The exact shape of each payload | `schema/*.schema.json` |
-| A worked, executable story in your runtime | `scenarios/` — Python, TypeScript, Node-RED, n8n, all checked against `scenarios/fixture.json` |
+| A worked, executable story in your runtime | `scenarios/` — Python, TypeScript, Node-RED, n8n, Ignition, all checked against `scenarios/fixture.json` |
 | What a library exposes | `surface.json`; what each one offers today, `implementations.json` |
 
 Use the scenario for your runtime as the starting point rather than writing the

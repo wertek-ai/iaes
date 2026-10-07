@@ -1,10 +1,13 @@
 # Changelog
 
-All three IAES packages are versioned together when a change crosses them.
+All four IAES packages are versioned together (`GOVERNANCE.md` §3.1).
 
 - `node-red-contrib-iaes` (npm) — the Node-RED palette
+- `n8n-nodes-iaes` (npm) — the n8n nodes
 - `@iaes/sdk` (npm) — TypeScript SDK
 - `iaes` (PyPI) — Python SDK
+
+The normative history of the specification is the version history in `IAES_SPEC.md`; this file records the packages.
 
 ---
 
@@ -86,7 +89,7 @@ with the correct values as defaults.
 
 ---
 
-## Empaquetado
+## Packaging
 
 - 🔴 **El sdist de Python pesaba 6.8 MB contra 26 KB del wheel.** `hatchling` barría el
   monorepo entero porque `.gitignore` cubría `npm/node_modules/` y

@@ -35,11 +35,11 @@ file names.
 | `schema/*.schema.json` | **decides machine-validity of an event.** It is what a validator runs. |
 | `IAES_SPEC.md` | normative prose. Governs semantics: what a field means and what a conforming implementation must do. |
 | `rfc/*.md` | **rationale, not authority** — `rfc/IAES-RFC-000.md` §4, item 2. An incorporated RFC records why a decision was made; it does not make one. |
-| `SDK_SURFACE.md`, `surface.json` | normative **for implementations**, not for the wire. What an SDK must expose to call itself an IAES SDK. Conformance is measured on the wire, so an SDK that exposes less is still producing valid events. |
+| `surface.json` | normative **for implementations**, not for the wire (`SDK_SURFACE.md` explains it and is not normative). What an SDK must expose to call itself an IAES SDK. Conformance is measured on the wire, so an SDK that exposes less is still producing valid events. |
 | `GOVERNANCE.md` | **normative too.** The process, the scope boundaries and the compatibility policy. It declares commitments no schema could override: §1, item 2 excludes equipment catalogs by name, and a schema that closed one would be the defect. |
 | everything else | tooling, examples, tests. |
 
-None of the three outranks the others, and **they must not contradict one
+None of these outranks the others, and **they must not contradict one
 another**. Where they do, the disagreement itself is the defect, and which one
 gives way depends on which is wrong — that is a question for the pull request,
 not a rule of precedence. The `correlation_id` divergence was found exactly

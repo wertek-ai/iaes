@@ -474,10 +474,10 @@ class TestPublishedReadmesDeclareTheFamily:
     last thing anybody remembers to update.
 
     ⚠️ Note what this deliberately does NOT check: the mere presence of an old
-    version string. The root README cites the Zenodo deposit, which really is
-    v1.3 until v1.4 is deposited — a naive rule would force falsifying a
-    citation. What is checked is that the CURRENT spec is declared, not that
-    older ones are absent.
+    version string. A README may name an older release on purpose (a citation
+    of a deposit, a migration note), and a naive rule would force falsifying it.
+    What is checked is that the CURRENT spec is declared, not that older ones
+    are absent.
     """
 
     READMES = ["README.md", "npm/README.md", "node-red/README.md", "n8n-nodes/README.md"]
