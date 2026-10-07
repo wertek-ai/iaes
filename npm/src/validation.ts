@@ -15,16 +15,8 @@ import * as path from "path";
 
 const SCHEMA_DIR = path.join(__dirname, "..", "schemas");
 
-/** Map event_type to schema filename. */
-const SCHEMA_FILES: Record<string, string> = {
-  "asset.measurement": "asset-measurement.schema.json",
-  "asset.health": "asset-health.schema.json",
-  "maintenance.work_order_intent": "maintenance-work-order-intent.schema.json",
-  "maintenance.completion": "maintenance-completion.schema.json",
-  "asset.hierarchy": "asset-hierarchy.schema.json",
-  "sensor.registration": "sensor-registration.schema.json",
-  "maintenance.spare_part_usage": "maintenance-spare-part-usage.schema.json",
-};
+/** Map event_type to schema filename: generated from schema/, never written here. */
+import { SCHEMA_FILES } from "./fromSchema";
 
 const schemaCache = new Map<string, Record<string, unknown>>();
 

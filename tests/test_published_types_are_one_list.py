@@ -80,8 +80,11 @@ def test_the_python_sdk_lists_exactly_the_published_types():
 def test_the_typescript_sdk_lists_exactly_the_published_types():
     want = published()
     cases = [
-        ("npm/src/envelope.ts", r"export const PUBLISHED_EVENT_TYPES\b", TYPE),
-        ("npm/src/validation.ts", r"const SCHEMA_FILES\b", KEY),
+        # Generated from schema/ since tools/generate_from_schema.py; envelope.ts
+        # and validation.ts import them. Still compared here, so a stale or
+        # hand-edited generated file fails twice: here and in the freshness check.
+        ("npm/src/fromSchema.ts", r"export const PUBLISHED_EVENT_TYPES\b", TYPE),
+        ("npm/src/fromSchema.ts", r"export const SCHEMA_FILES\b", KEY),
         ("npm/src/models.ts", r"const EVENT_TYPES\b[^=]*=", KEY),
     ]
     for rel, anchor, pattern in cases:
