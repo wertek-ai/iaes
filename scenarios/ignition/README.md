@@ -90,8 +90,18 @@ escapes non-ASCII text, writes `1e-07` and sorts keys by code point. So the scri
 shared JCS vectors in `conformance/content_hash.json`, including RFC 8785's own example.
 
 For the four payloads of the story the two rules give the same bytes (ASCII text, ordinary numbers), which is why the
-hashes above are unchanged. **Not yet measured on a Gateway:** the 2.1 script itself, and Jython on the payloads where the
-rules differ.
+hashes above are unchanged.
+
+**Measured on the same Gateway (2026-10-07, Ignition 8.3.9, trial):** the 2.1 `tags.json` imported (5/5), and a helper tag
+ran the script's serialiser in Jython over the 14 cases of `conformance/content_hash.json`, passed in as JSON:
+
+```
+Jython 2.7 RFC 8785      -> 14 of 14 content_hash equal to the shared vectors, including non-ASCII text, a character
+                            outside the BMP, exponents (1e-7, 1e+21), integer-like keys and RFC 8785's own example
+the story at 2.1         -> 5 events, match the fixture; the four published ones declare 2.1, hash as python, validate
+```
+
+The helper tag is not part of the scenario.
 
 **What the real Gateway found that the stand-in could not:** in Jython a **Java** exception (here `java.io.IOException`
 from `httpClient`, a receiver the Gateway could not reach) is not a Python `Exception`, so `except Exception` let it
@@ -116,6 +126,6 @@ ACCEPTANCE    python scenarios/ignition/run.py, and tests/test_reference_scenari
 STATUS        verified 2026-10-06 · on every commit: CPython with a stand-in for system.* · once on a real Ignition 8.3.9
               Gateway (trial, Docker): the five events match the fixture, their content_hash equals python's, the four
               published ones validate, and the batch arrives at a receiver as ONE POST identical to what was emitted. Not
-              verified: Ignition on Windows, a licensed Gateway, the Designer, and the 2.1 script (its RFC 8785
-              serialiser) on a Gateway: on CPython it reproduces the 14 shared JCS vectors.
+              verified: Ignition on Windows, a licensed Gateway, the Designer. The 2.1 script (its RFC 8785
+              serialiser) verified on the same Gateway on 2026-10-07: 14 of 14 shared JCS vectors in Jython.
 ```

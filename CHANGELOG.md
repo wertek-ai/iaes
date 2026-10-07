@@ -46,8 +46,8 @@ declares 2.0, and keeps its 2.0 hash.
 - **A second reference story,** the trip of RFC-010's example, told by both
   SDKs and checked with its timestamps (`scenarios/fixture-asset-state.json`).
 - **Ignition scenario:** declares 2.1 and serialises by RFC 8785 itself, since
-  `json.dumps` is not JCS. Reproduces the 14 shared vectors on CPython; not yet
-  run on a Gateway.
+  `json.dumps` is not JCS. Reproduces the 14 shared vectors on CPython and, on
+  2026-10-07, in Jython on a real Ignition 8.3.9 Gateway.
 
 ### Ranges kept on purpose
 
