@@ -1,0 +1,112 @@
+# Conformance cases
+
+One set of cases, run by every IAES implementation in this repository: the
+Python SDK, the TypeScript SDK, the Node-RED nodes and the n8n nodes. If two
+implementations give different answers for the same event, one of their CI
+jobs fails.
+
+## Why this exists
+
+IAES has one specification and four implementations, and until these cases
+each implementation re-wrote the rules by hand. Measured on 2026-10-06, that
+is how they came to disagree:
+
+- Node-RED accepted `spec_version: "205"` and Python rejected it.
+- n8n's strict mode kept its own list of required fields, without
+  `asset.hierarchy` and without three fields the schemas require.
+- Node-RED rejected events with a non-UUID `event_id` that every other
+  validator accepts.
+- Python and TypeScript computed different `content_hash` values for six of
+  eleven payloads.
+
+Agreement between implementations is now something CI measures.
+
+## Two verdicts
+
+The specification asks two separate questions (IAES_SPEC.md, "An event can be
+schema-valid and non-conforming"), and every case answers both.
+
+| Verdict | Question | Who answers it |
+|---|---|---|
+| `schema_valid` | Do the published schemas accept this event? | `validate` in each SDK; the Node-RED and n8n nodes call the TypeScript SDK's |
+| `conforming` | Does it also meet what the specification requires and the schemas only annotate? | `find_nonconformities` / `findNonconformities` |
+
+The second exists because in 2.x the schemas declare `uuid`, `date-time`,
+`date` and `uri` with `format`, which JSON Schema Draft 2020-12 treats as an
+annotation, while the specification makes RFC 4122, RFC 3339 (in UTC) and
+RFC 3986 normative for those fields. Making `format` binding in the schemas is
+a narrowing change (GOVERNANCE.md §4.2) and is not available inside 2.x.
+
+**Decision recorded here (2026-10-06):** the default answer of every validator
+is `schema_valid`. A validator stricter than the schema by default makes two
+readers disagree about the same bytes, which is the defect this suite exists
+to prevent. Nonconforming fields are always reported; the Node-RED and n8n
+nodes reject them only in **Strict** mode. A Node-RED node saved before the
+Strict option existed keeps rejecting them, so that updating the package does
+not change what a deployed flow accepts.
+
+`find_nonconformities` keeps no list of fields: it reads the `format`
+annotations from the schemas each package ships.
+
+## Files
+
+| File | What it holds |
+|---|---|
+| `validation.json` | Events with their expected `schema_valid`, `conforming` and `nonconforming_fields` |
+| `content_hash.json` | `data` payloads with the canonical bytes and the `content_hash` each implementation must produce |
+
+Both are **generated** by `tools/build_conformance_cases.py`; edit the
+generator, never the JSON. `tests/test_conformance.py` fails if they are stale.
+
+The expected values are written in the generator literally, from the
+specification and the schemas. They are never computed by calling an
+implementation: a suite whose answers come from the code it judges cannot
+fail. The only thing computed is the SHA-256 of a canonical string that is
+itself written out by hand.
+
+## `content_hash`: agreed and divergent cases
+
+`agreed` cases must produce exactly the recorded bytes in every implementation.
+
+`divergent_2_0` cases record what each 2.0 implementation produces today,
+because they disagree: non-ASCII text, characters outside the BMP,
+integer-like keys, small and large exponents, and key order outside the BMP.
+The runner checks each implementation against its own recorded value, so the
+divergence stays measured: if it changes, the build fails. The fix is
+proposed as a draft RFC (RFC 8785, wertek-ai/iaes#57); when it is accepted,
+these cases move to `agreed`.
+
+## Where each implementation runs the cases
+
+| Implementation | Runner |
+|---|---|
+| Python SDK | `tests/test_conformance.py` |
+| TypeScript SDK | `npm/test/conformance.test.js` |
+| Node-RED nodes | `node-red/test/conformance.test.js` (both modes, plus a node saved before Strict existed) |
+| n8n nodes | `n8n-nodes/test/conformance.test.js` (both modes) |
+
+## Adding a case
+
+1. Add it to `tools/build_conformance_cases.py`, with the expected verdicts
+   taken from the specification and the schemas, not from running a validator.
+2. Run `python tools/build_conformance_cases.py`.
+3. Run the four runners. If one disagrees, decide which side is wrong before
+   changing anything: the case, or the implementation.
+
+## Contract
+
+```
+CONTRACT      conformance cases for IAES 2.x validators and content_hash
+INPUT         conformance/validation.json, conformance/content_hash.json (generated)
+OUTPUT        for each validation case: schema_valid (bool), conforming (bool),
+              nonconforming_fields (sorted dotted paths, empty when the schema rejects the event)
+              for each hash case: canonical string and content_hash, either agreed or per implementation
+RULES         · the default verdict of every validator is schema_valid
+              · a nonconforming field is reported, and rejected only in strict mode
+              · find_nonconformities reads the schemas' `format` annotations; it keeps no field list
+              · a crash (anything other than a validation error) is a failure, never a verdict
+DO NOT INFER  · that a schema-valid event conforms
+              · that two implementations produce the same content_hash for non-ASCII text, integer-like
+                keys or exponents (see divergent_2_0) until the RFC 8785 draft (wertek-ai/iaes#57) is accepted
+SOURCE        tools/build_conformance_cases.py; expected values written by hand from IAES_SPEC.md and schema/
+```

@@ -47,7 +47,8 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@iaes/sdk": "^2.0.0"
+    "@iaes/sdk": "^2.0.0",
+    "ajv": "^8.0.0"
   },
   "devDependencies": {
     "n8n-workflow": "^1.0.0",

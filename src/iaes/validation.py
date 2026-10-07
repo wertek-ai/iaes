@@ -110,6 +110,13 @@ def validate(event: Dict[str, Any]) -> None:
             "Install with: pip install iaes[validate]"
         )
 
+    # Reported, not crashed: a list or a string reached ``event.get`` and raised
+    # AttributeError, while the TypeScript SDK reported a ValidationError with
+    # this same message. conformance/validation.json, case
+    # "schema.event_not_an_object", holds both to the same answer.
+    if not isinstance(event, dict):
+        raise ValidationError("Event must be a JSON object")
+
     event_type = event.get("event_type")
     if not event_type:
         raise ValidationError("Missing 'event_type' field")

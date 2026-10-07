@@ -291,9 +291,9 @@ describe("iaes-validate node", () => {
     });
 
     assert.equal(outputs[0][0], null); // valid is null
-    assert.ok(
-      outputs[0][1].iaes_errors.includes("Missing required field: event_type")
-    );
+    // The report names the field; its wording is the SDK's, as in every
+    // implementation (conformance/README.md).
+    assert.ok(outputs[0][1].iaes_errors.some((e) => e.includes("event_type")));
   });
 
   it("should reject events missing asset.asset_id", () => {
@@ -304,9 +304,7 @@ describe("iaes-validate node", () => {
     });
 
     assert.equal(outputs[0][0], null);
-    assert.ok(
-      outputs[0][1].iaes_errors.includes("Missing required field: asset")
-    );
+    assert.ok(outputs[0][1].iaes_errors.some((e) => e.includes("asset")));
   });
 
   // The old node checked event_type, asset.asset_id and data — nothing else —
@@ -324,12 +322,9 @@ describe("iaes-validate node", () => {
     });
 
     assert.equal(outputs[0][0], null);
-    const errors = outputs[0][1].iaes_errors;
+    const errors = outputs[0][1].iaes_errors.join(" | ");
     for (const field of ["spec_version", "event_id", "correlation_id", "timestamp", "source"]) {
-      assert.ok(
-        errors.includes("Missing required field: " + field),
-        "expected a complaint about " + field
-      );
+      assert.ok(errors.includes("'" + field + "'"), "expected a complaint about " + field);
     }
   });
 
@@ -370,7 +365,7 @@ describe("iaes-validate node", () => {
     const { outputs } = sendInput(node, { payload: envelope });
 
     assert.equal(outputs[0][0], null);
-    assert.ok(outputs[0][1].iaes_errors.includes("Missing required data field: unit"));
+    assert.ok(outputs[0][1].iaes_errors.some((e) => e.includes("unit")));
   });
 
   it("should accept JSON string payloads", () => {

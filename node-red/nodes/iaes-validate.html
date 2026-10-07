@@ -4,6 +4,10 @@
     color: "#16a34a",
     defaults: {
       name: { value: "" },
+      // New nodes judge by the schema, like every other IAES validator.
+      // A node saved before this option existed has no value and stays
+      // strict at runtime (see iaes-validate.js).
+      strict: { value: false },
     },
     inputs: 1,
     outputs: 2,
@@ -20,6 +24,11 @@
   <div class="form-row">
     <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
     <input type="text" id="node-input-name" placeholder="Name" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-strict"><i class="fa fa-check-square-o"></i> Strict</label>
+    <input type="checkbox" id="node-input-strict" style="width:auto" />
+    <span>Also reject events that pass the schema but break the specification</span>
   </div>
 </script>
 
@@ -40,6 +49,8 @@
         <dd>The event type (e.g., <code>asset.measurement</code>).</dd>
         <dt>iaes_asset_id <span class="property-type">string</span></dt>
         <dd>The asset ID from the event.</dd>
+        <dt>iaes_nonconformities <span class="property-type">string[]</span></dt>
+        <dd>Fields that pass the schema but break the specification; empty when there are none.</dd>
       </dl>
     </li>
     <li>Invalid
@@ -47,14 +58,24 @@
         <dt>payload <span class="property-type">object</span></dt>
         <dd>The original payload.</dd>
         <dt>iaes_error <span class="property-type">string</span></dt>
-        <dd>Description of the validation error.</dd>
+        <dd>The first problem found.</dd>
+        <dt>iaes_errors <span class="property-type">string[]</span></dt>
+        <dd>Every problem found, each with the path of the field.</dd>
       </dl>
     </li>
   </ol>
   <h3>Details</h3>
-  <p>Routes valid IAES events to output 1 and invalid events to output 2.
-  Checks for required fields (event_type, asset.asset_id, data) and verifies
-  the event_type is a recognized IAES type.</p>
-  <p>Use this node to filter and validate incoming MQTT or HTTP messages
-  before processing them in your flow.</p>
+  <p>Two verdicts, the same two the IAES specification separates.</p>
+  <p><b>Schema.</b> The event is validated against the published IAES schemas
+  with the SDK's <code>validate()</code>. An event the schema rejects goes to
+  output 2 with <code>msg.iaes_errors</code>. A custom <code>event_type</code>
+  is valid: only its envelope is judged.</p>
+  <p><b>Conformance.</b> Some fields are only annotated by the schema and
+  required by the specification: identifiers must be UUIDs (RFC 4122),
+  timestamps RFC 3339 in UTC, <code>dataschema</code> a URI. Their names are
+  returned in <code>msg.iaes_nonconformities</code>. With <b>Strict</b> on, such
+  an event goes to output 2; off, it goes to output 1 with a yellow status.</p>
+  <p>The Python SDK, the TypeScript SDK and the n8n nodes give the same two
+  answers for the same event; the shared cases in the repository's
+  <code>conformance/</code> directory are where that is checked.</p>
 </script>
