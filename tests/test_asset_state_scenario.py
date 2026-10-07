@@ -91,7 +91,8 @@ def test_two_identical_trips_are_two_events():
 
     trip = dict(asset_id="PUMP-101", source="plant.scada", state="down",
                 down_kind="unplanned", down_cause="other_unplanned", detail="trip")
-    first, second = AssetState(**trip).to_dict(), AssetState(**trip).to_dict()
+    first = AssetState(**trip, timestamp="2026-10-06T06:10:00Z").to_dict()
+    second = AssetState(**trip, timestamp="2026-10-07T06:10:00Z").to_dict()
     assert first["data"] == second["data"]
     assert "content_hash" not in first and "content_hash" not in second
     assert first["event_id"] != second["event_id"]

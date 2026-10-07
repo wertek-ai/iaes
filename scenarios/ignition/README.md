@@ -86,8 +86,11 @@ millisecond-precise; the timestamp is volatile and still a valid date-time.
 
 From 2.1 the hash is SHA-256 over the RFC 8785 (JCS) serialisation (IAES-RFC-011), and `json.dumps` is not JCS: it
 escapes non-ASCII text, writes `1e-07` and sorts keys by code point. So the script carries its own serialiser
-(`canonical`, `jcs_string`, `jcs_number`), written once for Jython 2.7 and CPython 3. On CPython it reproduces all 14
-shared JCS vectors in `conformance/content_hash.json`, including RFC 8785's own example.
+(`canonical`, `jcs_string`, `jcs_number`), written once for Jython 2.7 and CPython 3. On CPython it reproduces every
+shared JCS vector in `conformance/content_hash.json`, including RFC 8785's own example: `tests/test_ignition_jcs.py`
+runs the serialiser, taken out of the script unchanged, over all of them (34 serialised; 3 refused: a lone surrogate in
+a string and in a member name, and an integer beyond the largest double). An integer is hashed as the double nearest
+to it, as `JSON.parse` reads it.
 
 For the four payloads of the story the two rules give the same bytes (ASCII text, ordinary numbers), which is why the
 hashes above are unchanged.
@@ -127,5 +130,6 @@ STATUS        verified 2026-10-06 · on every commit: CPython with a stand-in fo
               Gateway (trial, Docker): the five events match the fixture, their content_hash equals python's, the four
               published ones validate, and the batch arrives at a receiver as ONE POST identical to what was emitted. Not
               verified: Ignition on Windows, a licensed Gateway, the Designer. The 2.1 script (its RFC 8785
-              serialiser) verified on the same Gateway on 2026-10-07: 14 of 14 shared JCS vectors in Jython.
+              serialiser) verified on the same Gateway on 2026-10-07: 14 of 14 shared JCS vectors in Jython. Not yet
+              run in Jython: the 20 vectors and 3 refusals added by the pre-cut review the same day.
 ```

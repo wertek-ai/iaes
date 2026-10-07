@@ -250,6 +250,16 @@ Closed by the steward on 2026-10-07, before the release that carries the memo.
    it: a value RFC 8785 cannot serialise cannot be hashed, and the producer
    omits `content_hash`, which is optional. Constraining the range of numbers
    in `data` would narrow every schema, which is MAJOR (`GOVERNANCE.md` §4.2).
+   Made precise at the cut (2026-10-07), after an adversarial review found the
+   Python SDK refusing every integer above 2^53 while the TypeScript SDK hashed
+   it: RFC 8785 works on IEEE-754 doubles, so an integer is hashed as the
+   double nearest to it, as `JSON.parse` reads it, and only one beyond the
+   largest double cannot be serialised. `IAES_SPEC.md` says so, and that
+   producers SHOULD NOT rely on the hash to tell apart integers a double cannot
+   represent. The same review settled two edges this memo left implicit: a
+   string with a lone surrogate is not I-JSON and is refused, and only
+   `2.<minor>` with a minor of 1 or more selects JCS; an absent or unreadable
+   `spec_version` keeps the 2.0 rule.
 
 # Author
 

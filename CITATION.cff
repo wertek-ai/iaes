@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use IAES in research or industrial systems, please cite it as below."
+type: software
+title: "Industrial Asset Event Standard (IAES)"
+version: "2.1"
+date-released: "2026-10-07"
+license: CC-BY-4.0
+authors:
+  - family-names: Garza
+    given-names: Gilberto
+    affiliation: Wertek AI
+# The concept DOI: it resolves to the latest version. The 2.1 version DOI is
+# minted when the release is deposited, and is not written here before it exists.
+doi: 10.5281/zenodo.18973216
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.18973216
+    description: "Every version of IAES (resolves to the latest)"
+  - type: doi
+    value: 10.5281/zenodo.22663498
+    description: "IAES 2.0"
+repository-code: "https://github.com/wertek-ai/iaes"
+url: "https://iaes.dev"
+keywords:
+  - industrial IoT
+  - predictive maintenance
+  - condition monitoring
+  - asset management
+  - industrial events
+  - vendor-neutral standard
+  - ISO 14224
+  - RFC 8785

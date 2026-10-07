@@ -251,9 +251,9 @@ A new published event type, emitted **once per transition**, never per reading
 | Field | Type | Required | Meaning |
 |---|---|---|---|
 | `state` | `up` \| `down` | yes | 3.96 / 3.15, from this event's `timestamp` on |
-| `down_kind` | `planned` \| `unplanned` | when `state` is `down` | Table 4's two branches of down time |
-| `down_cause` | string; published values `preventive_maintenance`, `other_planned`, `corrective_maintenance`, `other_unplanned` | no | Table 4's four branches. Must agree with `down_kind`: the first two are planned, the last two unplanned |
-| `up_mode` | string; published values `start_up`, `running`, `run_down`, `hot_standby`, `idle`, `cold_standby`, `externally_disabled` | no | Table 4's up-time leaves, plus 3.38 Note 3's externally disabled time, when `state` is `up` and the producer knows it |
+| `down_kind` | `planned` \| `unplanned` | when `state` is `down`; absent when `up` | Table 4's two branches of down time. Never null |
+| `down_cause` | string; published values `preventive_maintenance`, `other_planned`, `corrective_maintenance`, `other_unplanned` | no; absent when `state` is `up` | Table 4's four branches. Must agree with `down_kind`: the first two are planned, the last two unplanned |
+| `up_mode` | string; published values `start_up`, `running`, `run_down`, `hot_standby`, `idle`, `cold_standby`, `externally_disabled` | no; absent when `state` is `down` | Table 4's up-time leaves, plus 3.38 Note 3's externally disabled time, when `state` is `up` and the producer knows it |
 | `previous_state` | `up` \| `down` \| `unknown` | no | what the producer believed the state was just before this transition |
 | `detail` | string, open | no | anything finer: `trip`, `manual_shutdown`, `modification`, `reserve`, `testing`, … (examples, not a published catalog) |
 | `work_order_id` | string | no | the work order this down interval is handled under, on any event of the interval once it is known |
@@ -267,6 +267,11 @@ may not. Table 4 note d makes a trip an *other unplanned outage*, not
 corrective maintenance. Two consumers with the same events and the same stated
 classification get the same number. Neither has to guess what the producer
 meant.
+
+A field of the other state is a contradiction, not extra detail, so the schema
+rejects it, and the event declares 2.1 or a later 2.x minor, since the type does
+not exist in 2.0. (Tightened at the 2.1 cut, 2026-10-07, after an adversarial
+review and before the schema was served anywhere.)
 
 `down_cause` and `up_mode` are **open**: the values above are the published
 ones (`GOVERNANCE.md` §7), and a consumer MUST tolerate any other and treat it as

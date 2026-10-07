@@ -60,10 +60,26 @@ def as_text(s):
 		return s
 	return s.decode("utf-8")
 
+def well_formed(s):
+	# RFC 8785 serialises I-JSON, which has no lone surrogates. Jython stores text as UTF-16, so a
+	# character outside the BMP arrives here as a high + low pair, and a pair is fine; CPython 3 never
+	# pairs them, so there any surrogate is lone (and UnicodeEncodeError, a ValueError, would follow).
+	i = 0
+	n = len(s)
+	while i < n:
+		c = ord(s[i])
+		if 0xD800 <= c <= 0xDBFF and i + 1 < n and 0xDC00 <= ord(s[i + 1]) <= 0xDFFF:
+			i += 2
+			continue
+		if 0xD800 <= c <= 0xDFFF:
+			raise ValueError("a lone surrogate is not I-JSON (RFC 8785, section 3.1)")
+		i += 1
+	return s
+
 def jcs_string(s):
 	# Only the quote, the backslash and control characters are escaped; everything else as is.
 	out = [u'"']
-	for ch in as_text(s):
+	for ch in well_formed(as_text(s)):
 		if ch in SHORT:
 			out.append(SHORT[ch])
 		elif ord(ch) < 0x20:
@@ -77,9 +93,12 @@ def jcs_number(x):
 	# The ECMAScript form: repr gives the shortest round-trip digits, laid out as ECMAScript does.
 	from decimal import Decimal
 	if isinstance(x, INTEGERS):
-		if abs(x) > 2 ** 53:
-			raise ValueError("an integer beyond 2**53 has no exact JSON number form")
-		x = float(x)
+		# RFC 8785 works on IEEE-754 doubles: an integer is the double nearest to it, as JSON.parse
+		# reads it (2**53 + 1 hashes as 2**53). Only one beyond the largest double has no form.
+		try:
+			x = float(x)
+		except OverflowError:
+			raise ValueError("an integer beyond the largest IEEE-754 double has no JSON form")
 	if x != x or x in (float("inf"), float("-inf")):
 		raise ValueError("NaN and Infinity have no JSON form")
 	if x == 0:
@@ -114,8 +133,9 @@ def canonical(v):
 	if isinstance(v, (list, tuple)):
 		return u"[" + u",".join([canonical(i) for i in v]) + u"]"
 	if isinstance(v, dict):
-		# Members sorted by their names as UTF-16 code units, not code points.
-		keys = sorted(v.keys(), key=lambda key: as_text(key).encode("utf-16-be"))
+		# Members sorted by their names as UTF-16 code units, not code points (checked first: the
+		# sort key cannot encode a lone surrogate).
+		keys = sorted(v.keys(), key=lambda key: well_formed(as_text(key)).encode("utf-16-be"))
 		return u"{" + u",".join([jcs_string(key) + u":" + canonical(v[key]) for key in keys]) + u"}"
 	raise TypeError("not a JSON value: %r" % (v,))
 
