@@ -1,4 +1,4 @@
-"""IAES event models — 7 vendor-neutral dataclasses for the IAES v2.0 spec.
+"""IAES event models — 8 vendor-neutral dataclasses for the IAES v2.1 spec.
 
 Each model produces a spec-compliant IAES envelope via ``to_dict()``.
 All fields are spec-only — no vendor-specific extensions.
@@ -14,13 +14,18 @@ from .envelope import SPEC_VERSION, compute_content_hash, schema_uri_for
 from .enums import (
     CompletionStatus,
     ConditionTrend,
+    DownCause,
+    DownKind,
     HierarchyLevel,
     ISO13374Status,
     MeasurementType,
+    PreviousState,
     RegistrationStatus,
     RelationshipType,
     Severity,
     UnitsQualifier,
+    UpDownState,
+    UpMode,
     WorkOrderPriority,
 )
 
@@ -62,8 +67,13 @@ def _build_envelope(
     plant: Optional[str],
     area: Optional[str],
     data: Dict[str, Any],
+    with_content_hash: bool = True,
 ) -> Dict[str, Any]:
-    """Build a spec-compliant IAES envelope dict."""
+    """Build a spec-compliant IAES envelope dict.
+
+    ``with_content_hash=False`` is for ``asset.state``, which MUST NOT carry one
+    (IAES_SPEC.md, ``asset.state``, rule 3).
+    """
     clean_data = {k: v for k, v in data.items() if v is not None}
     envelope: Dict[str, Any] = {
         "spec_version": SPEC_VERSION,
@@ -72,7 +82,11 @@ def _build_envelope(
         "correlation_id": correlation_id,
         "timestamp": timestamp.isoformat() if hasattr(timestamp, "isoformat") else str(timestamp),
         "source": source,
-        "content_hash": compute_content_hash(clean_data),
+    }
+    # Same key order as before: the hash sits between source and asset.
+    if with_content_hash:
+        envelope["content_hash"] = compute_content_hash(clean_data)
+    envelope.update({
         "asset": {
             "asset_id": asset_id,
             "asset_name": asset_name,
@@ -80,7 +94,7 @@ def _build_envelope(
             "area": area,
         },
         "data": clean_data,
-    }
+    })
     # The event type determines the contract, so the producer gets this for
     # free — and only for published types, because a URI that does not resolve
     # is worse than an absent field.
@@ -747,6 +761,100 @@ class SparePartUsage:
         )
 
 
+# ─── asset.state (IAES 2.1) ─────────────────────────────────
+
+
+@dataclass
+class AssetState:
+    """IAES ``asset.state`` — a transition of an asset between up and down (IAES 2.1).
+
+    Emit once per transition, never per reading. ``timestamp`` is the instant of
+    the transition, never the time of sending, so set it. The event carries no
+    ``content_hash``: two identical trips on one asset would hash the same and
+    the second would be dropped as a duplicate, so consumers deduplicate this
+    type by ``event_id`` (IAES_SPEC.md, ``asset.state``).
+    """
+
+    asset_id: str
+    state: Union[str, UpDownState]
+    source: str = "state"
+
+    down_kind: Optional[Union[str, DownKind]] = None
+    down_cause: Optional[Union[str, DownCause]] = None
+    up_mode: Optional[Union[str, UpMode]] = None
+    previous_state: Optional[Union[str, PreviousState]] = None
+    detail: Optional[str] = None
+    work_order_id: Optional[str] = None
+    reason: Optional[str] = None
+
+    # Asset identity
+    asset_name: Optional[str] = None
+    plant: Optional[str] = None
+    area: Optional[str] = None
+
+    # Envelope
+    event_id: str = field(default_factory=_uuid4)
+    correlation_id: str = field(default_factory=_uuid4)
+    source_event_id: Optional[str] = None
+    batch_id: Optional[str] = None
+    timestamp: datetime = field(default_factory=_utcnow)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize to an IAES wire-format dict. Never carries ``content_hash``."""
+        data = {
+            "state": _enum_val(self.state),
+            "down_kind": _enum_val(self.down_kind),
+            "down_cause": _enum_val(self.down_cause),
+            "up_mode": _enum_val(self.up_mode),
+            "previous_state": _enum_val(self.previous_state),
+            "detail": self.detail,
+            "work_order_id": self.work_order_id,
+            "reason": self.reason,
+        }
+        return _build_envelope(
+            "asset.state",
+            event_id=self.event_id,
+            correlation_id=self.correlation_id,
+            source_event_id=self.source_event_id,
+            batch_id=self.batch_id,
+            timestamp=self.timestamp,
+            source=self.source,
+            asset_id=self.asset_id,
+            asset_name=self.asset_name,
+            plant=self.plant,
+            area=self.area,
+            data=data,
+            with_content_hash=False,
+        )
+
+    @classmethod
+    def from_object(cls, envelope: Dict[str, Any]) -> "AssetState":
+        """Deserialize from an IAES wire-format dict."""
+        asset = envelope.get("asset", {})
+        data = envelope.get("data", {})
+        return cls(
+            asset_id=asset["asset_id"],
+            state=data["state"],
+            source=envelope.get("source", "state"),
+            down_kind=data.get("down_kind"),
+            down_cause=data.get("down_cause"),
+            up_mode=data.get("up_mode"),
+            previous_state=data.get("previous_state"),
+            detail=data.get("detail"),
+            work_order_id=data.get("work_order_id"),
+            reason=data.get("reason"),
+            asset_name=asset.get("asset_name"),
+            plant=asset.get("plant"),
+            area=asset.get("area"),
+            event_id=envelope.get("event_id", _uuid4()),
+            correlation_id=envelope.get("correlation_id", _uuid4()),
+            source_event_id=envelope.get("source_event_id"),
+            batch_id=envelope.get("batch_id"),
+            timestamp=_parse_timestamp(envelope["timestamp"]),
+        )
+
+
 # ─── Lookup table for from_object dispatch ─────────────────
 
 EVENT_TYPES = {
@@ -757,6 +865,7 @@ EVENT_TYPES = {
     "asset.hierarchy": AssetHierarchy,
     "sensor.registration": SensorRegistration,
     "maintenance.spare_part_usage": SparePartUsage,
+    "asset.state": AssetState,
 }
 
 

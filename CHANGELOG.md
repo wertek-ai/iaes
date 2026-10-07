@@ -11,9 +11,53 @@ The normative history of the specification is the version history in `IAES_SPEC.
 
 ---
 
-## Unreleased
+## Unreleased — 2.1.0, implementing IAES 2.1
 
-### `content_hash` by RFC 8785 (JCS) for 2.1 events (IAES-RFC-011, ready ahead of 2.1)
+The four packages move to **2.1.0** together (`GOVERNANCE.md` §3.1): they
+implement IAES 2.1, which accepts RFC-010, RFC-011 and RFC-013. The version
+history in `IAES_SPEC.md` has the specification's side; this is the packages'.
+
+### Events now declare 2.1
+
+`SPEC_VERSION` is `"2.1"` in both SDKs, so every event they build declares 2.1
+and its `content_hash` is computed by RFC 8785 (below). **For ASCII text and
+ordinary numbers the hash is the same as in 2.0.x**; it changes where the 2.0
+implementations disagreed: non-ASCII text, exponents, integer-like keys and
+characters outside the BMP. An event built by 2.0.x and retried by 2.1.0 still
+declares 2.0, and keeps its 2.0 hash.
+
+### `asset.state` (IAES-RFC-010)
+
+- **Python and TypeScript:** `AssetState`, which never carries `content_hash`.
+  Set `timestamp`: for this type it is the instant of the transition, and the
+  default (now) produces a valid event and a wrong down interval. In
+  TypeScript `toJSON()` returns `IAESWireEnvelope`, whose `content_hash` is
+  optional, and `fromObject` / `fromJSON` accept either envelope type.
+- **Five enumerations,** generated from the schema: `UpDownState`, `DownKind`
+  and `PreviousState` (closed), `DownCause` and `UpMode` (advisory: the fields
+  are open, and any other value is *not classified*, never an error). Not
+  `AssetState`: the class takes that name.
+- **Node-RED `iaes route`:** output 8, `state`. It comes after the other
+  seven, so a flow wired before 2.1 keeps every wire; until now an
+  `asset.state` event left by output 7 as an unknown type.
+- **Not yet:** the Node-RED and n8n nodes do not build `asset.state`. Neither
+  lets a flow set the envelope timestamp, which for this type is the fact
+  (`implementations.json`).
+- **A second reference story,** the trip of RFC-010's example, told by both
+  SDKs and checked with its timestamps (`scenarios/fixture-asset-state.json`).
+- **Ignition scenario:** declares 2.1 and serialises by RFC 8785 itself, since
+  `json.dumps` is not JCS. Reproduces the 14 shared vectors on CPython and, on
+  2026-10-07, in Jython on a real Ignition 8.3.9 Gateway.
+
+### Ranges kept on purpose
+
+`node-red-contrib-iaes` and `n8n-nodes-iaes` keep `"@iaes/sdk": "^2.0.0"` in
+this change. Their lockfiles resolve the SDK from the registry, and 2.1.0 does
+not exist there until it is published; CI tests them against the SDK in this
+commit (`file:../npm`). The range moves to `^2.1.0` after the SDK is published,
+as the 2.0 lockfiles did.
+
+### `content_hash` by RFC 8785 (JCS) for 2.1 events (IAES-RFC-011)
 
 Both SDKs now carry `canonical_json` / `canonicalJson` (RFC 8785).
 `compute_content_hash` / `computeContentHash` take the `spec_version` of the
@@ -22,8 +66,8 @@ event:
 - 2.1 and later use JCS;
 - 2.0 and earlier keep the 2.0 computation unchanged.
 
-The SDKs still declare 2.0, so **no hash changes in this release**. The 2.1
-rule is in place, and tested, for the release that carries the RFC.
+Written ahead of 2.1 while the SDKs still declared 2.0; with 2.1.0 they
+declare 2.1, and the rule applies (above).
 
 `conformance/content_hash.json` gains the JCS bytes for every case, plus
 RFC 8785's own example. Measured on the shared cases:

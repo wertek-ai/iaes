@@ -2,7 +2,7 @@
 
 import { createHash, randomUUID } from "crypto";
 
-export const SPEC_VERSION = "2.0";
+export const SPEC_VERSION = "2.1";
 
 /**
  * Canonical base for schema identity. Every schema is served at

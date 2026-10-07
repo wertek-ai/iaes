@@ -155,3 +155,76 @@ class RegistrationStatus(str, Enum):
     REGISTERED = "registered"
     CALIBRATED = "calibrated"
     DECOMMISSIONED = "decommissioned"
+
+
+class UpDownState(str, Enum):
+    """The state from this event's timestamp on: able (up) or unable (down) to
+    perform as required (ISO 14224:2016, 3.96 and 3.15).
+
+    Schema: asset.state, data.state.
+    """
+
+    UP = "up"
+    DOWN = "down"
+
+
+class DownKind(str, Enum):
+    """The two branches of down time (ISO 14224:2016, Table 4). Required when
+    state is down.
+
+    Schema: asset.state, data.down_kind.
+    """
+
+    PLANNED = "planned"
+    UNPLANNED = "unplanned"
+
+
+class DownCause(str, Enum):
+    """The four branches of down time (ISO 14224:2016, Table 4). Open: the
+    examples are the published values, and a consumer MUST treat any other
+    as not classified, never as an error. A published value must agree with
+    down_kind: the first two are planned, the last two unplanned. A trip is
+    an other unplanned outage, not corrective maintenance. Advisory: the
+    schema leaves this field open, so these are conveniences, never a
+    constraint.
+
+    Schema: asset.state, data.down_cause.
+    """
+
+    PREVENTIVE_MAINTENANCE = "preventive_maintenance"
+    OTHER_PLANNED = "other_planned"
+    CORRECTIVE_MAINTENANCE = "corrective_maintenance"
+    OTHER_UNPLANNED = "other_unplanned"
+
+
+class UpMode(str, Enum):
+    """What the asset was doing while up, when the producer knows it: the up-
+    time leaves of ISO 14224:2016 Table 4, plus externally disabled time
+    (3.38, Note 3). Open: the examples are the published values, and a
+    consumer MUST treat any other as not classified, never as an error.
+    Whether a mode counts as operating time is the consumer's
+    classification. Advisory: the schema leaves this field open, so these
+    are conveniences, never a constraint.
+
+    Schema: asset.state, data.up_mode.
+    """
+
+    START_UP = "start_up"
+    RUNNING = "running"
+    RUN_DOWN = "run_down"
+    HOT_STANDBY = "hot_standby"
+    IDLE = "idle"
+    COLD_STANDBY = "cold_standby"
+    EXTERNALLY_DISABLED = "externally_disabled"
+
+
+class PreviousState(str, Enum):
+    """What the producer believed the state was just before this event. unknown
+    when it starts, or regains sight of the asset, without knowing it.
+
+    Schema: asset.state, data.previous_state.
+    """
+
+    UP = "up"
+    DOWN = "down"
+    UNKNOWN = "unknown"

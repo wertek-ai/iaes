@@ -27,8 +27,8 @@ Sensors --> Intelligence --> IAES --> Connectors --> Enterprise Systems
 ## Part of IAES
 
 The standard ships as four packages that version together. **The first two
-numbers of a package version are the specification it implements** — `2.0.x`
-implements IAES 2.0.
+numbers of a package version are the specification it implements** — `2.1.x`
+implements IAES 2.1.
 
 | Runtime | Package | Install |
 |---|---|---|
@@ -239,7 +239,7 @@ event = from_dict(wire)  # AssetMeasurement, AssetHealth, etc.
 print(event.asset_id, event.value)
 ```
 
-## Event Types (v2.0)
+## Event Types (v2.1)
 
 | Event Type | Python | TypeScript | Purpose |
 |------------|--------|------------|---------|
@@ -250,6 +250,7 @@ print(event.asset_id, event.value)
 | `asset.hierarchy` | `AssetHierarchy` | `AssetHierarchy` | Asset hierarchy sync (org > plant > area > equipment) |
 | `sensor.registration` | `SensorRegistration` | `SensorRegistration` | Sensor discovery and lifecycle |
 | `maintenance.spare_part_usage` | `SparePartUsage` | `SparePartUsage` | Spare parts consumed during maintenance |
+| `asset.state` | `AssetState` | `AssetState` | An asset went up or down: the facts MTBF, MTTR and availability are computed from (2.1) |
 
 ## Enums
 
@@ -271,6 +272,11 @@ AssetHealth(asset_id="M-001", severity="critical")  # also works
 | `HierarchyLevel` | organization, plant, area, equipment |
 | `RelationshipType` | parent_of, child_of, sibling_of, depends_on |
 | `RegistrationStatus` | discovered, registered, calibrated, decommissioned |
+| `UpDownState` | up, down |
+| `DownKind` | planned, unplanned |
+| `DownCause` | preventive_maintenance, other_planned, corrective_maintenance, other_unplanned (advisory: the field is open) |
+| `UpMode` | start_up, running, run_down, hot_standby, idle, cold_standby, externally_disabled (advisory: the field is open) |
+| `PreviousState` | up, down, unknown |
 
 ## Wire Format
 
@@ -278,7 +284,7 @@ Every event serializes to the same envelope structure:
 
 ```json
 {
-  "spec_version": "2.0",
+  "spec_version": "2.1",
   "dataschema": "https://iaes.dev/schema/v2/asset.measurement",
   "event_type": "asset.measurement",
   "event_id": "a9e3c4b2-...",
@@ -309,7 +315,7 @@ Every event serializes to the same envelope structure:
 ## Standards referenced
 
 IAES cites industrial standards where they supply context or a vocabulary
-defined outside it. **Citation is not conformance**, and IAES 2.0 claims none
+defined outside it. **Citation is not conformance**, and IAES 2.1 claims none
 to ISO 13374, ISO 17359, ISO 14224 or ISO 55000.
 
 | Document | Relationship | Normative for meaning |

@@ -11,8 +11,8 @@ IAES Industrial Asset Event Standard nodes for [n8n](https://n8n.io) — emit, v
 ## Part of IAES
 
 The standard ships as four packages that version together. **The first two
-numbers of a package version are the specification it implements** — `2.0.x`
-implements IAES 2.0.
+numbers of a package version are the specification it implements** — `2.1.x`
+implements IAES 2.1.
 
 | Runtime | Package | Install |
 |---|---|---|

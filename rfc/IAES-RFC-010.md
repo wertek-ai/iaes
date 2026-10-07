@@ -13,12 +13,19 @@ ISSN: N/A
 > it. It is **not** normative authority for how IAES behaves. The applicable
 > normative artifacts, as released, govern IAES. See `GOVERNANCE.md` §6.1.
 
-**State: Review**, per `GOVERNANCE.md` §6: accepted for consideration by the steward
-on 2026-10-07. Still open for comment; it becomes Accepted only when its change is
-incorporated (§11) in the release that carries it.
+**State: Accepted**, per `GOVERNANCE.md` §6, on 2026-10-07: the 2.1 cut
+incorporated its change (§11) into `IAES_SPEC.md`, `schema/asset-state.schema.json`,
+`surface.json`, `GOVERNANCE.md` §9.2 and `references/registry.json`.
 **Compatibility: MINOR** under `GOVERNANCE.md` §4.1 and §4.4, analysed part by
-part in §9. No dependency remains (§8).
-**Target version: 2.1.** Distribution is unlimited.
+part in §9. The question §9 left to the steward is answered: removing the MTTR
+sentence states something about a quantity a consumer derives, not a meaning of
+the bytes of a recovery event, so T1 does not answer and the part is MINOR.
+**Version: IAES 2.1.** Distribution is unlimited.
+
+One departure from §11, decided at incorporation: the schema forbids
+`content_hash` with a described `{"not": {}}` instead of `false`. Both reject the
+field; with `false`, the Python validator reported the error at `$` rather than at
+`content_hash`, and the SDK profile requires the path of the failing field.
 
 Numbered 010 because an open draft already holds 009 (the Appendix C memo).
 

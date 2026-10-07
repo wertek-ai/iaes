@@ -13,11 +13,15 @@ changes what an event is or what a conforming implementation must do: a field,
 a type, an enumeration value, a constraint, a required/optional decision, or
 the meaning of any of them.
 
-Write it as `rfc/IAES-RFC-NNN.md`, numbered after the highest that exists, and
-open a pull request. The RFC states the problem, the proposed change, the
+Write it as `rfc/IAES-RFC-NNN.md`, numbered after the highest that exists
+**including Drafts in open pull requests**, and open a pull request. The RFC states the problem, the proposed change, the
 compatibility level under `GOVERNANCE.md` §4, the effect on existing
 implementers, and at least one worked example. It starts in **Draft** and
 nothing in it is in force until it is Accepted.
+
+A Draft stays in its pull request; comments happen there. It is merged only
+when the steward moves it to Review, or closes it as Rejected or Superseded
+with the reason (`GOVERNANCE.md` §6, *Where a memo lives*).
 
 `rfc/IAES-RFC-001.md` is an existing example to copy the shape from.
 

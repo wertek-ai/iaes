@@ -22,8 +22,8 @@ const {
 } = require("../dist/index");
 
 describe("IAES TypeScript SDK", () => {
-  it("spec version is 1.2", () => {
-    assert.equal(SPEC_VERSION, "2.0");
+  it("declares the specification it implements", () => {
+    assert.equal(SPEC_VERSION, "2.1");
   });
 
   it("AssetMeasurement roundtrip", () => {
@@ -39,7 +39,7 @@ describe("IAES TypeScript SDK", () => {
     const wire = event.toJSON();
 
     assert.equal(wire.event_type, "asset.measurement");
-    assert.equal(wire.spec_version, "2.0");
+    assert.equal(wire.spec_version, "2.1");
     assert.equal(wire.asset.asset_id, "MOTOR-001");
     assert.equal(wire.data.measurement_type, "vibration_velocity");
     assert.equal(wire.data.value, 4.2);

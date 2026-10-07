@@ -4,7 +4,7 @@ import hashlib
 import json
 from typing import Any, Dict
 
-SPEC_VERSION = "2.0"
+SPEC_VERSION = "2.1"
 
 #: Canonical base for schema identity. Every schema is served at
 #: ``SCHEMA_BASE + <event_type>``, which is why ``dataschema`` can be derived

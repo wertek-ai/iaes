@@ -1,14 +1,14 @@
 {
   "$comment": "The IAES SDK profile: what a library must expose to claim it. Normative for the profile and not for the wire (GOVERNANCE.md §9.2); SDK_SURFACE.md is the reasoning and does not govern. What each implementation currently offers is measured in implementations.json, which is not normative and not part of a release: a file that both defined the profile and recorded who meets it would be edited every time a package shipped.",
-  "iaes_spec_version": "2.0",
+  "iaes_spec_version": "2.1",
   "status": {
     "state": "normative",
     "normative_for": "the IAES SDK profile (GOVERNANCE.md §9.2)",
     "normative_for_the_wire": false,
-    "profile_of": "IAES 2.0",
+    "profile_of": "IAES 2.1",
     "adopted_by": "rfc/IAES-RFC-006.md",
     "notice": "Changing this file does not change what an IAES event is. It changes what a library must expose to claim the IAES SDK profile. A library that does not claim the profile is unaffected, and may still be wire-conformant.",
-    "claimed_not_granted": "No one grants this profile. A library claims it by stating, in its published documentation, that it implements the IAES SDK profile of IAES 2.0; any third party checks the claim against this file. See GOVERNANCE.md §9.3 for why the steward must not be the grantor."
+    "claimed_not_granted": "No one grants this profile. A library claims it by stating, in its published documentation, that it implements the IAES SDK profile of IAES 2.1; any third party checks the claim against this file. See GOVERNANCE.md §9.3 for why the steward must not be the grantor."
   },
   "naming": {
     "rule": "The same word, in each language's convention. Never a different verb.",
@@ -55,9 +55,9 @@
     "build": {
       "what": "construct an event of a published type",
       "per": "event_type",
-      "published_types": 7,
+      "published_types": 8,
       "required": true,
-      "required_types": "all 7 published event types"
+      "required_types": "all 8 published event types"
     },
     "from_object": {
       "what": "construct an event from a plain object",
@@ -79,7 +79,7 @@
       "note": "Measured 2026-09-06: three of five have it, and the one that does not is the TypeScript SDK -- which is the one the two flow runtimes depend on."
     },
     "compute_content_hash": {
-      "what": "the digest the specification defines: SHA-256 over canonical JSON with sorted keys, first 16 hex characters",
+      "what": "the digest the specification defines (IAES_SPEC.md, Producer Guidelines, recommended behavior 6): SHA-256 over the RFC 8785 serialisation of data, first 16 hex characters, by the rule of the spec_version the event declares",
       "required": true,
       "note": "Must agree across languages. The C++ implementation shipped FNV-1a over insertion order until 2026-09-06, so the same reading hashed differently depending on which SDK produced it. Its conformance is now checked against digests produced by the Python SDK."
     },
@@ -96,10 +96,10 @@
     },
     "vocabulary": {
       "what": "expose the published enumerations",
-      "count": 10,
+      "count": 15,
       "required": true,
       "note": "All of them. The flow runtimes take theirs from @iaes/sdk rather than exposing a node, which is the platform's idiom and counts as present.",
-      "required_enumerations": "all 10 published enumerations"
+      "required_enumerations": "all 15 published enumerations"
     }
   },
   "not_capabilities": {

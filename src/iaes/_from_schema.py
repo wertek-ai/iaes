@@ -8,6 +8,7 @@ PUBLISHED_EVENT_TYPES = frozenset({
     "asset.health",
     "asset.hierarchy",
     "asset.measurement",
+    "asset.state",
     "maintenance.completion",
     "maintenance.spare_part_usage",
     "maintenance.work_order_intent",
@@ -19,6 +20,7 @@ SCHEMA_FILES = {
     "asset.health": "asset-health.schema.json",
     "asset.hierarchy": "asset-hierarchy.schema.json",
     "asset.measurement": "asset-measurement.schema.json",
+    "asset.state": "asset-state.schema.json",
     "maintenance.completion": "maintenance-completion.schema.json",
     "maintenance.spare_part_usage": "maintenance-spare-part-usage.schema.json",
     "maintenance.work_order_intent": "maintenance-work-order-intent.schema.json",
@@ -30,6 +32,7 @@ REQUIRED_DATA_FIELDS = {
     "asset.health": ("health_index", "severity"),
     "asset.hierarchy": ("hierarchy_level", "relationship_type"),
     "asset.measurement": ("measurement_type", "value", "unit"),
+    "asset.state": ("state",),
     "maintenance.completion": ("status", "work_order_id"),
     "maintenance.spare_part_usage": ("work_order_id", "spare_part_id", "quantity_used"),
     "maintenance.work_order_intent": ("title", "priority"),
@@ -49,6 +52,11 @@ CATALOGS = {
     },
     "asset.measurement": {
         "units_qualifier": ("rms", "peak", "peak_to_peak", "average", "true_rms",),
+    },
+    "asset.state": {
+        "state": ("up", "down",),
+        "down_kind": ("planned", "unplanned",),
+        "previous_state": ("up", "down", "unknown",),
     },
     "maintenance.completion": {
         "status": ("completed", "partially_completed", "cancelled", "deferred",),

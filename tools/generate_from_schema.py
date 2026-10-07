@@ -60,6 +60,12 @@ ENUMS = [
     ("HierarchyLevel", "asset.hierarchy", "hierarchy_level"),
     ("RelationshipType", "asset.hierarchy", "relationship_type"),
     ("RegistrationStatus", "sensor.registration", "registration_status"),
+    # asset.state (IAES 2.1, IAES-RFC-010). Not named AssetState: the model class takes that name.
+    ("UpDownState", "asset.state", "state"),
+    ("DownKind", "asset.state", "down_kind"),
+    ("DownCause", "asset.state", "down_cause"),
+    ("UpMode", "asset.state", "up_mode"),
+    ("PreviousState", "asset.state", "previous_state"),
 ]
 
 #: measurement_type is OPEN in the schema: it carries advisory `examples`, not an
@@ -106,9 +112,10 @@ def enum_values(found, event_type, field):
         return [v for v in spec["enum"] if v is not None], spec.get("description", "")
     values = list(spec.get("examples", [])) + [v for v in SDK_ADDITIONS.get(field, [])
                                                  if v not in spec.get("examples", [])]
-    note = (" Advisory: the schema leaves this field open, so these are conveniences, never a"
-            " constraint. The last %d were published by the SDKs before the schema listed its"
-            " examples." % len(SDK_ADDITIONS.get(field, [])))
+    note = " Advisory: the schema leaves this field open, so these are conveniences, never a constraint."
+    if SDK_ADDITIONS.get(field):
+        note += (" The last %d were published by the SDKs before the schema listed its examples."
+                 % len(SDK_ADDITIONS[field]))
     return values, spec.get("description", "") + note
 
 

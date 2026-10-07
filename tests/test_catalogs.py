@@ -40,6 +40,9 @@ PAIRS = {
     "severity": "Severity",
     "status": "CompletionStatus",
     "units_qualifier": "UnitsQualifier",
+    "state": "UpDownState",
+    "down_kind": "DownKind",
+    "previous_state": "PreviousState",
 }
 
 # Closed in the schema, with no enumeration for a producer to read.
@@ -62,6 +65,19 @@ ADVISORY = {
                "as one: an implementation that rejects an unlisted measurement "
                "type is stricter than the standard.",
         "resolve_in": "1.5",
+    },
+    "DownCause": {
+        "field": "down_cause",
+        "why": "Open by design (IAES-RFC-010 §6): the schema publishes four values "
+               "as examples and a consumer treats any other as not classified. "
+               "The constants name the published values; they are not a constraint.",
+        "resolve_in": "not planned: the field is open on purpose",
+    },
+    "UpMode": {
+        "field": "up_mode",
+        "why": "Open by design (IAES-RFC-010 §6), like down_cause: seven published "
+               "values as examples, any other tolerated as not classified.",
+        "resolve_in": "not planned: the field is open on purpose",
     },
 }
 

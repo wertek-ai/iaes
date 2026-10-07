@@ -13,8 +13,8 @@ Create, validate, route, and bridge Sparkplug B industrial asset events — no c
 ## Part of IAES
 
 The standard ships as four packages that version together. **The first two
-numbers of a package version are the specification it implements** — `2.0.x`
-implements IAES 2.0.
+numbers of a package version are the specification it implements** — `2.1.x`
+implements IAES 2.1.
 
 | Runtime | Package | Install |
 |---|---|---|
@@ -146,9 +146,10 @@ rather than as an error. Rate limiting is enforced by the server, never by the n
                            --5--> [function: process hierarchy]
                            --6--> [function: process sensor]
                            --7--> [debug] (spare parts + unknown)
+                           --8--> [function: process state]
 ```
 
-The **iaes route** node reads `event_type` from the IAES envelope and sends the message to the corresponding output. Output 7 receives `maintenance.spare_part_usage` and any unrecognized event types.
+The **iaes route** node reads `event_type` from the IAES envelope and sends the message to the corresponding output. Output 7 receives `maintenance.spare_part_usage` and any unrecognized event types. Output 8 receives `asset.state` (IAES 2.1): it was added after the other seven, so a flow wired before 2.1 keeps every wire where it was.
 
 ## Links
 

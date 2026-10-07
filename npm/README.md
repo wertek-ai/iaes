@@ -16,8 +16,8 @@ Create, serialize, validate, and publish industrial asset events using the [IAES
 ## Part of IAES
 
 The standard ships as four packages that version together. **The first two
-numbers of a package version are the specification it implements** — `2.0.x`
-implements IAES 2.0.
+numbers of a package version are the specification it implements** — `2.1.x`
+implements IAES 2.1.
 
 | Runtime | Package | Install |
 |---|---|---|
@@ -69,6 +69,7 @@ const result = await client.publish(event);
 | `asset.hierarchy` | `AssetHierarchy` | Asset hierarchy sync (org > plant > area > equipment) |
 | `sensor.registration` | `SensorRegistration` | Sensor discovery and lifecycle |
 | `maintenance.spare_part_usage` | `SparePartUsage` | Spare parts consumed during maintenance |
+| `asset.state` | `AssetState` | An asset went up or down: the facts MTBF, MTTR and availability are computed from (2.1) |
 
 ## Examples
 
@@ -205,6 +206,11 @@ new AssetHealth({ asset_id: "M-001", severity: "critical" }); // also works
 | `HierarchyLevel` | organization, plant, area, equipment |
 | `RelationshipType` | parent_of, child_of, sibling_of, depends_on |
 | `RegistrationStatus` | discovered, registered, calibrated, decommissioned |
+| `UpDownState` | up, down |
+| `DownKind` | planned, unplanned |
+| `DownCause` | preventive_maintenance, other_planned, corrective_maintenance, other_unplanned (advisory: the field is open) |
+| `UpMode` | start_up, running, run_down, hot_standby, idle, cold_standby, externally_disabled (advisory: the field is open) |
+| `PreviousState` | up, down, unknown |
 
 ## Type Exports
 

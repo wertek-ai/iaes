@@ -539,7 +539,7 @@ class TestBundledSchemasMatchTheCanonicalOnes:
     def test_every_bundled_copy_is_byte_identical(self):
         canonical, bundled = self._paths()
         originals = sorted(canonical.glob("*.schema.json"))
-        assert len(originals) == 8, "expected 8 canonical schemas"
+        assert len(originals) == 9, "expected 9 canonical schemas (the envelope and eight event types)"
 
         for copy_dir in bundled:
             for original in originals:
@@ -630,7 +630,7 @@ class TestDataschema:
 
 class TestVersion:
     def test_spec_version(self):
-        assert SPEC_VERSION == "2.0"
+        assert SPEC_VERSION == "2.1"
 
     def test_package_version(self):
         """Derived from pyproject, not typed here.
