@@ -13,9 +13,39 @@ ISSN: N/A
 > it. It is **not** normative authority for how IAES behaves. The applicable
 > normative artifacts, as released, govern IAES. See `GOVERNANCE.md` §6.1.
 
-**State: Draft**, per `GOVERNANCE.md` §6. Open for comment.
-**Compatibility: MINOR** if the steward confirms the R1 analysis in §5;
-otherwise MAJOR. **Target version: none stated yet.** Distribution is unlimited.
+**State: Rejected**, per `GOVERNANCE.md` §6, on 2026-10-06. The reason is
+below and stays in the repository with the proposal it closes. The proposal is
+kept unchanged after it, as the record of what was rejected.
+Distribution is unlimited.
+
+# Reason for rejection
+
+1. **It contradicts an accepted rule instead of applying it.** `rfc/IAES-RFC-008.md`
+   (Accepted) says a representation served under a major's URI "MUST NOT be
+   regenerated from a later release". The 2.0 version history in `IAES_SPEC.md`
+   says the same ("never regenerated from a later release"). This memo restates
+   that rule as "from a later **major**" and says RFC-008 "says nothing about
+   minors". RFC-008 says *release*. A memo that changes an accepted rule must say
+   it supersedes it, and this one did not.
+2. **So it is not MINOR.** Narrowing what a published URI guarantees is a
+   reduction under `GOVERNANCE.md` §4.5 R1, so the memo is MAJOR whichever way
+   §5 below is read.
+3. **The per-release copies would collide.** `/schema/v2.0/<type>` and
+   `/schema/v2.1/<type>` would carry the same `$id` as `/schema/v2/<type>` with
+   different bytes. A validator that registers schemas by `$id` cannot hold two
+   of them (inferred from how JSON Schema registries key resources; not
+   measured against a specific library).
+4. **The release that needed it no longer does.** `rfc/IAES-RFC-010.md` was
+   revised so that 2.1 adds one new schema file and edits none.
+
+**What stands, from RFC-008 as accepted:** within a major, the bytes at
+`/schema/v2/<type>` never change. A change to an existing schema waits for the
+next major, at a new URI. A minor may add new schema files at new URIs.
+
+*(Proposal as submitted, for the record:)*
+
+**Compatibility, as proposed: MINOR** if the steward confirms the R1 analysis in §5;
+otherwise MAJOR. **Target version: none stated.**
 
 # Copyright Notice
 
