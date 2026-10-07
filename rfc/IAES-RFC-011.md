@@ -13,9 +13,11 @@ ISSN: N/A
 > it. It is **not** normative authority for how IAES behaves. The applicable
 > normative artifacts, as released, govern IAES. See `GOVERNANCE.md` §6.1.
 
-**State: Draft**, per `GOVERNANCE.md` §6. Open for comment.
+**State: Review**, per `GOVERNANCE.md` §6: accepted for consideration by the steward
+on 2026-10-07. Still open for comment; it becomes Accepted only when its change is
+incorporated (§8) in the release that carries it.
 **Compatibility: MINOR**, by the tests of `GOVERNANCE.md` §4.4 (§5).
-**Target version: none stated yet.** Distribution is unlimited.
+**Target version: 2.1.** Distribution is unlimited.
 
 # Copyright Notice
 
