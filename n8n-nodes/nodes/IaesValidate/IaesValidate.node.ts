@@ -11,16 +11,6 @@ import { SPEC_VERSION } from '@iaes/sdk';
 // below are the interoperability defaults, not the limit.
 const EVENT_TYPE_PATTERN = /^[a-z][a-z0-9_]*\.[a-z][a-z0-9_.]*$/;
 
-const VALID_EVENT_TYPES = [
-	'asset.measurement',
-	'asset.health',
-	'maintenance.work_order_intent',
-	'maintenance.completion',
-	'asset.hierarchy',
-	'sensor.registration',
-	'maintenance.spare_part_usage',
-];
-
 const REQUIRED_ENVELOPE_FIELDS = [
 	'spec_version',
 	'event_type',
@@ -68,8 +58,8 @@ function validateIaesEvent(payload: Record<string, unknown>): ValidationResult {
 	// event_type in a namespace it controls, and tells consumers they MUST NOT
 	// error on one they do not recognise. This rejected every custom type: the
 	// same defect 1.4 corrected in the schema, reintroduced in an official
-	// implementation of it. VALID_EVENT_TYPES is still used below to decide
-	// which payloads have a published schema to be judged against.
+	// implementation of it. Which payloads are judged against a published
+	// schema is decided by the strict-mode switch below, not by a list.
 	const eventType = payload.event_type as string;
 	if (eventType && !EVENT_TYPE_PATTERN.test(eventType)) {
 		errors.push(

@@ -2,8 +2,9 @@ module.exports = function (RED) {
   const { fromJSON, SPEC_VERSION } = require("@iaes/sdk");
 
   // Mirrors schema/iaes-envelope.schema.json + the per-type data schemas.
-  // Kept as a table here because the JSON schemas live outside this npm
-  // package; the golden test asserts the two stay in step.
+  // tests/test_published_types_are_one_list.py asserts that REQUIRED_DATA_FIELDS
+  // lists exactly the published types (derived from schema/). It does not check
+  // the required fields inside each entry.
   const REQUIRED_ENVELOPE_FIELDS = [
     "spec_version",
     "event_type",

@@ -49,7 +49,10 @@ describe("version", () => {
   it("the SDK targets the spec version it implements", () => {
     const { SPEC_VERSION } = require("../dist/index.js");
     const spec = fs.readFileSync(path.join(root, "..", "IAES_SPEC.md"), "utf8");
-    const rows = [...spec.matchAll(/^\| (\d+\.\d+) \| /gm)].map((m) => m[1]);
+    // Only the version history: `| 2.1 |` also opens a row of the failure-mode table.
+    const history = spec.match(/^### Version history[^\n]*\n([\s\S]*?)(?=^#{1,3} )/m);
+    assert.ok(history, "IAES_SPEC.md has no '### Version history' section");
+    const rows = [...history[1].matchAll(/^\| (\d+\.\d+) \| /gm)].map((m) => m[1]);
 
     assert.ok(rows.length > 0, "no version history found in IAES_SPEC.md");
     assert.ok(

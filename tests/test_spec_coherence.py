@@ -29,6 +29,19 @@ def spec_text():
     return SPEC.read_text(encoding="utf-8")
 
 
+def version_history():
+    """The `### Version history` section only, up to the next heading.
+
+    Anchored to the section, not to the shape of a row: `| 2.1 |` also opens a
+    row of the failure-mode table (`| 2.1 | Overheating |`), so a regex over the
+    whole document found a "2.1 history row" that does not exist.
+    """
+    text = spec_text()
+    m = re.search(r"^### Version history[^\n]*\n(.*?)(?=^#{1,3} )", text, re.M | re.S)
+    assert m, "IAES_SPEC.md has no '### Version history' section"
+    return m.group(1)
+
+
 def spec_version():
     """The full version the specification titles itself, in one place."""
     title = spec_text().splitlines()[0]
@@ -75,15 +88,15 @@ class TestSpecDeclaresTheVersionTheCodeEmits(unittest.TestCase):
 
     def test_version_history_is_in_order(self):
         # A row out of order is how the 1.4 entry hid between 1.2 and 1.3.
-        rows = re.findall(r"^\| (\d+\.\d+) \| (?:March|April|May|June|July|August|September) \d{4} \|",
-                          spec_text(), re.M)
+        rows = re.findall(r"^\| (\d+\.\d+) \| [A-Z][a-z]+ \d{4} \|", version_history(), re.M)
+        self.assertGreater(len(rows), 3, "the version history parsed to almost nothing")
         as_numbers = [tuple(int(p) for p in v.split(".")) for v in rows]
         self.assertEqual(as_numbers, sorted(as_numbers),
                          f"version history is out of order: {rows}")
 
     def test_the_history_records_the_current_version(self):
         version = self._spec_version_from_sdk()
-        self.assertRegex(spec_text(), rf"(?m)^\| {re.escape(version)} \|",
+        self.assertRegex(version_history(), rf"(?m)^\| {re.escape(version)} \|",
                          f"version {version} has no row in the version history")
 
 
