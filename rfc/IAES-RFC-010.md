@@ -13,11 +13,12 @@ ISSN: N/A
 > it. It is **not** normative authority for how IAES behaves. The applicable
 > normative artifacts, as released, govern IAES. See `GOVERNANCE.md` §6.1.
 
-**State: Draft**, per `GOVERNANCE.md` §6. Open for comment.
+**State: Review**, per `GOVERNANCE.md` §6: accepted for consideration by the steward
+on 2026-10-07. Still open for comment; it becomes Accepted only when its change is
+incorporated (§11) in the release that carries it.
 **Compatibility: MINOR** under `GOVERNANCE.md` §4.1 and §4.4, analysed part by
 part in §9. No dependency remains (§8).
-**Target version: none stated yet** -- the steward states one when this memo
-moves to Review. Distribution is unlimited.
+**Target version: 2.1.** Distribution is unlimited.
 
 Numbered 010 because an open draft already holds 009 (the Appendix C memo).
 
