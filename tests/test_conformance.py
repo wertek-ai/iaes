@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from iaes import ValidationError, compute_content_hash, find_nonconformities, validate
+from iaes import ValidationError, canonical_json, compute_content_hash, find_nonconformities, validate
 
 ROOT = Path(__file__).resolve().parent.parent
 CASES = json.loads((ROOT / "conformance" / "validation.json").read_text(encoding="utf-8"))["cases"]
@@ -53,8 +53,17 @@ def test_nonconforming_fields(case):
     assert find_nonconformities(case["event"]) == case["expect"]["nonconforming_fields"], case["title"]
 
 
-@pytest.mark.parametrize("case", HASHES, ids=[c["id"] for c in HASHES])
-def test_content_hash(case):
+@pytest.mark.parametrize("case", [c for c in HASHES if c["status"] != "jcs_only"],
+                         ids=[c["id"] for c in HASHES if c["status"] != "jcs_only"])
+def test_content_hash_2_0(case):
+    """2.0 events keep the 2.0 rule (IAES-RFC-011 §5): what this SDK produced before."""
     expected = (case["content_hash"] if case["status"] == "agreed"
                 else case["by_implementation"]["python"]["content_hash"])
-    assert compute_content_hash(case["data"]) == expected, case["title"]
+    assert compute_content_hash(case["data"], "2.0") == expected, case["title"]
+
+
+@pytest.mark.parametrize("case", HASHES, ids=[c["id"] for c in HASHES])
+def test_content_hash_2_1_is_jcs(case):
+    """2.1 and later hash RFC 8785 (JCS): the same bytes in every implementation."""
+    assert canonical_json(case["data"]) == case["jcs"]["canonical"], case["title"]
+    assert compute_content_hash(case["data"], "2.1") == case["jcs"]["content_hash"], case["title"]

@@ -16,6 +16,7 @@ const {
   ValidationError,
   findNonconformities,
   computeContentHash,
+  canonicalJson,
 } = require("../dist/index.js");
 
 const DIR = path.join(__dirname, "..", "..", "conformance");
@@ -50,9 +51,17 @@ for (const c of CASES) {
 }
 
 for (const c of HASHES) {
-  test(`content_hash: ${c.id}`, () => {
-    const expected =
-      c.status === "agreed" ? c.content_hash : c.by_implementation.typescript.content_hash;
-    assert.equal(computeContentHash(c.data), expected, c.title);
+  if (c.status !== "jcs_only") {
+    // 2.0 events keep the 2.0 rule (IAES-RFC-011 §5): what this SDK produced before.
+    test(`content_hash 2.0: ${c.id}`, () => {
+      const expected =
+        c.status === "agreed" ? c.content_hash : c.by_implementation.typescript.content_hash;
+      assert.equal(computeContentHash(c.data, "2.0"), expected, c.title);
+    });
+  }
+  // 2.1 and later hash RFC 8785 (JCS): the same bytes in every implementation.
+  test(`content_hash 2.1 (JCS): ${c.id}`, () => {
+    assert.equal(canonicalJson(c.data), c.jcs.canonical, c.title);
+    assert.equal(computeContentHash(c.data, "2.1"), c.jcs.content_hash, c.title);
   });
 }

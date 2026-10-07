@@ -64,17 +64,20 @@ implementation: a suite whose answers come from the code it judges cannot
 fail. The only thing computed is the SHA-256 of a canonical string that is
 itself written out by hand.
 
-## `content_hash`: agreed and divergent cases
+## `content_hash`: two rules, by declared version
 
-`agreed` cases must produce exactly the recorded bytes in every implementation.
+The rule follows the `spec_version` the event declares (IAES-RFC-011, in Review
+with target 2.1):
 
-`divergent_2_0` cases record what each 2.0 implementation produces today,
-because they disagree: non-ASCII text, characters outside the BMP,
-integer-like keys, small and large exponents, and key order outside the BMP.
-The runner checks each implementation against its own recorded value, so the
-divergence stays measured: if it changes, the build fails. The fix is
-proposed as a draft RFC (RFC 8785, wertek-ai/iaes#57); when it is accepted,
-these cases move to `agreed`.
+- **2.0 and earlier** keep the 2.0 computation. `agreed` cases must produce exactly
+  the recorded bytes in every implementation. `divergent_2_0` cases record what each
+  2.0 implementation produces, because they disagree: non-ASCII text, characters
+  outside the BMP, integer-like keys, small and large exponents, and key order
+  outside the BMP. The runner checks each implementation against its own value, so
+  the divergence stays measured, and frozen: a 2.0 event keeps its 2.0 hash.
+- **2.1 and later** hash the UTF-8 bytes of the RFC 8785 (JCS) serialisation. Every
+  case carries `jcs` (canonical string and hash), the same in every implementation;
+  `jcs_only` cases add RFC 8785's own example and the boundaries of the number form.
 
 ## Where each implementation runs the cases
 
@@ -106,7 +109,7 @@ RULES         · the default verdict of every validator is schema_valid
               · find_nonconformities reads the schemas' `format` annotations; it keeps no field list
               · a crash (anything other than a validation error) is a failure, never a verdict
 DO NOT INFER  · that a schema-valid event conforms
-              · that two implementations produce the same content_hash for non-ASCII text, integer-like
-                keys or exponents (see divergent_2_0) until the RFC 8785 draft (wertek-ai/iaes#57) is accepted
+              · that two implementations produce the same content_hash for a 2.0 event with non-ASCII
+                text, integer-like keys or exponents (see divergent_2_0); from 2.1 they do (jcs)
 SOURCE        tools/build_conformance_cases.py; expected values written by hand from IAES_SPEC.md and schema/
 ```

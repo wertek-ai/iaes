@@ -12,7 +12,11 @@
       },
       "status": "agreed",
       "canonical": "{\"measurement_type\":\"vibration_velocity\",\"unit\":\"mm/s\",\"value\":4.2}",
-      "content_hash": "1265f9e5f49a22d3"
+      "content_hash": "1265f9e5f49a22d3",
+      "jcs": {
+        "canonical": "{\"measurement_type\":\"vibration_velocity\",\"unit\":\"mm/s\",\"value\":4.2}",
+        "content_hash": "1265f9e5f49a22d3"
+      }
     },
     {
       "id": "whole_float",
@@ -23,7 +27,11 @@
       },
       "status": "agreed",
       "canonical": "{\"unit\":\"Hz\",\"value\":25600}",
-      "content_hash": "9b2597e941c8f443"
+      "content_hash": "9b2597e941c8f443",
+      "jcs": {
+        "canonical": "{\"unit\":\"Hz\",\"value\":25600}",
+        "content_hash": "9b2597e941c8f443"
+      }
     },
     {
       "id": "nested",
@@ -41,7 +49,11 @@
       },
       "status": "agreed",
       "canonical": "{\"a\":\"z\",\"b\":{\"x\":true,\"y\":[3,2,1]}}",
-      "content_hash": "56fc81db0c88d221"
+      "content_hash": "56fc81db0c88d221",
+      "jcs": {
+        "canonical": "{\"a\":\"z\",\"b\":{\"x\":true,\"y\":[3,2,1]}}",
+        "content_hash": "56fc81db0c88d221"
+      }
     },
     {
       "id": "empty",
@@ -49,7 +61,11 @@
       "data": {},
       "status": "agreed",
       "canonical": "{}",
-      "content_hash": "44136fa355b3678a"
+      "content_hash": "44136fa355b3678a",
+      "jcs": {
+        "canonical": "{}",
+        "content_hash": "44136fa355b3678a"
+      }
     },
     {
       "id": "negative_zero",
@@ -59,7 +75,11 @@
       },
       "status": "agreed",
       "canonical": "{\"value\":0}",
-      "content_hash": "23d7b286bd429460"
+      "content_hash": "23d7b286bd429460",
+      "jcs": {
+        "canonical": "{\"value\":0}",
+        "content_hash": "23d7b286bd429460"
+      }
     },
     {
       "id": "non_ascii",
@@ -77,6 +97,10 @@
           "canonical": "{\"reason\":\"disparo de protección\"}",
           "content_hash": "35bfe554a215913c"
         }
+      },
+      "jcs": {
+        "canonical": "{\"reason\":\"disparo de protección\"}",
+        "content_hash": "35bfe554a215913c"
       }
     },
     {
@@ -95,6 +119,10 @@
           "canonical": "{\"note\":\"🔧 wrench\"}",
           "content_hash": "ffba08bc81c62eda"
         }
+      },
+      "jcs": {
+        "canonical": "{\"note\":\"🔧 wrench\"}",
+        "content_hash": "ffba08bc81c62eda"
       }
     },
     {
@@ -115,6 +143,10 @@
           "canonical": "{\"9\":1,\"10\":2,\"a\":3}",
           "content_hash": "71d9c6c9a9f7a35f"
         }
+      },
+      "jcs": {
+        "canonical": "{\"10\":2,\"9\":1,\"a\":3}",
+        "content_hash": "fad7c1f834d1646d"
       }
     },
     {
@@ -133,6 +165,10 @@
           "canonical": "{\"value\":1e-7}",
           "content_hash": "910750038eb30a40"
         }
+      },
+      "jcs": {
+        "canonical": "{\"value\":1e-7}",
+        "content_hash": "910750038eb30a40"
       }
     },
     {
@@ -151,6 +187,10 @@
           "canonical": "{\"value\":1e+21}",
           "content_hash": "776bf0d292f3767f"
         }
+      },
+      "jcs": {
+        "canonical": "{\"value\":1e+21}",
+        "content_hash": "776bf0d292f3767f"
       }
     },
     {
@@ -170,6 +210,62 @@
           "canonical": "{\"😀\":2,\"\":1}",
           "content_hash": "28c95d1bbb220922"
         }
+      },
+      "jcs": {
+        "canonical": "{\"😀\":2,\"\":1}",
+        "content_hash": "28c95d1bbb220922"
+      }
+    },
+    {
+      "id": "rfc8785_example",
+      "title": "RFC 8785 section 3.2.4, verbatim",
+      "data": {
+        "numbers": [
+          333333333.3333333,
+          1e+30,
+          4.5,
+          0.002,
+          1e-27
+        ],
+        "string": "€$\u000f\nA'B\"\\\\\"/",
+        "literals": [
+          null,
+          true,
+          false
+        ]
+      },
+      "status": "jcs_only",
+      "jcs": {
+        "canonical": "{\"literals\":[null,true,false],\"numbers\":[333333333.3333333,1e+30,4.5,0.002,1e-27],\"string\":\"€$\\u000f\\nA'B\\\"\\\\\\\\\\\"/\"}",
+        "content_hash": "2d5e01a318d0f087"
+      }
+    },
+    {
+      "id": "number_boundaries",
+      "title": "where ECMAScript switches to exponent form: 1e20 and 1e-6 stay plain; 1e21 and 1e-7 do not",
+      "data": {
+        "a": 1e+20,
+        "b": 1e+21,
+        "c": 1e-06,
+        "d": 1e-07,
+        "e": -1.5e-05
+      },
+      "status": "jcs_only",
+      "jcs": {
+        "canonical": "{\"a\":100000000000000000000,\"b\":1e+21,\"c\":0.000001,\"d\":1e-7,\"e\":-0.000015}",
+        "content_hash": "4a1c8aa7b94e2b97"
+      }
+    },
+    {
+      "id": "control_characters",
+      "title": "control characters: short forms where they exist, \\u00xx otherwise",
+      "data": {
+        "s": "a\b\t\n\f\r\u0007z"
+      },
+      "status": "jcs_only",
+      "jcs": {
+        "canonical": "{\"s\":\"a\\b\\t\\n\\f\\r\\u0007z\"}",
+        "content_hash": "2393704dd20db5c0"
       }
     }
   ]

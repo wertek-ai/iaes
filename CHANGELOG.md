@@ -13,6 +13,27 @@ The normative history of the specification is the version history in `IAES_SPEC.
 
 ## Unreleased
 
+### `content_hash` by RFC 8785 (JCS) for 2.1 events (IAES-RFC-011, ready ahead of 2.1)
+
+Both SDKs now carry `canonical_json` / `canonicalJson` (RFC 8785).
+`compute_content_hash` / `computeContentHash` take the `spec_version` of the
+event:
+
+- 2.1 and later use JCS;
+- 2.0 and earlier keep the 2.0 computation unchanged.
+
+The SDKs still declare 2.0, so **no hash changes in this release**. The 2.1
+rule is in place, and tested, for the release that carries the RFC.
+
+`conformance/content_hash.json` gains the JCS bytes for every case, plus
+RFC 8785's own example. Measured on the shared cases:
+
+- **Python** differed from JCS on 6 of 11: escaping, exponents, key order
+  outside the BMP.
+- **TypeScript** differed on 1: integer-like keys, because it built a sorted
+  object and JavaScript enumerates integer-like keys first. It now writes the
+  members in order.
+
 ### Shape rules are generated from `schema/`, never copied
 
 `tools/generate_from_schema.py` writes the published types, their schema files,

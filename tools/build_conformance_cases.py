@@ -266,15 +266,58 @@ def hash_cases():
          '{"\U0001F600":2,"":1}'),
     ]
     out = []
+    # RFC 8785 (JCS), the rule of 2.1 and later (IAES-RFC-011). Written out by hand
+    # from RFC 8785: members sorted by UTF-16 code unit, strings unescaped except
+    # `"`, backslash and control characters, numbers as ECMAScript writes them.
+    # Characters outside ASCII are built with chr() so that no tool on the way can
+    # rewrite an escape sequence in this source.
+    bs, q = chr(92), chr(34)
+    jcs = {
+        "ascii": '{"measurement_type":"vibration_velocity","unit":"mm/s","value":4.2}',
+        "whole_float": '{"unit":"Hz","value":25600}',
+        "nested": '{"a":"z","b":{"x":true,"y":[3,2,1]}}',
+        "empty": "{}",
+        "negative_zero": '{"value":0}',
+        "non_ascii": '{"reason":"disparo de protecci' + chr(0xF3) + 'n"}',
+        "astral": '{"note":"' + chr(0x1F527) + ' wrench"}',
+        "integer_like_keys": '{"10":2,"9":1,"a":3}',
+        "small_exponent": '{"value":1e-7}',
+        "large_whole_float": '{"value":1e+21}',
+        "key_order_outside_bmp": "{" + q + chr(0x1F600) + q + ":2," + q + chr(0xE000) + q + ":1}",
+    }
     for case_id, title, data, canonical in agreed:
         out.append({"id": case_id, "title": title, "data": data, "status": "agreed",
-                    "canonical": canonical, "content_hash": sha16(canonical)})
+                    "canonical": canonical, "content_hash": sha16(canonical),
+                    "jcs": {"canonical": jcs[case_id], "content_hash": sha16(jcs[case_id])}})
     for case_id, title, data, py, ts in divergent:
         out.append({"id": case_id, "title": title, "data": data, "status": "divergent_2_0",
                     "by_implementation": {
                         "python": {"canonical": py, "content_hash": sha16(py)},
                         "typescript": {"canonical": ts, "content_hash": sha16(ts)},
-                    }})
+                    },
+                    "jcs": {"canonical": jcs[case_id], "content_hash": sha16(jcs[case_id])}})
+
+    # Cases that exist only for JCS: RFC 8785's own example (§3.2.4) and the
+    # boundaries of the ECMAScript number form.
+    rfc_string_value = chr(0x20AC) + "$" + chr(0x0F) + chr(0x0A) + "A'B" + q + bs + bs + q + "/"
+    rfc_string_jcs = (q + chr(0x20AC) + "$" + bs + "u000f" + bs + "n" + "A'B" + bs + q
+                      + bs + bs + bs + bs + bs + q + "/" + q)
+    solo_jcs = [
+        ("rfc8785_example", "RFC 8785 section 3.2.4, verbatim",
+         {"numbers": [333333333.33333329, 1e30, 4.50, 2e-3, 1e-27],
+          "string": rfc_string_value, "literals": [None, True, False]},
+         '{"literals":[null,true,false],"numbers":[333333333.3333333,1e+30,4.5,0.002,1e-27],"string":'
+         + rfc_string_jcs + "}"),
+        ("number_boundaries", "where ECMAScript switches to exponent form: 1e20 and 1e-6 stay plain; 1e21 and 1e-7 do not",
+         {"a": 1e20, "b": 1e21, "c": 0.000001, "d": 1e-7, "e": -1.5e-5},
+         '{"a":100000000000000000000,"b":1e+21,"c":0.000001,"d":1e-7,"e":-0.000015}'),
+        ("control_characters", "control characters: short forms where they exist, \\u00xx otherwise",
+         {"s": "a" + chr(8) + chr(9) + chr(10) + chr(12) + chr(13) + chr(7) + "z"},
+         '{"s":"a' + bs + "b" + bs + "t" + bs + "n" + bs + "f" + bs + "r" + bs + 'u0007z"}'),
+    ]
+    for case_id, title, data, canonical in solo_jcs:
+        out.append({"id": case_id, "title": title, "data": data, "status": "jcs_only",
+                    "jcs": {"canonical": canonical, "content_hash": sha16(canonical)}})
     return out
 
 
