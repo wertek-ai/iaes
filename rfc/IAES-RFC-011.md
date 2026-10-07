@@ -27,11 +27,12 @@ Creative Commons Attribution 4.0 International License (CC BY 4.0).
 `content_hash` is how IAES consumers detect duplicate events. The specification
 says it is computed over "canonical JSON, sorted keys" and does not say what
 canonical means. The two SDKs took different readings, and they disagree today
-on any `data` payload that contains a non-ASCII character or a number outside a
-narrow range. This memo proposes that canonical means **RFC 8785, the JSON
-Canonicalization Scheme (JCS)**: an existing IETF specification that fixes how
-keys are ordered, how strings are escaped and how numbers are written, and that
-the TypeScript SDK already follows.
+on any `data` payload that contains a non-ASCII character, a number outside a
+narrow range, or a key that looks like an integer. This memo proposes that
+canonical means **RFC 8785, the JSON Canonicalization Scheme (JCS)**: an
+existing IETF specification that fixes how keys are ordered, how strings are
+escaped and how numbers are written. Neither SDK follows it exactly today, so
+every implementation changes.
 
 # Table of Contents
 
@@ -61,6 +62,16 @@ in Python, `computeContentHash` in TypeScript), same `data`, side by side:
 | `{"v": 1.5e-5}` | `4df3acabdba004e7` | `7c56bd8bbfb403e3` | **differ** |
 | `{"v": 2.5e21}` | `dbfa755576bd5c8c` | `7046c22c1149e655` | **differ** |
 
+Three more cases, measured the same day while building the shared conformance
+cases (wertek-ai/iaes#63, `content_hash.json`), show that the TypeScript SDK is
+not JCS either:
+
+| `data` | Python canonical | TypeScript canonical | JCS (RFC 8785) |
+|---|---|---|---|
+| `{"9":1,"10":2,"a":3}` | `{"10":2,"9":1,"a":3}` | `{"9":1,"10":2,"a":3}` | `{"10":2,"9":1,"a":3}` |
+| keys U+E000 and U+1F600 | U+E000 first | U+1F600 first | U+1F600 first |
+| `{"note":"🔧 wrench"}` | `🔧` escaped | UTF-8 | UTF-8 |
+
 The causes are in the serialisers:
 
 - **Strings.** Python's `json.dumps` escapes every non-ASCII character
@@ -69,6 +80,12 @@ The causes are in the serialisers:
   `0.000015`. Python's SDK turns whole floats into integers before hashing
   (`src/iaes/envelope.py`, `_normalize_for_hash`), so `2.5e21` becomes
   `2500000000000000000000`, while JavaScript writes `2.5e+21`.
+- **Key order.** Python sorts keys by code point; RFC 8785 sorts by UTF-16 code
+  unit, so they differ for keys outside the Basic Multilingual Plane. The
+  TypeScript SDK sorts correctly but then builds a new object
+  (`npm/src/envelope.ts`, `sortKeys`), and JavaScript enumerates integer-like
+  keys first, in numeric order, whatever order they were inserted in. So
+  `"10"` lands after `"9"`.
 
 `tests/test_reference_scenarios.py` checks that every implementation agrees on
 `content_hash`, and it passes, because the reference story is ASCII with
@@ -110,9 +127,10 @@ optional).
 - It exists, is published by the IETF, and has implementations in many
   languages. An integrator in Go, Java or C# can use one instead of reading our
   SDK's source.
-- It is what JavaScript already does, so the TypeScript SDK, the Node-RED nodes
-  and the n8n nodes are already conforming; only the Python SDK and the Ignition
-  scenario change.
+- It is close to what JavaScript does for strings and numbers, so the
+  TypeScript change is small: write the members in order instead of building an
+  object. An earlier draft of this memo said the TypeScript SDK was already
+  conforming; integer-like keys show it is not (§1).
 - A rule of our own ("escape everything", say) would have to define number
   formatting too, which is the harder half, and would still differ from every
   JCS library a third party might pick.
@@ -132,30 +150,59 @@ and §4.2 do not classify it, so `GOVERNANCE.md` §4.4 does.
 - **T2 (cross-version).** A consumer declaring 2.1 receives a 2.0 event with a
   `content_hash` computed by the Python SDK over Spanish text. If the consumer
   compares received hashes, nothing changes. If it **recomputes** the hash and
-  compares, it gets a different value and treats two copies of that event as
-  distinct: a duplicate is missed, never a false merge, and `event_id` still
-  identifies the event (`IAES_SPEC.md`, *Consumers*, item 2). The event is still
-  consumable with the meaning 2.0 gave it. So T2 answers **MINOR**, provided only
-  implementations that declare 2.1 must adopt JCS.
+  compares, it gets a different value. The event is still consumable with the
+  meaning 2.0 gave it. So T2 answers **MINOR**, provided only implementations
+  that declare 2.1 must adopt JCS.
 
-The missed-duplicate case is a broken expectation, not a broken guarantee
+**What can go wrong, stated plainly.** Consumers deduplicate on `content_hash` +
+`asset.asset_id` + `event_type`, and fall back to `event_id` **only when
+`content_hash` is absent** (`IAES_SPEC.md`, *Consumers*, item 2). An earlier
+draft of this memo said `event_id` "still identifies the event"; under that rule
+it does not, when a hash is present. So the failure mode is this. A producer
+emits an event, the send fails, the SDK is upgraded, and the retry recomputes
+`content_hash` with JCS. The consumer receives two hashes for one event and
+processes it twice: a missed duplicate, never a false merge.
+
+The SDKs close that case themselves: **the hash is computed by the rule of the
+`spec_version` the event declares.** An event built as 2.0 and retried after
+the upgrade still declares 2.0, so it keeps its 2.0 hash; only events built as
+2.1 use JCS. What remains is a consumer that recomputes hashes for events from
+mixed versions. That is a broken expectation, not a broken guarantee
 (`GOVERNANCE.md` §8 item 2), and the release notes disclose it.
 
 # 6. Effect on existing implementers
 
+Every implementation changes; none is JCS today (§1).
+
 - **Python SDK** (`src/iaes/envelope.py`): `compute_content_hash` serialises with
-  JCS. The SDK has no runtime dependencies, so this is done in-house: sorted
-  keys, `ensure_ascii=False`, UTF-8, and a number formatter that follows the
-  ECMAScript algorithm; `_normalize_for_hash` is replaced by it. Hashes change
-  only for the payloads §1 shows.
-- **TypeScript SDK**: already JCS for valid JSON values; a test pins it.
-- **Node-RED and n8n**: use the TypeScript SDK; no change.
+  JCS for events that declare 2.1 or later. The SDK has no runtime dependencies,
+  so this is done in-house:
+  - keys sorted by **UTF-16 code unit** (`sorted(keys, key=lambda k:
+    k.encode("utf-16-be"))`), not by code point, which is what `sort_keys=True`
+    does;
+  - strings unescaped (`ensure_ascii=False`) except `"`, `\` and control
+    characters;
+  - UTF-8 bytes;
+  - a number formatter that follows the ECMAScript algorithm. Python's `repr`
+    already gives the shortest round-trip digits; only the exponent form differs
+    (JavaScript uses one only below 1e-6 or from 1e21 up, and writes `e-7`,
+    not `e-07`).
+
+  `_normalize_for_hash` is replaced by the formatter. Events that declare 2.0
+  keep the 2.0 computation (§5).
+- **TypeScript SDK** (`npm/src/envelope.ts`): write members in sorted order while
+  serialising, instead of building a sorted object and calling
+  `JSON.stringify`. Same version rule.
+- **Node-RED and n8n**: use the TypeScript SDK; they change with it.
 - **Ignition reference scenario**: its Jython script must follow the same rules
   (it is Python 2.7 there); the reference story's values are unaffected.
-- **Consumers** that recompute `content_hash`: compare against events from
-  producers that declare 2.1, or compare received values.
-- **Tests**: a cross-language test with RFC 8785's own examples, plus the cases
-  in §1 (non-ASCII text, small and large numbers), in every implementation.
+- **Consumers** that recompute `content_hash`: recompute by the rule of the
+  event's `spec_version`, or compare received values.
+- **Tests**: the shared conformance cases (wertek-ai/iaes#63, `content_hash.json`)
+  record each implementation's 2.0 output for the six divergent payloads. This
+  memo adds the JCS bytes for each and RFC 8785's own examples. Every
+  implementation must produce them for 2.1 events and keep its recorded 2.0
+  output for 2.0 events.
 
 # 7. Worked example
 
@@ -191,9 +238,11 @@ When Accepted, in the same change:
 
 # 10. Open questions
 
-1. **Old hashes.** Should the release notes give consumers a way to recognise a
-   2.0 Python hash over non-ASCII text (for example, by also computing the 2.0
-   form during a transition), or is "compare received values" enough?
+1. **Old hashes.** Answered in this revision by the version rule (§5): the hash
+   follows the `spec_version` the event declares, so a 2.0 event keeps its 2.0
+   hash. Still open: whether the specification should also tell consumers that
+   2.0 hashes are implementation-dependent for the payloads in §1. Recommended:
+   yes, in the 2.1 version-history row.
 2. **Integers beyond 2^53.** IAES numbers are JSON numbers; should the
    specification say that values must stay within the double-precision range,
    so that every producer can hash them?
