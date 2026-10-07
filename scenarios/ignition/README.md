@@ -43,8 +43,8 @@ IAES 2.0, no event carries the facts MTBF and MTTR are computed from:
 - The onset and recovery of an `asset.health` condition measure how long a **condition** lasted. A condition can recover
   while the asset never stopped.
 
-What is missing -- when the asset was down, planned or unplanned, and what it was doing while up -- is proposed, in a
-draft RFC that is not yet part of the repository, as a new event type, `asset.state`. Until something like it is released, an MTBF or MTTR
+What is missing -- when the asset was down, planned or unplanned, and what it was doing while up -- is proposed in
+`rfc/IAES-RFC-010.md` (Draft) as a new event type, `asset.state`. Until something like it is released, an MTBF or MTTR
 computed from IAES events is computed from a proxy, and should say which.
 
 ## How it is checked
