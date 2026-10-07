@@ -99,8 +99,8 @@ was moved to Review on 2026-10-07 (wertek-ai/iaes#67), so no Draft remains on
 
 # 6. Worked example
 
-A contributor proposes RFC-020 and opens a pull request adding
-`rfc/IAES-RFC-020.md` with `**State: Draft**`. Comments happen on the pull
+A contributor proposes a new memo and opens a pull request that adds it to
+`rfc/` with `**State: Draft**`. Comments happen on the pull
 request. The steward states a target version and moves it to Review: the State
 line changes in the same pull request, and only then is it merged. Had the
 steward rejected it instead, the State line would say Rejected, a reason
