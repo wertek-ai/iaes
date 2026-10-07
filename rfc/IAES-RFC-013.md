@@ -13,11 +13,12 @@ ISSN: N/A
 > it. It is **not** normative authority for how IAES behaves. The applicable
 > normative artifacts, as released, govern IAES. See `GOVERNANCE.md` §6.1.
 
-**State: Draft**, per `GOVERNANCE.md` §6. Open for comment. Following its own
-rule, this memo lives in its pull request and does not enter `rfc/` on the
-default branch until it reaches Review.
+**State: Review**, per `GOVERNANCE.md` §6: accepted for consideration by the steward
+on 2026-10-07. Following its own rule, it entered `rfc/` on the default branch on
+reaching Review, not before. It becomes Accepted when its change is incorporated
+(§7) in the release that carries it.
 **Compatibility: MINOR**, by test R3 of `GOVERNANCE.md` §4.5 (§4).
-**Target version: none stated yet.** Distribution is unlimited.
+**Target version: 2.1.** Distribution is unlimited.
 
 # Copyright Notice
 
