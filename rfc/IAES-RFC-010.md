@@ -15,11 +15,22 @@ ISSN: N/A
 
 **State: Draft**, per `GOVERNANCE.md` §6. Open for comment.
 **Compatibility: MINOR** under `GOVERNANCE.md` §4.1 and §4.4, analysed part by
-part in §9, with two dependencies that must be decided first (§8).
+part in §9. No dependency remains (§8).
 **Target version: none stated yet** -- the steward states one when this memo
 moves to Review. Distribution is unlimited.
 
 Numbered 010 because an open draft already holds 009 (the Appendix C memo).
+
+**Revised 2026-10-06** after an adversarial review. The changes:
+
+- `asset.state` carries no `content_hash`, because two identical trips on one
+  day would hash the same and the second would be dropped as a duplicate (§6).
+- A `down_cause` field with Table 4's four branches. A trip is an outage, not
+  automatically a failure (§6).
+- Rules for transitions, ordering, gaps, testing after repair and several
+  producers (§6).
+- `active_repair_seconds` moves to the next major, because it is MAJOR (§7).
+- No edit to any published 2.x schema (§8).
 
 # Copyright Notice
 
@@ -100,15 +111,28 @@ ISO 14224:2016 is in `references/registry.json`. This section cites it by
 clause and does not reproduce its text.
 
 - **3.15 down state** and **3.96 up state** -- unable / able to perform as
-  required. A down state can be caused by a fault **or by preventive
-  maintenance**.
+  required. 3.15 names the causes: an **internal** fault, or preventive
+  maintenance. An item that cannot run because something outside it is missing
+  (no feed, no power) is not down by that definition: 3.38 Note 3 counts
+  "externally disabled time" as non-operating **up** time.
 - **3.16 down time** and **3.97 up time** -- the intervals in those states. Down
   time runs from the failure to the restoration of service and is planned or
   unplanned.
 - **Table 4 (timeline definitions)** -- total time splits into down time
   (planned: preventive maintenance and other planned outages; unplanned:
   corrective maintenance and other unplanned outages) and up time, which lists
-  start-up, running, run-down, hot standby, idle and cold standby.
+  start-up, running, run-down, hot standby, idle and cold standby. Its notes
+  settle three things this memo depends on:
+  - **Note d:** a **trip and a manual shutdown are "other unplanned outages"**,
+    not corrective maintenance. A trip is not by itself a failure; it becomes
+    corrective maintenance when the item needs repair.
+  - **Notes c and f:** repair and active preventive maintenance **include
+    testing**. The down interval ends when the item is back in service after
+    its test, not when it first turns.
+  - **Note a:** **reserve** (available but not required) is placed under
+    *other planned outages*. Yet 3.38 defines idle as a "non-operating up state
+    during non-required time". The standard itself leaves the same situation on
+    two sides (§13).
 - **8.3.1 (surveillance and operating period)** -- an item that is **idle** or in
   **hot standby** (ready for immediate operation when started) is considered
   **operating** ("in service"); an item in **cold standby** (needs activities
@@ -201,9 +225,10 @@ to 10:00, and it is back in service, tested, at 10:40:
 - **Against:** the facts arrive only when the work order closes, so nothing shows
   an asset as down while it is down; a trip reset by an operator with no work
   order has no event to carry it; and it says nothing about what the asset was
-  doing while up, so **an MTBF over operating time stays impossible**. The
-  elapsed MTBF (3.60) becomes computable only from unplanned down intervals --
-  not from `failure_confirmed` (§1, item 3).
+  doing while up, so **an MTBF over operating time stays impossible**. Even the
+  elapsed MTBF (3.60) needs to know which down intervals were failures, and
+  `downtime_category` cannot say it: a trip is an unplanned outage, not a
+  failure (Table 4 note d). Nor can `failure_confirmed` (§1, item 3).
 
 # 6. Option B -- a new event type, asset.state
 
@@ -214,27 +239,71 @@ A new published event type, emitted **once per transition**, never per reading
 |---|---|---|---|
 | `state` | `up` \| `down` | yes | 3.96 / 3.15, from this event's `timestamp` on |
 | `down_kind` | `planned` \| `unplanned` | when `state` is `down` | Table 4's two branches of down time |
-| `up_mode` | `start_up` \| `running` \| `run_down` \| `hot_standby` \| `idle` \| `cold_standby` | no | Table 4's up-time leaves, when `state` is `up` and the producer knows it |
-| `detail` | string, open | no | anything finer: `preventive_maintenance`, `modification`, `corrective_maintenance`, `trip`, … (examples, not a published catalog) |
-| `work_order_id` | string | no | the work order this down interval is being handled under, when there is one |
+| `down_cause` | string; published values `preventive_maintenance`, `other_planned`, `corrective_maintenance`, `other_unplanned` | no | Table 4's four branches. Must agree with `down_kind`: the first two are planned, the last two unplanned |
+| `up_mode` | string; published values `start_up`, `running`, `run_down`, `hot_standby`, `idle`, `cold_standby`, `externally_disabled` | no | Table 4's up-time leaves, plus 3.38 Note 3's externally disabled time, when `state` is `up` and the producer knows it |
+| `previous_state` | `up` \| `down` \| `unknown` | no | what the producer believed the state was just before this transition |
+| `detail` | string, open | no | anything finer: `trip`, `manual_shutdown`, `modification`, `reserve`, `testing`, … (examples, not a published catalog) |
+| `work_order_id` | string | no | the work order this down interval is handled under, on any event of the interval once it is known |
 | `reason` | string | no | free text: what the producer observed |
 
-The design declares the **mode**, not a verdict on whether it is operating time.
-A consumer computing an MTBF over operating time states which modes it counted
--- ISO 14224:2016 8.3.1 counts `idle` and `hot_standby`; a reader of Table 4
-alone may not -- and two consumers with the same events and the same stated
+The design declares the **mode** and the **cause**, not a verdict. Whether an up
+mode counts as operating time, and whether a down interval counts as a failure,
+is the consumer's classification, and the consumer states it. ISO 14224:2016
+8.3.1 counts `idle` and `hot_standby` as operating; a reader of Table 4 alone
+may not. Table 4 note d makes a trip an *other unplanned outage*, not
+corrective maintenance. Two consumers with the same events and the same stated
 classification get the same number. Neither has to guess what the producer
 meant.
 
-The envelope already says when: `timestamp` is "When the event occurred"
-(`IAES_SPEC.md`, envelope table). A state holds until the next `asset.state` for
-the same asset **from the same `source`** (§13 item 3). A transition out of a
-down state SHOULD reference the event that opened it with `source_event_id` and
-share its `correlation_id`. A work order keeps its own chain
-(intent → completion, `IAES_SPEC.md` *Typical Flow*); the link between a down
-interval and its work order is `work_order_id`, not the chain.
+`down_cause` and `up_mode` are **open**: the values above are the published
+ones (`GOVERNANCE.md` §7), and a consumer MUST tolerate any other and treat it as
+*not classified*, never as an error.
 
-**Worked example.** The same trip, as it happens:
+**Rules.**
+
+1. **When to emit.** Once per transition, never per reading (the rule
+   `sensor.registration` already follows). A transition is a change of `state`,
+   `down_kind`, `down_cause` or `up_mode`. So a trip (`other_unplanned`) that
+   turns out to need repair (`corrective_maintenance`) is two events, and
+   down → down is legitimate when the cause changes.
+2. **When it happened.** The envelope `timestamp` is "When the event occurred"
+   (`IAES_SPEC.md`, envelope table), in UTC like every timestamp. For this type
+   it is the instant of the transition, never the time of sending. Consumers
+   order by `timestamp`, not by arrival. A producer MUST NOT emit two
+   transitions for the same asset with the same `timestamp`.
+3. **Deduplication.** `content_hash` covers `data` only, and `data` carries no
+   time, so two identical trips on the same asset would hash the same. Under
+   `IAES_SPEC.md` *Consumers* item 2 the second would then be dropped as a
+   duplicate and the MTBF would be inflated. So **a producer MUST NOT send
+   `content_hash` on `asset.state`.** Consumers then deduplicate by
+   `event_id`, which *Consumers* item 2 already does when the hash is absent.
+   This also works for a 2.0 consumer that does not know the type.
+4. **Gaps.** `previous_state` lets a consumer detect a missed event: a `down`
+   whose `previous_state` is `down` with the same cause, or a `previous_state`
+   that contradicts the last event the consumer has. A consumer MUST NOT
+   invent the missing interval; it reports the gap.
+5. **Testing after repair.** Table 4 notes c and f put testing inside the down
+   interval. A producer that can tell a test run from a return to service SHOULD
+   keep the asset `down` (`detail: testing`) until the item is back in its
+   intended service. A producer that cannot tell them apart, such as a SCADA
+   that only sees current, declares `up` when it sees operation. Its down
+   intervals are then shorter than ISO's, and its `reason` SHOULD say so.
+6. **One timeline per source.** A state holds until the next `asset.state` for
+   the same asset **from the same `source`**. A consumer MUST NOT merge the
+   timelines of different sources into one without stating the precedence it
+   used. A SCADA that declares trips and a CMMS that declares planned outages
+   are two timelines of the same asset, not one.
+7. **Chains.** One down interval is one chain. The event that enters `down`
+   opens it. Every later `asset.state` while still down, and the event that
+   leaves `down`, shares its `correlation_id` and references the previous one
+   with `source_event_id`. Changes of `up_mode` outside a down interval use
+   their own. A work order keeps its own chain (intent → completion,
+   `IAES_SPEC.md` *Typical Flow*); the link between a down interval and its work
+   order is `work_order_id`, not the chain.
+
+**Worked example.** A pump trips at 06:10. At 06:40 an inspection finds a bearing
+that needs replacing, so the outage becomes corrective maintenance under a work
+order. The pump is back in service, tested, at 10:40:
 
 ```json
 [
@@ -242,20 +311,39 @@ interval and its work order is `work_order_id`, not the chain.
    "event_id": "1c7f2a90-6b1e-4d3a-9f5c-2e8d4b6a0c11", "correlation_id": "e0b9a8c7-d6e5-4f43-a2b1-c0d9e8f7a6b5",
    "timestamp": "2026-10-06T06:10:00Z", "source": "plant.scada",
    "asset": {"asset_id": "PUMP-101"},
-   "data": {"state": "down", "down_kind": "unplanned", "detail": "trip", "reason": "motor protection trip"}},
+   "data": {"state": "down", "down_kind": "unplanned", "down_cause": "other_unplanned",
+            "previous_state": "up", "detail": "trip", "reason": "motor protection trip"}},
+
+  {"spec_version": "2.1", "event_type": "asset.state",
+   "event_id": "7e3a1b52-9c4d-4f6e-8a1b-2c3d4e5f6a7b", "correlation_id": "e0b9a8c7-d6e5-4f43-a2b1-c0d9e8f7a6b5",
+   "source_event_id": "1c7f2a90-6b1e-4d3a-9f5c-2e8d4b6a0c11",
+   "timestamp": "2026-10-06T06:40:00Z", "source": "plant.scada",
+   "asset": {"asset_id": "PUMP-101"},
+   "data": {"state": "down", "down_kind": "unplanned", "down_cause": "corrective_maintenance",
+            "previous_state": "down", "work_order_id": "WO-2026-1101"}},
 
   {"spec_version": "2.1", "event_type": "asset.state",
    "event_id": "4d2b8e61-0a9f-4c7e-b3d5-6f1a2c8e9b07", "correlation_id": "e0b9a8c7-d6e5-4f43-a2b1-c0d9e8f7a6b5",
-   "source_event_id": "1c7f2a90-6b1e-4d3a-9f5c-2e8d4b6a0c11",
+   "source_event_id": "7e3a1b52-9c4d-4f6e-8a1b-2c3d4e5f6a7b",
    "timestamp": "2026-10-06T10:40:00Z", "source": "plant.scada",
    "asset": {"asset_id": "PUMP-101"},
-   "data": {"state": "up", "up_mode": "running", "work_order_id": "WO-2026-1101"}}
+   "data": {"state": "up", "up_mode": "running", "previous_state": "down",
+            "work_order_id": "WO-2026-1101"}}
 ]
 ```
 
-Any consumer gets the same unplanned down interval (4 h 30 min) and, because
-every up interval carries its mode, the same operating time between this failure
-and the next under whichever classification it states.
+Any consumer gets the same facts:
+
+- the same unplanned down interval (4 h 30 min);
+- the same cause history: an outage that became corrective maintenance at 06:40;
+- because every up interval carries its mode, the same operating time under
+  whichever classification it states.
+
+Whether this trip counts as a failure for an MTBF is still the consumer's
+decision. It is now made on a declared fact, `down_cause`, rather than guessed.
+An earlier draft said "any consumer gets the same" MTBF, and that overstated
+it: without a cause, every consumer had to decide on its own what a failure
+was.
 
 - **For:** it is what a SCADA, a PLC or an edge gateway already knows, at the
   moment it changes; a dashboard can show an asset as down while it is down; a
@@ -281,43 +369,45 @@ send completions with the interval but cannot emit `asset.state`, Option A's
 fields can be added later as a fallback, with a rule for which source wins
 (§13 item 4).
 
-**Active repair time** (8.3.3) gets its own optional field on
-`maintenance.completion`, `active_repair_seconds`: the elapsed time the item was
-being worked on (Figure 4). `actual_duration_seconds` is **left as it is**.
-Redefining it as active repair time would change what existing bytes mean when
-two technicians work two hours (four hours spent, two hours of active repair),
-which is MAJOR under `GOVERNANCE.md` §4.2.
+**Active repair time** (8.3.3) is **not** added in this memo. The draft proposed
+an optional `active_repair_seconds` on `maintenance.completion`, and the review
+showed it is MAJOR. That schema does not set `additionalProperties`, so today an
+event with `"active_repair_seconds": "2h"` validates. Declaring the field with a
+numeric type would make that event invalid, which is a narrowing under
+`GOVERNANCE.md` §4.2. It waits for the next major, together with any other
+field of that schema. `actual_duration_seconds` stays as it is. Redefining it as
+active repair time would change what existing bytes mean when two technicians
+work two hours (four hours spent, two hours of active repair), which is MAJOR
+too.
 
 # 8. Dependencies to decide first
 
-1. **How canonical JSON escapes non-ASCII text.** `content_hash` is "canonical
-   JSON, sorted keys" (`IAES_SPEC.md`), and the two SDKs disagree on any string
-   with a non-ASCII character: the Python SDK escapes it and the TypeScript SDK
-   does not (measured 2026-10-06 on "disparo de protección": `8af73ebab2507204`
-   against `35bfe554a215913c`; on ASCII they agree). `asset.state.reason` is free
-   text, so a non-English plant hits it on day one. That decision is normative
-   and needs its own memo; this one should not ship before it.
-2. **Whether a MINOR may change the bytes served at a major's schema URI.**
-   Adding `active_repair_seconds`, and listing `asset.state` among the envelope's
-   `event_type.examples`, edit two schemas published under `/schema/v2/`.
-   `GOVERNANCE.md` §8 item 1 says published versions are never edited in place
-   and stays silent on whether a per-major URI carries the latest minor. Either
-   that is stated (and the earlier bytes stay retrievable at the release tag and
-   DOI), or 2.1 ships `asset.state` as a new schema only and the two additions
-   wait.
+The first draft had two. The revision removes both:
 
-Not a dependency of this memo but found while writing it: every published event
-schema references the envelope as `iaes-envelope.schema.json`, which does not
-resolve under `https://iaes.dev/schema/v2/` (the envelope is served as
-`/schema/v2/envelope`). A new `asset-state.schema.json` copied from an existing
-one would inherit it.
+1. **How canonical JSON escapes non-ASCII text** (the RFC 8785 draft,
+   wertek-ai/iaes#57). `asset.state` carries no `content_hash` (§6 rule 3), so
+   `reason` in Spanish or Japanese no longer depends on how the SDKs serialise
+   it.
+2. **Whether a MINOR may change the bytes served at a major's schema URI.** This
+   memo no longer edits any published 2.x schema. `active_repair_seconds` waits
+   for the next major (§7), and `asset.state` is **not** added to the envelope's
+   `event_type.examples`. The examples are an annotation, and the catalogue is
+   open without them. 2.1 adds one new file, `asset-state.schema.json`, at a new
+   URI.
+
+Found while writing the first draft: every published event schema references
+the envelope as `iaes-envelope.schema.json`. That did not resolve under
+`https://iaes.dev/schema/v2/`; the site now serves it there as an alias
+(iaes-website#8). The new schema does not copy that reference. It points at the
+envelope's own `$id`, `https://iaes.dev/schema/v2/envelope`, which both SDKs
+register.
 
 # 9. Compatibility level, part by part
 
 - **The new event type `asset.state`: MINOR**, `GOVERNANCE.md` §4.1 -- consumers
-  are already required to tolerate unknown `event_type` values.
-- **`active_repair_seconds` on `maintenance.completion`: MINOR**, §4.1 -- an
-  optional field.
+  are already required to tolerate unknown `event_type` values. Its two
+  type-specific rules (no `content_hash`; one timeline per source) apply only to
+  a type that does not exist in 2.0, so they change no existing obligation.
 - **Removing the MTTR sentence from *Recovery Events*, and adding that a
   condition's recovery MUST NOT be presented as an asset's restoration:** this
   is normative text, so §4.1's "non-normative text" line does not cover it; it
@@ -348,11 +438,14 @@ one would inherit it.
 - **Consumers:** unknown types are already tolerated. A consumer that derives an
   "MTTR" from onset-to-recovery keeps working; once it declares 2.1 it stops
   presenting that number as the asset's restoration.
-- **SDKs:** a model class, an enum for `state` (not named `AssetState`, which the
-  class takes), enums for `down_kind` and `up_mode`, the schema copy, and the
-  three internal lists of published types in each SDK -- which today can go out
-  of step silently; the implementation PR should add a guard that derives them
-  from `schema/`.
+- **SDKs:** a model class that never computes `content_hash` (§6 rule 3), an
+  enum for `state` (not named `AssetState`, which the class takes) and for
+  `down_kind`, published-value lists for `down_cause` and `up_mode` that accept
+  any other string, the schema copy, and the three internal lists of published
+  types in each SDK. `tests/test_published_types_are_one_list.py` already holds
+  those lists to `schema/`, and the shared conformance cases (`conformance/`)
+  get the `asset.state` cases: the identical-trips case, an unknown
+  `down_cause`, and a `content_hash` that must be rejected.
 - **Node-RED and n8n:** neither lets a flow set the envelope `timestamp` today.
   For `asset.state` the timestamp **is** the fact, so both need it before they
   can produce this type truthfully.
@@ -370,14 +463,16 @@ one would inherit it.
 
 When Accepted, in the same change (precedent: RFC-008):
 
-- `schema/asset-state.schema.json` (new, `$id` `https://iaes.dev/schema/v2/asset.state`), and its copies in both SDKs.
-- `schema/maintenance-completion.schema.json`: `active_repair_seconds` -- subject to §8 item 2.
-- `schema/iaes-envelope.schema.json`: `asset.state` in `event_type.examples` -- subject to §8 item 2.
-- `IAES_SPEC.md`: a section for `asset.state`; a row in the event type usage
-  guide and in *Producers*; *Recovery Events* without the MTTR sentence and with
-  the MUST NOT; a sentence that `asset.hierarchy.is_active` and
-  `iso_13374_status` are not an up/down record; `active_repair_seconds` in the
-  completion table; the version history row.
+- `schema/asset-state.schema.json` (new, `$id` `https://iaes.dev/schema/v2/asset.state`, `$ref` to the envelope's `$id`), and its copies in both SDKs. It forbids `content_hash` (`"content_hash": false`). No other schema changes.
+- `IAES_SPEC.md`:
+  - a section for `asset.state`, with the rules of §6;
+  - a row in the event type usage guide;
+  - in *Producers* item 6 and *Consumers* item 2, the exception: no
+    `content_hash` on this type, so deduplication falls back to `event_id`;
+  - *Recovery Events* without the MTTR sentence, and with the MUST NOT;
+  - a sentence that `asset.hierarchy.is_active` and `iso_13374_status` are not
+    an up/down record;
+  - the version history row.
 - `surface.json`: published types and vocabulary counts for 2.1 (§9).
 - `GOVERNANCE.md` §9.2, which names "IAES 2.0" as the release that adopts the profile.
 - `references/registry.json`: IEC 60050-192:2015.
@@ -396,16 +491,22 @@ When Accepted, in the same change (precedent: RFC-008):
 1. **Name.** `asset.state` or `asset.availability`? The first names what is
    declared; the second names one use of it.
 2. **Unknown at start.** When a producer starts and does not know the previous
-   state, does it emit its current state with a `reason` saying so, or stay
-   silent until the first transition? The answer decides whether the first span
-   of a series can be trusted.
-3. **Several producers.** A SCADA declares trips and a CMMS declares planned
-   outages for the same asset. This memo keys a timeline by asset **and**
-   `source`; is a single merged timeline per asset needed, and if so, with what
-   precedence?
+   state, does it emit its current state with `previous_state: unknown`, or
+   stay silent until the first transition? Recommended: emit it with
+   `previous_state: unknown`, so that the first span is visibly not trusted
+   rather than silently missing.
+3. **Several producers.** Answered in this revision by §6 rule 6, which is
+   normative: one timeline per (asset, `source`), and a consumer MUST NOT merge
+   them without stating the precedence. Still open: whether a later memo
+   publishes a non-normative example of a merge.
 4. **Option A as a fallback?** Is there a producer that can send completions with
    the down interval but cannot emit `asset.state` (a CMMS with no SCADA behind
    it)?
+5. **Reserve: up or down?** Table 4 note a puts reserve under planned down time;
+   3.38 makes idle a "non-operating up state during non-required time". This
+   memo lets the producer declare what it sees (`down` with
+   `down_cause: other_planned, detail: reserve`, or `up` with `up_mode: idle`)
+   and does not choose between them. Should it?
 
 # Author
 
