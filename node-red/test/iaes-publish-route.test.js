@@ -226,12 +226,12 @@ describe("iaes-route node", () => {
 
     assert.equal(errors.length, 0);
     assert.equal(outputs.length, 1);
-    const out = outputs[0]; // array of 7
-    assert.equal(out.length, 7);
+    const out = outputs[0]; // array of 8
+    assert.equal(out.length, 8);
     assert.ok(out[0]); // output 1 has the message
     assert.equal(out[0].iaes_event_type, "asset.measurement");
     assert.equal(out[0].iaes_asset_id, "M-001");
-    for (let i = 1; i < 7; i++) assert.equal(out[i], null);
+    for (let i = 1; i < 8; i++) assert.equal(out[i], null);
   });
 
   it("should route asset.health to output 2", () => {
@@ -292,6 +292,18 @@ describe("iaes-route node", () => {
     assert.ok(out[6]);
     assert.equal(out[6].iaes_event_type, "maintenance.spare_part_usage");
     for (let i = 0; i < 6; i++) assert.equal(out[i], null);
+  });
+
+  it("should route asset.state to output 8, after the seven outputs a 2.0 flow is wired to", () => {
+    const node = createNode(RED, "iaes-route", {});
+    const envelope = makeEnvelope("asset.state", "PUMP-101");
+    const { outputs } = sendInput(node, { payload: envelope });
+    const out = outputs[0];
+    assert.equal(out.length, 8);
+    assert.ok(out[7]);
+    assert.equal(out[7].iaes_event_type, "asset.state");
+    assert.equal(out[7].iaes_unknown_event_type, undefined);
+    for (let i = 0; i < 7; i++) assert.equal(out[i], null);
   });
 
   it("should route unknown event_type to output 7 (other)", () => {

@@ -306,6 +306,57 @@ Records spare parts consumed during a maintenance activity. Linked to the work o
 | `currency` | string | no | ISO 4217 currency code (USD, MXN, BRL) |
 | `total_cost` | number | no | Total cost (quantity_used * unit_cost) |
 
+### `asset.state` (v2.1)
+
+Declares that an asset went **up** or **down**: the timeline that MTBF, MTTR and availability are computed from. It carries facts, not indicators. How a consumer turns them into a number is the consumer's, and the consumer states the classification it used.
+
+Emitted **once per transition**, never per reading.
+
+```json
+{
+  "spec_version": "2.1",
+  "event_type": "asset.state",
+  "timestamp": "2026-10-06T06:10:00Z",
+  "source": "plant.scada",
+  "data": {
+    "state": "down",
+    "down_kind": "unplanned",
+    "down_cause": "other_unplanned",
+    "previous_state": "up",
+    "detail": "trip",
+    "reason": "motor protection trip"
+  }
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `state` | enum | yes | `up` or `down`, from this event's `timestamp` on: able or unable to perform as required (ISO 14224:2016, 3.96 and 3.15) |
+| `down_kind` | enum | when `state` is `down` | `planned` or `unplanned`: the two branches of down time (ISO 14224:2016, Table 4) |
+| `down_cause` | string | no | **Open.** Published values: `preventive_maintenance` and `other_planned` (planned), `corrective_maintenance` and `other_unplanned` (unplanned), the four branches of Table 4. A published value MUST agree with `down_kind` |
+| `up_mode` | string | no | **Open.** Published values: `start_up`, `running`, `run_down`, `hot_standby`, `idle`, `cold_standby` (Table 4's up-time leaves) and `externally_disabled` (3.38, Note 3). Sent when `state` is `up` and the producer knows it |
+| `previous_state` | enum | no | `up`, `down` or `unknown`: what the producer believed the state was just before this event |
+| `detail` | string | no | Anything finer: `trip`, `manual_shutdown`, `modification`, `reserve`, `testing`, … (examples, not a published catalog) |
+| `work_order_id` | string | no | The work order this down interval is handled under, on any event of the interval once it is known |
+| `reason` | string | no | Free text: what the producer observed |
+
+The event declares the **mode** and the **cause**, not a verdict. A trip is an *other unplanned outage*, not corrective maintenance (ISO 14224:2016, Table 4, note d); it becomes corrective maintenance when the item needs repair. Whether an up mode counts as operating time, and whether a down interval counts as a failure, is the consumer's classification. `down_cause` and `up_mode` are **open**: a consumer MUST tolerate any other value and treat it as *not classified*, never as an error.
+
+**Rules.**
+
+1. **When to emit.** Once per transition, never per reading. A transition is a change of `state`, `down_kind`, `down_cause` or `up_mode`, so down → down is legitimate when the cause changes: a trip that turns out to need repair is two events.
+2. **When it happened.** The envelope `timestamp` is the instant of the transition, never the time of sending, in UTC like every timestamp. Consumers order by `timestamp`, not by arrival. A producer MUST NOT emit two transitions for the same asset with the same `timestamp`.
+3. **No `content_hash`.** `data` carries no time, so two identical trips on the same asset would hash the same, and a consumer deduplicating by hash would drop the second. **A producer MUST NOT send `content_hash` on `asset.state`**, and the schema rejects it. Consumers deduplicate this type by `event_id`.
+4. **Gaps.** `previous_state` lets a consumer detect a missed event: a `down` whose `previous_state` is `down` with the same cause, or a `previous_state` that contradicts the last event the consumer has. A consumer MUST NOT invent the missing interval; it reports the gap.
+5. **Testing after repair.** Repair and preventive maintenance include testing (ISO 14224:2016, Table 4, notes c and f). A producer that can tell a test run from a return to service SHOULD keep the asset `down` (`detail: testing`) until the item is back in its intended service. A producer that cannot tell them apart, such as a SCADA that only sees current, declares `up` when it sees operation; its down intervals are then shorter, and its `reason` SHOULD say so.
+6. **One timeline per source.** A state holds until the next `asset.state` for the same asset **from the same `source`**. A consumer MUST NOT merge the timelines of different sources into one without stating the precedence it used.
+7. **Chains.** One down interval is one chain. The event that enters `down` opens it; every later `asset.state` while still down, and the event that leaves `down`, shares its `correlation_id` and references the previous one with `source_event_id`. Changes of `up_mode` outside a down interval use their own. The link between a down interval and its work order is `work_order_id`, not the chain.
+8. **Start, and losing track.** A producer that starts, or that loses sight of the asset and regains it, and does not know the state before that instant SHOULD emit the state it sees with `previous_state: unknown` rather than stay silent until the first transition. A consumer MUST NOT extend the previous state across that event: the span before it, back to the last event it has from that `source`, is a gap under rule 4. Its `timestamp` is the instant the producer learned the state.
+
+**Not the record.** `asset.hierarchy.is_active` says whether the asset is in the register's active set, which is a lifecycle fact, and `asset.health.iso_13374_status: failed` is a **condition** assessment. Neither declares an up or down interval, and a consumer MUST NOT derive down time from them.
+
+The mean operating time between failures (IEC 60050-192:2015, 192-05-13) needs to know what the asset was doing while up, which `up_mode` declares. Active repair time (ISO 14224:2016, 8.3.3) is not carried by any 2.x event.
+
 ## Severity Standard
 
 IAES defines five severity levels:
@@ -343,6 +394,7 @@ A PLC, sensor, or gateway knows `vibration_rms = 4.6`. That is telemetry, not a 
 | Technician assessment | `operator.field_assessment` | `asset.health` |
 | Lab analysis | `lab.oil_analysis` | `asset.measurement` |
 | Maintenance application | `vendor.cmms` | `maintenance.work_order_intent` |
+| Run/stop state (SCADA, MES, edge gateway) | `plant.scada` | `asset.state` |
 
 ### Signal sources (upstream of IAES)
 
@@ -392,7 +444,7 @@ Systems that emit IAES events MUST follow these rules:
 
 5. **Set `dataschema` to the schema the payload was written against.** Producers SHOULD include it. The schema for a published event type is always `https://iaes.dev/schema/v<major>/<event_type>` for the major the event declares — `https://iaes.dev/schema/v2/<event_type>` in this release, so an SDK can derive it rather than ask for it. A producer using a custom `event_type` with no published schema MUST omit the field rather than point at a URI that does not resolve.
 
-6. **Compute `content_hash` for deduplication.** Producers SHOULD compute `content_hash` as the first 16 lowercase hexadecimal characters of the SHA-256 digest of the **UTF-8 encoding of the RFC 8785 (JSON Canonicalization Scheme) serialisation** of the `data` payload, with absent optional fields omitted. RFC 8785 fixes the order of members (by their names as UTF-16 code units), how strings are escaped (only `"`, `\` and control characters) and how numbers are written (the ECMAScript form: `1e-7`, `0.000015`, `25600`). A value RFC 8785 cannot serialise (a NaN, an infinity, an integer beyond the double-precision range) cannot be hashed: the producer omits `content_hash` rather than invent a form for it. **The rule follows the `spec_version` the event declares:** an event that declares 2.0 or earlier keeps the computation of the version it declares (canonical JSON with sorted keys), so an event built as 2.0 and retried after an upgrade keeps its hash.
+6. **Compute `content_hash` for deduplication.** Producers SHOULD compute `content_hash` as the first 16 lowercase hexadecimal characters of the SHA-256 digest of the **UTF-8 encoding of the RFC 8785 (JSON Canonicalization Scheme) serialisation** of the `data` payload, with absent optional fields omitted. RFC 8785 fixes the order of members (by their names as UTF-16 code units), how strings are escaped (only `"`, `\` and control characters) and how numbers are written (the ECMAScript form: `1e-7`, `0.000015`, `25600`). A value RFC 8785 cannot serialise (a NaN, an infinity, an integer beyond the double-precision range) cannot be hashed: the producer omits `content_hash` rather than invent a form for it. **The rule follows the `spec_version` the event declares:** an event that declares 2.0 or earlier keeps the computation of the version it declares (canonical JSON with sorted keys), so an event built as 2.0 and retried after an upgrade keeps its hash. **Exception:** `asset.state` MUST NOT carry `content_hash` (see `asset.state`, rule 3).
 
 7. **Include `asset_name`, `plant`, and `area` when available.** These fields are optional but significantly improve human readability in logs, dashboards, and audit trails.
 
@@ -414,7 +466,7 @@ Systems that receive IAES events MUST follow these rules:
 
 1. **Do not require `dataschema`.** It is optional and MUST NOT be a reason to reject an event. When present, a consumer MAY use it to select the validator for the payload, and to tell which version of a contract the producer wrote against without asking. When absent, fall back to `event_type` and `spec_version`.
 
-2. **Deduplicate using `content_hash`.** Consumers SHOULD detect duplicate events using the combination of `content_hash` + `asset.asset_id` + `event_type`. If `content_hash` is not present, fall back to `event_id` uniqueness.
+2. **Deduplicate using `content_hash`.** Consumers SHOULD detect duplicate events using the combination of `content_hash` + `asset.asset_id` + `event_type`. If `content_hash` is not present, fall back to `event_id` uniqueness. `asset.state` never carries one, so it is always deduplicated by `event_id`.
 
 3. **Use `correlation_id` to reconstruct flows.** Consumers that display or analyze event chains SHOULD group events by `correlation_id` and order them by `timestamp`.
 
@@ -478,7 +530,9 @@ An `asset.health` event MAY represent recovery — when a previously abnormal co
 }
 ```
 
-Recovery events SHOULD reference the original onset event via `source_event_id` and share the same `correlation_id`. This enables consumers to compute Mean Time To Recovery (MTTR) and close open alerts automatically.
+Recovery events SHOULD reference the original onset event via `source_event_id` and share the same `correlation_id`, so that consumers can close open alerts automatically.
+
+The interval between an onset and its recovery is how long a **condition** lasted. It is not the restoration of the **asset**: a power factor can drop and recover while the asset keeps running, and a bearing can show an abnormal condition for weeks while the pump keeps pumping. A consumer MUST NOT present that interval as a mean time to repair, to restoration or to recovery. The intervals an asset spent down and up are declared by `asset.state`.
 
 > Detailed emission and transition guidance is not yet published. Until it is, the rules above
 > are the whole of what this specification says about when to emit.
@@ -496,6 +550,7 @@ When to use each event type, who produces it, and who consumes it.
 | `asset.hierarchy` | CMMS, ERP, asset register, BIM system | Digital twin, dashboard, graph database | Asset tree structure changes — new equipment, relocation, parent/child relationships | Routine sync of unchanged hierarchy (use idempotent upsert, not repeated events). |
 | `sensor.registration` | Edge gateway, IoT platform, device manager | Asset register, provisioning system, monitoring dashboard | A sensor is discovered, registered, calibrated, or decommissioned for the first time or changes state | Every reading cycle. Emit once per state change, not per reading. |
 | `maintenance.spare_part_usage` | CMMS, warehouse system, technician app | Inventory system, cost analytics, procurement | Spare parts were consumed during a maintenance action | Generic inventory movements unrelated to maintenance (use your ERP). |
+| `asset.state` | SCADA, MES, PLC or edge gateway that sees run, stop and trip; CMMS for planned outages | Availability and reliability analytics, dashboard, CMMS | An asset goes up or down, or its down cause or up mode changes | Every reading cycle: emit once per transition. Deriving down time from `asset.health` or `asset.hierarchy.is_active`. |
 
 > **Guidance:** `asset.measurement` and `sensor.registration` are high-frequency by nature. Consumers building intelligence dashboards SHOULD filter by `asset.health` and `maintenance.*` event types for actionable signal. Raw measurements belong in time-series storage, not intelligence layers.
 
@@ -564,6 +619,8 @@ the defect.
 | RFC 8785 | **Yes** for `content_hash` on events that declare 2.1 or later. | **No.** A digest is computed, not validated: the schema checks only that it is a string. |
 | ISO 4217 | **Yes.** `currency` is an ISO 4217 code. | **Partly.** `^[A-Z]{3}$` checks the shape, not membership: `ZZZ` and `QQQ` pass. |
 | ISO 14224 | No. Mentioned for the `iso_14224` object and Appendix B. | No. |
+| ISO 14224:2016 | No. Where the vocabulary of `asset.state` comes from (3.15, 3.38, 3.96, Table 4). This document states what each value means. | No. |
+| IEC 60050-192:2015 | No. Mentioned for the operating-time definition of MTBF (192-05-13). | No. |
 | ISO 17359 | No. Mentioned for `units_qualifier` and the acquisition fields. | No. |
 | ISO 13374 series | No. Mentioned for `iso_13374_status`, `condition_trend` and Appendix C. | No. |
 | ISO 55000 | No. Mentioned as asset management context. | No. |

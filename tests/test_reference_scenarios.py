@@ -54,7 +54,7 @@ def python_events() -> list:
     return reference_scenarios.run()
 
 
-def typescript_events(tmp_path: Path) -> list:
+def typescript_events(tmp_path: Path, scenario: Path = TS_SCENARIO) -> list:
     """Compile the TypeScript scenario against the built SDK, then run it.
 
     Compiled rather than run through a TS loader on purpose: the compiler is
@@ -78,7 +78,7 @@ def typescript_events(tmp_path: Path) -> list:
             "npm/node_modules/.bin/tsc is missing. Run `npm ci` in npm/."
         )
 
-    source = TS_SCENARIO.read_text(encoding="utf-8")
+    source = scenario.read_text(encoding="utf-8")
     entry = tmp_path / "scenario.ts"
     entry.write_text(source.replace('"@iaes/sdk"', f'"{DIST.as_posix()}"'),
                      encoding="utf-8")

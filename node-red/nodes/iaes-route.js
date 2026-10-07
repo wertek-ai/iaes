@@ -7,7 +7,20 @@ module.exports = function (RED) {
     "asset.hierarchy",
     "sensor.registration",
     "maintenance.spare_part_usage",
+    // IAES 2.1. Appended, never inserted: the position of a type is the output it
+    // leaves by, and a deployed flow is wired to positions. Outputs 1-7 keep their
+    // meaning; asset.state gets output 8.
+    "asset.state",
   ];
+  var OUTPUTS = 8;
+  var OTHER = 6;     // output 7: maintenance.spare_part_usage and anything unknown
+  var STATE = 7;     // output 8: asset.state
+
+  function empty() {
+    var outputs = [];
+    for (var i = 0; i < OUTPUTS; i++) outputs.push(null);
+    return outputs;
+  }
 
   function IaesRouteNode(config) {
     RED.nodes.createNode(this, config);
@@ -24,12 +37,12 @@ module.exports = function (RED) {
 
         if (!envelope || !envelope.event_type) {
           node.status({ fill: "red", shape: "dot", text: "missing event_type" });
-          // Route to last output (other/unknown)
-          var outputs = [null, null, null, null, null, null, null];
+          // Route to the "other" output (unknown)
+          var outputs = empty();
           msg.payload = envelope;
           msg.iaes_event_type = undefined;
           msg.iaes_asset_id = undefined;
-          outputs[6] = msg;
+          outputs[OTHER] = msg;
           send(outputs);
           done();
           return;
@@ -42,15 +55,17 @@ module.exports = function (RED) {
         msg.iaes_event_type = eventType;
         msg.iaes_asset_id = (envelope.asset && envelope.asset.asset_id) || undefined;
 
-        var outputs = [null, null, null, null, null, null, null];
-        if (index >= 0 && index < 6) {
+        var outputs = empty();
+        if (index >= 0 && index < OTHER) {
           outputs[index] = msg;
+        } else if (index === STATE) {
+          outputs[STATE] = msg;
         } else {
           // maintenance.spare_part_usage (index 6) or unknown → output 7 (index 6).
           // Output 7 carries both, so flag the unknown case — otherwise a typo
           // in event_type is indistinguishable from a valid spare-part event.
           if (index < 0) msg.iaes_unknown_event_type = true;
-          outputs[6] = msg;
+          outputs[OTHER] = msg;
         }
 
         node.status({ fill: "green", shape: "dot", text: eventType });

@@ -1,5 +1,5 @@
 /**
- * IAES event models — 7 vendor-neutral classes for the IAES v2.0 spec.
+ * IAES event models — 8 vendor-neutral classes for the IAES v2.1 spec.
  *
  * Each model produces a spec-compliant IAES envelope via `toJSON()`.
  * All fields are spec-only — no vendor-specific extensions.
@@ -10,6 +10,7 @@ import {
   uuid,
   type AssetIdentity,
   type IAESEnvelope,
+  type IAESWireEnvelope,
 } from "./envelope";
 import type {
   Severity,
@@ -22,6 +23,11 @@ import type {
   HierarchyLevel,
   RelationshipType,
   RegistrationStatus,
+  UpDownState,
+  DownKind,
+  DownCause,
+  UpMode,
+  PreviousState,
 } from "./enums";
 
 // ─── Shared base fields ────────────────────────────────────
@@ -891,8 +897,131 @@ export class SparePartUsage {
   }
 }
 
+// ─── asset.state (IAES 2.1) ────────────────────────────────
+
+export interface AssetStateInit extends BaseFields {
+  state: UpDownState | string;
+  down_kind?: DownKind | string | null;
+  down_cause?: DownCause | string | null;
+  up_mode?: UpMode | string | null;
+  previous_state?: PreviousState | string | null;
+  detail?: string | null;
+  work_order_id?: string | null;
+  reason?: string | null;
+}
+
+/**
+ * IAES `asset.state` — a transition of an asset between up and down (IAES 2.1).
+ *
+ * Emit once per transition, never per reading. `timestamp` is the instant of
+ * the transition, never the time of sending, so set it. The event carries no
+ * `content_hash`: two identical trips on one asset would hash the same and the
+ * second would be dropped as a duplicate, so consumers deduplicate this type by
+ * `event_id` (IAES_SPEC.md, `asset.state`). That is why `toJSON()` returns an
+ * `IAESWireEnvelope`, whose `content_hash` is optional, and not an `IAESEnvelope`.
+ */
+export class AssetState {
+  readonly asset_id: string;
+  readonly state: string;
+  readonly source: string;
+  readonly down_kind?: string | null;
+  readonly down_cause?: string | null;
+  readonly up_mode?: string | null;
+  readonly previous_state?: string | null;
+  readonly detail?: string | null;
+  readonly work_order_id?: string | null;
+  readonly reason?: string | null;
+  readonly asset_name?: string | null;
+  readonly plant?: string | null;
+  readonly area?: string | null;
+  readonly event_id: string;
+  readonly correlation_id: string;
+  readonly source_event_id?: string | null;
+  readonly batch_id?: string | null;
+  readonly timestamp: string;
+  readonly metadata: Record<string, unknown>;
+
+  constructor(init: AssetStateInit) {
+    this.asset_id = init.asset_id;
+    this.state = init.state;
+    this.source = init.source ?? "state";
+    this.down_kind = init.down_kind;
+    this.down_cause = init.down_cause;
+    this.up_mode = init.up_mode;
+    this.previous_state = init.previous_state;
+    this.detail = init.detail;
+    this.work_order_id = init.work_order_id;
+    this.reason = init.reason;
+    this.asset_name = init.asset_name;
+    this.plant = init.plant;
+    this.area = init.area;
+    this.event_id = init.event_id ?? uuid();
+    this.correlation_id = init.correlation_id ?? uuid();
+    this.source_event_id = init.source_event_id;
+    this.batch_id = init.batch_id;
+    this.timestamp = toISOString(init.timestamp);
+    this.metadata = init.metadata ?? {};
+  }
+
+  toJSON(): IAESWireEnvelope {
+    const { content_hash, ...envelope } = buildEnvelope({
+      eventType: "asset.state",
+      eventId: this.event_id,
+      correlationId: this.correlation_id,
+      sourceEventId: this.source_event_id,
+      batchId: this.batch_id,
+      timestamp: this.timestamp,
+      source: this.source,
+      asset: {
+        asset_id: this.asset_id,
+        asset_name: this.asset_name,
+        plant: this.plant,
+        area: this.area,
+      },
+      data: {
+        state: this.state,
+        down_kind: this.down_kind,
+        down_cause: this.down_cause,
+        up_mode: this.up_mode,
+        previous_state: this.previous_state,
+        detail: this.detail,
+        work_order_id: this.work_order_id,
+        reason: this.reason,
+      },
+    });
+    return envelope;
+  }
+
+  static fromObject(envelope: IAESWireEnvelope): AssetState {
+    const { asset, data } = envelope;
+    return new AssetState({
+      asset_id: asset.asset_id,
+      state: data.state as string,
+      source: envelope.source,
+      down_kind: data.down_kind as string | undefined,
+      down_cause: data.down_cause as string | undefined,
+      up_mode: data.up_mode as string | undefined,
+      previous_state: data.previous_state as string | undefined,
+      detail: data.detail as string | undefined,
+      work_order_id: data.work_order_id as string | undefined,
+      reason: data.reason as string | undefined,
+      asset_name: asset.asset_name,
+      plant: asset.plant,
+      area: asset.area,
+      event_id: envelope.event_id,
+      correlation_id: envelope.correlation_id,
+      source_event_id: envelope.source_event_id ?? undefined,
+      batch_id: envelope.batch_id,
+      timestamp: envelope.timestamp,
+    });
+  }
+}
+
 // ─── Dispatch table ────────────────────────────────────────
 
+// AssetState.fromObject takes the wider IAESWireEnvelope (an asset.state event
+// carries no content_hash); the others take IAESEnvelope. The dispatcher accepts
+// either and hands each class what it reads.
 const EVENT_TYPES: Record<
   string,
   { fromObject: (e: IAESEnvelope) => unknown }
@@ -904,18 +1033,19 @@ const EVENT_TYPES: Record<
   "asset.hierarchy": AssetHierarchy,
   "sensor.registration": SensorRegistration,
   "maintenance.spare_part_usage": SparePartUsage,
+  "asset.state": AssetState,
 };
 
 /**
  * Deserialize any IAES envelope to the corresponding model class.
  * @throws Error if event_type is not recognized
  */
-export function fromObject(envelope: IAESEnvelope): unknown {
+export function fromObject(envelope: IAESEnvelope | IAESWireEnvelope): unknown {
   const cls = EVENT_TYPES[envelope.event_type];
   if (!cls) {
     throw new Error(`Unknown IAES event_type: "${envelope.event_type}"`);
   }
-  return cls.fromObject(envelope);
+  return cls.fromObject(envelope as IAESEnvelope);
 }
 
 // ─── Deprecated aliases ────────────────────────────────────
@@ -942,6 +1072,6 @@ export function fromObject(envelope: IAESEnvelope): unknown {
 // Python has a mechanism that is quiet by default.
 
 /** @deprecated Use {@link fromObject}. Kept working; it is not going away. */
-export function fromJSON(envelope: IAESEnvelope): unknown {
+export function fromJSON(envelope: IAESEnvelope | IAESWireEnvelope): unknown {
   return fromObject(envelope);
 }

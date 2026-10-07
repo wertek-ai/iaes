@@ -55,9 +55,9 @@
     "build": {
       "what": "construct an event of a published type",
       "per": "event_type",
-      "published_types": 7,
+      "published_types": 8,
       "required": true,
-      "required_types": "all 7 published event types"
+      "required_types": "all 8 published event types"
     },
     "from_object": {
       "what": "construct an event from a plain object",
@@ -96,10 +96,10 @@
     },
     "vocabulary": {
       "what": "expose the published enumerations",
-      "count": 10,
+      "count": 15,
       "required": true,
       "note": "All of them. The flow runtimes take theirs from @iaes/sdk rather than exposing a node, which is the platform's idiom and counts as present.",
-      "required_enumerations": "all 10 published enumerations"
+      "required_enumerations": "all 15 published enumerations"
     }
   },
   "not_capabilities": {

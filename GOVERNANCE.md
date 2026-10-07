@@ -495,8 +495,13 @@ A library **may claim** a profile, naming the release whose profile it meets.
 Claiming it is a statement any third party can check against that release's
 definition.
 
-**IAES 2.0 adopts one profile**, defined by `surface.json` in this release, with
-`SDK_SURFACE.md` as its reasoning. It applies to a **library** — a package that
+**IAES 2.0 adopted one profile**, defined by `surface.json`, with
+`SDK_SURFACE.md` as its reasoning. **IAES 2.1 carries it forward** with the
+capabilities of the types it adds: building every published event type now
+includes `asset.state`, and the published enumerations include its five
+(`rfc/IAES-RFC-010.md` §9). A library that met the 2.0 profile and claims it
+keeps claiming 2.0; claiming the 2.1 profile requires the new class and
+enumerations. It applies to a **library** — a package that
 exposes an API to code written by its user. Flow-runtime packages are a
 different artifact class and are out of scope; they remain wire-conformant and
 claim no profile, which §9.2 says is not a deficiency.

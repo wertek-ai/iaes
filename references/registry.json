@@ -44,6 +44,15 @@
       "cited_as": "ISO 14224:2016"
     },
     {
+      "id": "IEC-60050-192:2015",
+      "publisher": "IEC",
+      "number": "60050-192",
+      "edition": "2015",
+      "availability": "public",
+      "cited_as": "IEC 60050-192:2015",
+      "note": "The International Electrotechnical Vocabulary part 192 (dependability). IEC publishes its terms and definitions without charge in Electropedia, so the definition cited (192-05-13) can be read by anyone. Mentioned, not depended on: IAES_SPEC.md names it for the operating-time MTBF in the asset.state section."
+    },
+    {
       "id": "ISO-14224-unpinned",
       "publisher": "ISO",
       "number": "14224",

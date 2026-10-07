@@ -1,7 +1,7 @@
 """IAES — Industrial Asset Event Standard.
 
 A vendor-neutral Python SDK for creating, serializing, and validating
-industrial asset events per the IAES v2.0 specification.
+industrial asset events per the IAES v2.1 specification.
 
 Usage::
 
@@ -28,19 +28,25 @@ from .envelope import SPEC_VERSION, canonical_json, compute_content_hash, schema
 from .enums import (
     CompletionStatus,
     ConditionTrend,
+    DownCause,
+    DownKind,
     HierarchyLevel,
     ISO13374Status,
     MeasurementType,
+    PreviousState,
     RegistrationStatus,
     RelationshipType,
     Severity,
     UnitsQualifier,
+    UpDownState,
+    UpMode,
     WorkOrderPriority,
 )
 from .models import (
     AssetHealth,
     AssetHierarchy,
     AssetMeasurement,
+    AssetState,
     MaintenanceCompletion,
     SensorRegistration,
     SparePartUsage,
@@ -73,6 +79,7 @@ __all__ = [
     "AssetHierarchy",
     "SensorRegistration",
     "SparePartUsage",
+    "AssetState",
     # Client
     "Client",
     "AsyncClient",
@@ -88,6 +95,11 @@ __all__ = [
     "HierarchyLevel",
     "RelationshipType",
     "RegistrationStatus",
+    "UpDownState",
+    "DownKind",
+    "DownCause",
+    "UpMode",
+    "PreviousState",
     # Helpers
     "from_object",
     "from_dict",

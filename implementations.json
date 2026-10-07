@@ -2,19 +2,19 @@
   "$comment": "What each implementation offers today. NOT NORMATIVE and deliberately not part of any release: surface.json defines the IAES SDK profile, and this file records how far each implementation is from it. They were one file until 2026-09-08, which meant an SDK release would have edited a normative artifact -- the implementation moving the standard, which is the boundary backwards. tests/test_surface.py checks this file against the code, and checks that every capability it names exists in surface.json.",
   "measures": "the IAES SDK profile defined in surface.json",
   "not_normative": "Nothing here requires anything of anyone. A library's claim to the profile lives in that library's own published documentation (rfc/IAES-RFC-006.md §6); `claims_profile` here records whether such a claim has been made, and is not itself the claim.",
-  "measured": "2026-09-08",
+  "measured": "2026-10-07",
   "implementations": {
     "$comment": "Declared gaps, not silent ones. An absent capability that nobody declared is indistinguishable from one nobody thought of, and that is how five platforms arrived at five different surfaces. Checked by tests/test_surface.py.",
     "python": {
       "package": "iaes",
       "repo": "this",
       "has": [
-        "build:7",
+        "build:8",
         "from_object",
         "validate",
         "compute_content_hash",
         "schema_uri_for",
-        "vocabulary:10"
+        "vocabulary:15"
       ],
       "gaps": [],
       "note": "route is not a gap: a library caller uses a switch, and the profile does not require it. from_dict is kept as a deprecated alias of from_object.",
@@ -25,12 +25,12 @@
       "package": "@iaes/sdk",
       "repo": "this",
       "has": [
-        "build:7",
+        "build:8",
         "from_object",
         "validate",
         "compute_content_hash",
         "schema_uri_for",
-        "vocabulary:10"
+        "vocabulary:15"
       ],
       "gaps": [],
       "note": "Gained validate and the canonical fromObject on 2026-09-08. fromJSON is kept as a deprecated alias.",
@@ -44,12 +44,12 @@
         "build:3",
         "validate",
         "route",
-        "vocabulary:10"
+        "vocabulary:15"
       ],
       "gaps": [
         "from_object",
         "schema_uri_for",
-        "build: completion, spare_part_usage, sensor_registration, hierarchy"
+        "build: completion, spare_part_usage, sensor_registration, hierarchy, asset_state"
       ],
       "claims_profile": null,
       "claim_note": "Out of scope: a flow-runtime package is not a library (rfc/IAES-RFC-006.md §2). Wire-conformant; claiming no profile is not a deficiency."
@@ -60,13 +60,13 @@
       "has": [
         "build:6",
         "validate",
-        "vocabulary:10"
+        "vocabulary:15"
       ],
       "gaps": [
         "from_object",
         "route",
         "schema_uri_for",
-        "build: hierarchy"
+        "build: hierarchy, asset_state (the Emit node cannot set the envelope timestamp, and for asset.state the timestamp is the fact itself)"
       ],
       "claims_profile": null,
       "claim_note": "Out of scope: a flow-runtime package is not a library (rfc/IAES-RFC-006.md §2)."
@@ -84,12 +84,12 @@
         "from_object",
         "route",
         "schema_uri_for",
-        "build: work_order_intent, completion, spare_part_usage, sensor_registration, hierarchy",
-        "vocabulary: 1 of 10 enumerations"
+        "build: work_order_intent, completion, spare_part_usage, sensor_registration, hierarchy, asset_state",
+        "vocabulary: 1 of 15 enumerations"
       ],
       "note": "A microcontroller runtime, deliberately narrow. Its conformance is checked in its own repository's CI, not here, so tests/test_surface.py does not verify this row -- which is itself a gap, and stated rather than left implied.",
       "claims_profile": false,
-      "claim_note": "A deliberately narrow microcontroller runtime: two of seven builders, one of ten enumerations. Wire-conformant, and not an SDK."
+      "claim_note": "A deliberately narrow microcontroller runtime: two of eight builders, one of fifteen enumerations. Wire-conformant, and not an SDK."
     }
   }
 }

@@ -2,7 +2,7 @@
  * IAES — Industrial Asset Event Standard
  *
  * A vendor-neutral TypeScript/JavaScript SDK for creating, serializing,
- * and deserializing industrial asset events per the IAES v2.0 specification.
+ * and deserializing industrial asset events per the IAES v2.1 specification.
  *
  * @example
  * ```ts
@@ -46,6 +46,11 @@ export {
   HierarchyLevel,
   RelationshipType,
   RegistrationStatus,
+  UpDownState,
+  DownKind,
+  DownCause,
+  UpMode,
+  PreviousState,
 } from "./enums";
 
 export {
@@ -56,6 +61,7 @@ export {
   AssetHierarchy,
   SensorRegistration,
   SparePartUsage,
+  AssetState,
   fromObject,
   fromJSON,
 } from "./models";
@@ -68,6 +74,7 @@ export type {
   AssetHierarchyInit,
   SensorRegistrationInit,
   SparePartUsageInit,
+  AssetStateInit,
 } from "./models";
 
 export {
