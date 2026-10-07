@@ -179,8 +179,28 @@ def normative_files(ref: str = "HEAD") -> list:
     return files
 
 
+_RFC_STATE = re.compile(r"\*\*State:\s*(\w+)\*\*")
+
+
 def rationale_files(ref: str = "HEAD") -> list:
-    return matching(ref, RATIONALE_GLOBS)
+    """The RFCs that travel with a release as its rationale.
+
+    `GOVERNANCE.md` §3-bis: a specification release carries "the accepted RFCs".
+    The glob alone took every memo in `rfc/`, so a Draft merged for comment would
+    have been shipped as the rationale of a release it is not part of (measured
+    2026-10-06: `rfc/IAES-RFC-010.md`, Draft, sat on main). A memo that declares
+    a state other than Accepted is left out. RFC-000 and RFC-001 predate the
+    State line and have always been part of the rationale; they stay, so the
+    manifests of spec-v1.4 and spec-v2.0 are unchanged.
+    """
+    out = []
+    for f in matching(ref, RATIONALE_GLOBS):
+        rel = str(f.relative_to(ROOT)).replace("\\", "/")
+        m = _RFC_STATE.search(_text_at(ref, rel))
+        if m and m.group(1) != "Accepted":
+            continue
+        out.append(f)
+    return out
 
 
 def digest(path: Path, ref: str = "HEAD") -> str:
@@ -272,7 +292,7 @@ def build(tag: str | None, out: Path | None) -> dict:
         },
         "implementations": {
             rel: {"version": v, "implements": major_minor(v)}
-            for rel, v in package_versions().items()
+            for rel, v in package_versions(ref).items()
         },
         "note": (
             "Digests are SHA-256 of the content in the repository at this tag, not of ""the files as they appear in a checkout -- line endings differ by platform ""and the digest must not. ""A specification release is these files under this tag; `normative` "

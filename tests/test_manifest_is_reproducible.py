@@ -18,6 +18,7 @@ These tests prove the property by checking out the same content both ways.
 import hashlib
 import importlib.util
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -205,3 +206,39 @@ class TestAReleaseStaysRebuildable(unittest.TestCase):
         self.assertEqual(
             before.stdout, after.stdout,
             f"{tag} must describe the same release regardless of what exists today")
+
+
+class TheManifestDescribesItsOwnRelease(unittest.TestCase):
+    """Found by a read-only review on 2026-10-06: two values did not come from
+    the release they describe."""
+
+    def _tags(self):
+        tags = git("tag", "-l", "spec-v*").decode().split()
+        if not tags:
+            self.fail(NO_TAGS)
+        return tags
+
+    def test_the_packages_listed_are_the_packages_at_the_tag(self):
+        # build() read package_versions() from the checkout, so the manifest of
+        # spec-v1.4 reported the four packages at 2.0.2.
+        tool = load_tool()
+        for tag in self._tags():
+            manifest = tool.build(tag, None)
+            got = {rel: entry["version"] for rel, entry in manifest["implementations"].items()}
+            self.assertEqual(got, tool.package_versions(tag),
+                             f"the manifest of {tag} lists packages that are not the ones at {tag}")
+
+    def test_a_memo_that_is_not_accepted_is_not_rationale(self):
+        # GOVERNANCE.md §3-bis: a release carries "the accepted RFCs". The glob
+        # took every memo, so a Draft merged for comment would ship as rationale.
+        tool = load_tool()
+        state = re.compile(r"\*\*State:\s*(\w+)\*\*")
+        for f in tool.rationale_files("HEAD"):
+            m = state.search(f.read_text(encoding="utf-8"))
+            self.assertTrue(m is None or m.group(1) == "Accepted",
+                            f"{f.name} is rationale but declares State: {m.group(1) if m else ''}")
+        # Positive control: the filter keeps the accepted memos and the two that
+        # predate the State line.
+        names = {f.name for f in tool.rationale_files("HEAD")}
+        self.assertIn("IAES-RFC-000.md", names)
+        self.assertIn("IAES-RFC-002.md", names)
