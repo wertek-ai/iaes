@@ -427,6 +427,13 @@ its own repository, which is the failure this section is otherwise about.
 | **Rejected** | Closed with a written reason. The reason stays in the repository. |
 | **Superseded** | Replaced by a later RFC, which names it. |
 
+**Where a memo lives.** A Draft lives in its pull request and is not merged
+to the default branch. It is merged when it moves to Review, or when it is
+closed as Rejected or Superseded, with its state and, for a closed memo, its
+reason. A Draft found on the default branch is moved back to a pull request
+or advanced to Review by the steward; it is never left there as a Draft.
+The rationale is in `rfc/IAES-RFC-013.md`.
+
 An RFC states: the problem, the proposed change, the compatibility level per
 §4, the effect on existing implementers, and at least one worked example.
 
