@@ -5,102 +5,75 @@ import type {
 	INodeTypeDescription,
 } from 'n8n-workflow';
 
-import { SPEC_VERSION } from '@iaes/sdk';
+import { validate, ValidationError, findNonconformities } from '@iaes/sdk';
 
-// Dot-notation, mirroring the specification's own pattern. The published types
-// below are the interoperability defaults, not the limit.
-const EVENT_TYPE_PATTERN = /^[a-z][a-z0-9_]*\.[a-z][a-z0-9_.]*$/;
-
-const REQUIRED_ENVELOPE_FIELDS = [
-	'spec_version',
-	'event_type',
-	'event_id',
-	'correlation_id',
-	'timestamp',
-	'source',
-	'asset',
-	'data',
-];
+// This node keeps no rules of its own. It used to: a list of required envelope
+// fields, a regex for event_type, a length check for content_hash and, in
+// strict mode, a switch of required data fields per type -- a fourth copy of
+// the standard. Measured on 2026-10-06 the switch had no case for
+// asset.hierarchy, left out three fields the schemas require, and accepted
+// null where every other validator rejects it.
+//
+// Now there are two verdicts, the same two the specification separates
+// (IAES_SPEC.md, "An event can be schema-valid and non-conforming"):
+//
+//   - schema: the SDK's validate(), against the published schemas;
+//   - conformance: the SDK's findNonconformities(), which checks the fields
+//     the schemas annotate with a format (uuid, date-time, date, uri).
+//
+// The Python SDK, the TypeScript SDK and the Node-RED nodes give the same two
+// answers for the same event; conformance/ in the repository is where that is
+// measured.
+//
+// Strict mode routes a nonconforming event to the Invalid output; off, it goes
+// to Valid with the fields named in iaes_validation.nonconformities. Before,
+// strict mode meant "check the data fields": the schema now always does that,
+// so an event with a missing required data field is Invalid in both modes.
 
 interface ValidationResult {
 	valid: boolean;
 	errors: string[];
+	nonconformities: string[];
 	spec_version: string;
 	event_type: string | null;
 }
 
-function validateIaesEvent(payload: Record<string, unknown>): ValidationResult {
-	const errors: string[] = [];
+function describe(field: string): string {
+	return `${field} does not conform to the specification`;
+}
 
-	// Check required envelope fields
-	for (const field of REQUIRED_ENVELOPE_FIELDS) {
-		if (!(field in payload) || payload[field] === null || payload[field] === undefined) {
-			errors.push(`Missing required field: ${field}`);
-		}
+function validateIaesEvent(payload: Record<string, unknown>, strict: boolean): ValidationResult {
+	const specVersion = typeof payload.spec_version === 'string' ? payload.spec_version : 'unknown';
+	const eventType = typeof payload.event_type === 'string' ? payload.event_type : null;
+
+	try {
+		validate(payload);
+	} catch (err) {
+		// Anything but a ValidationError is a failure of the validator itself
+		// (for example, ajv missing), not a verdict on the event.
+		if (!(err instanceof ValidationError)) throw err;
+		// Every problem in one pass: in strict mode the nonconforming fields are
+		// reported alongside what the schema rejected.
+		const nonconformities = findNonconformities(payload);
+		return {
+			valid: false,
+			errors: (err.errors.length ? err.errors : [err.message]).concat(
+				strict ? nonconformities.map(describe) : [],
+			),
+			nonconformities,
+			spec_version: specVersion,
+			event_type: eventType,
+		};
 	}
 
-	// Validate spec_version
-	const specVersion = payload.spec_version as string;
-	// The major comes from the SDK, which this file already imports. It was
-	// hardcoded to 1, so the node shipped as 2.0.0 while rejecting every 2.0
-	// event the SDK beside it produces. The Node-RED twin derives it; this one
-	// did not, and nothing caught it because n8n-nodes has no tests.
-	const specMajor = SPEC_VERSION.split('.')[0];
-	if (specVersion && !new RegExp(`^${specMajor}\\.\\d+$`).test(specVersion)) {
-		errors.push(
-			`Invalid spec_version "${specVersion}" — must match ^${specMajor}.\\d+$`,
-		);
-	}
-
-	// Validate event_type — SHAPE, not membership.
-	//
-	// The catalog is OPEN. The specification lets a producer emit its own
-	// event_type in a namespace it controls, and tells consumers they MUST NOT
-	// error on one they do not recognise. This rejected every custom type: the
-	// same defect 1.4 corrected in the schema, reintroduced in an official
-	// implementation of it. Which payloads are judged against a published
-	// schema is decided by the strict-mode switch below, not by a list.
-	const eventType = payload.event_type as string;
-	if (eventType && !EVENT_TYPE_PATTERN.test(eventType)) {
-		errors.push(
-			`event_type "${eventType}" must be lowercase dot-notation (e.g. acme.press_stroke)`,
-		);
-	}
-
-	// Validate asset object
-	const asset = payload.asset as Record<string, unknown> | undefined;
-	if (asset) {
-		if (!asset.asset_id) {
-			errors.push('Missing required field: asset.asset_id');
-		}
-	}
-
-	// Validate timestamp format
-	const timestamp = payload.timestamp as string;
-	if (timestamp) {
-		const parsed = Date.parse(timestamp);
-		if (isNaN(parsed)) {
-			errors.push(`Invalid timestamp "${timestamp}" — must be ISO 8601`);
-		}
-	}
-
-	// Validate content_hash format (if present)
-	const contentHash = payload.content_hash as string;
-	if (contentHash && (typeof contentHash !== 'string' || contentHash.length !== 16)) {
-		errors.push(`Invalid content_hash — must be 16-char hex string`);
-	}
-
-	// Validate data is an object
-	const data = payload.data;
-	if (data !== undefined && (typeof data !== 'object' || data === null || Array.isArray(data))) {
-		errors.push('Field "data" must be an object');
-	}
-
+	const nonconformities = findNonconformities(payload);
+	const errors = strict ? nonconformities.map(describe) : [];
 	return {
 		valid: errors.length === 0,
 		errors,
-		spec_version: specVersion || 'unknown',
-		event_type: eventType || null,
+		nonconformities,
+		spec_version: specVersion,
+		event_type: eventType,
 	};
 }
 
@@ -130,7 +103,7 @@ export class IaesValidate implements INodeType {
 				name: 'strictMode',
 				type: 'boolean',
 				default: false,
-				description: 'When enabled, also validates event-type-specific required fields in data',
+				description: 'When enabled, also rejects events that pass the schema but break the specification (identifiers that are not UUIDs, timestamps that are not RFC 3339 UTC, a dataschema that is not a URI)',
 			},
 		],
 	};
@@ -158,6 +131,7 @@ export class IaesValidate implements INodeType {
 						iaes_validation: {
 							valid: false,
 							errors: [`Field "${inputField}" is not an object or is missing`],
+							nonconformities: [],
 							spec_version: 'unknown',
 							event_type: null,
 						},
@@ -166,40 +140,7 @@ export class IaesValidate implements INodeType {
 				continue;
 			}
 
-			const result = validateIaesEvent(payload);
-
-			// Strict mode: check event-type-specific required fields
-			if (strictMode && result.event_type) {
-				const data = payload.data as Record<string, unknown>;
-				if (data) {
-					switch (result.event_type) {
-						case 'asset.health':
-							if (!('health_index' in data)) result.errors.push('data.health_index required');
-							if (!('severity' in data)) result.errors.push('data.severity required');
-							break;
-						case 'asset.measurement':
-							if (!('measurement_type' in data)) result.errors.push('data.measurement_type required');
-							if (!('value' in data)) result.errors.push('data.value required');
-							if (!('unit' in data)) result.errors.push('data.unit required');
-							break;
-						case 'maintenance.work_order_intent':
-							if (!('title' in data)) result.errors.push('data.title required');
-							break;
-						case 'maintenance.completion':
-							if (!('work_order_id' in data)) result.errors.push('data.work_order_id required');
-							break;
-						case 'sensor.registration':
-							if (!('sensor_id' in data)) result.errors.push('data.sensor_id required');
-							if (!('registration_status' in data)) result.errors.push('data.registration_status required');
-							break;
-						case 'maintenance.spare_part_usage':
-							if (!('spare_part_id' in data)) result.errors.push('data.spare_part_id required');
-							if (!('quantity_used' in data)) result.errors.push('data.quantity_used required');
-							break;
-					}
-					result.valid = result.errors.length === 0;
-				}
-			}
+			const result = validateIaesEvent(payload, strictMode);
 
 			const output = {
 				json: {

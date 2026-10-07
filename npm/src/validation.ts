@@ -28,6 +28,17 @@ const SCHEMA_FILES: Record<string, string> = {
 
 const schemaCache = new Map<string, Record<string, unknown>>();
 
+/**
+ * The schema file for a published event type, or undefined for any other.
+ * An own-property lookup: `SCHEMA_FILES[t]` alone would return
+ * Object.prototype members for names like "constructor".
+ */
+export function schemaFileFor(eventType: string): string | undefined {
+  return Object.prototype.hasOwnProperty.call(SCHEMA_FILES, eventType)
+    ? SCHEMA_FILES[eventType]
+    : undefined;
+}
+
 /** Raised when an IAES event fails schema validation. */
 export class ValidationError extends Error {
   readonly errors: string[];
@@ -167,7 +178,7 @@ export function validate(input: unknown): void {
   // Only "this type has no published schema" takes the custom path. Any real
   // failure below propagates, which is what the Python SDK does by raising
   // ValueError for the unmapped case alone.
-  if (SCHEMA_FILES[eventType] === undefined) {
+  if (schemaFileFor(eventType) === undefined) {
     const check = ajv.compile(envelopeSchema);
     if (!check(event)) {
       const errors = check.errors ?? [];

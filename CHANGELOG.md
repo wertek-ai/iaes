@@ -11,6 +11,46 @@ The normative history of the specification is the version history in `IAES_SPEC.
 
 ---
 
+## Unreleased
+
+### One set of cases for four implementations (`conformance/`)
+
+The Python SDK, the TypeScript SDK, the Node-RED nodes and the n8n nodes now
+run the same cases: 57 events with their expected verdicts and 11
+`content_hash` payloads. Measured before this change, the four implementations
+disagreed. Node-RED accepted `spec_version: "205"`. n8n's strict mode had its
+own incomplete list of required fields. Node-RED rejected a non-UUID
+`event_id` that the other validators accept. Python and TypeScript hashed six
+of eleven payloads differently. See `conformance/README.md`.
+
+- **New:** `find_nonconformities` (Python) and `findNonconformities`
+  (TypeScript) name the fields the schemas accept and the specification forbids
+  (identifiers that are not UUIDs, timestamps that are not RFC 3339 UTC, a
+  `dataschema` that is not a URI). They read the schemas' `format`
+  annotations and keep no field list of their own.
+- **Python `validate`:** an event that is not an object raises
+  `ValidationError("Event must be a JSON object")`, as TypeScript does. It used
+  to raise `AttributeError`.
+- **Node-RED `iaes-validate`:** judges with the SDK instead of its own rules.
+  - The schema decides valid and invalid; `msg.iaes_nonconformities` names the
+    nonconforming fields.
+  - A new **Strict** option rejects nonconforming events. It is off for new
+    nodes. A node saved before the option existed keeps rejecting them, as it
+    did.
+  - Error texts are now the SDK's: each names the field's path.
+  - `spec_version: "205"` is now rejected.
+- **n8n IAES Validate:** judges with the SDK.
+  - The schema decides in both modes, so a missing required data field is now
+    Invalid even with strict mode off.
+  - Strict mode now also rejects nonconforming fields.
+  - `iaes_validation.nonconformities` is new.
+- `ajv` is now a dependency of `node-red-contrib-iaes` and `n8n-nodes-iaes`.
+  The nodes validate with the SDK, which needs it.
+- The `content_hash` disagreement is recorded case by case, not fixed. The
+  fix is proposed as a draft RFC (RFC 8785, wertek-ai/iaes#57).
+
+---
+
 ## 2026-09-09 — 2.0.2
 
 ### An absent score was written as 0.0 in every SDK

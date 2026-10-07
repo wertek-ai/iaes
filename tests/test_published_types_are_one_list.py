@@ -7,8 +7,10 @@ does not fail -- it degrades in silence:
     _SCHEMA_FILES           missing -> validate() falls back to envelope-only
     EVENT_TYPES             missing -> from_object() cannot build the type
 
-The Node-RED route and validate nodes keep their own tables, and the n8n Emit
-node its own options. Found by a read-only review on 2026-10-06: no test tied
+The Node-RED route node keeps its own table, and the n8n Emit node its own
+options. The two validate nodes used to keep tables too; they now judge with
+the SDK, and the last test here holds them to keeping none. Found by a
+read-only review on 2026-10-06: no test tied
 any of these to `schema/`, and one comment claimed a "golden test" that did
 not exist. The published set is derived here from the schemas themselves (the
 `$id` of every schema except the envelope), which is what "published" means.
@@ -91,7 +93,6 @@ def test_the_node_red_tables_list_exactly_the_published_types():
     want = published()
     cases = [
         ("node-red/nodes/iaes-route.js", r"var EVENT_TYPES\b", TYPE),
-        ("node-red/nodes/iaes-validate.js", r"const REQUIRED_DATA_FIELDS\b", KEY),
     ]
     for rel, anchor, pattern in cases:
         got = set(pattern.findall(block_after(read(rel), anchor)))
@@ -107,3 +108,21 @@ def test_the_n8n_emit_node_offers_only_published_types():
     got = set(re.findall(r"value: '([a-z][a-z0-9_]*\.[a-z][a-z0-9_.]*)'", options))
     assert got, "no event type options found"
     assert got <= published(), f"n8n Emit offers unpublished types: {sorted(got - published())}"
+
+
+def test_the_validators_keep_no_list_of_their_own():
+    """The validate nodes judge with the SDK, so they must not name a type.
+
+    Until the shared conformance cases (conformance/), the Node-RED validate
+    node kept a table of required data fields per type and the n8n one a
+    switch, and the two drifted from the schemas and from each other. Both now
+    call the SDK's validate() and findNonconformities(). A published type
+    named in either source is the first step back to a fourth copy of the
+    standard.
+    """
+    for rel in ("node-red/nodes/iaes-validate.js",
+                "n8n-nodes/nodes/IaesValidate/IaesValidate.node.ts"):
+        src = read(rel)
+        named = set(TYPE.findall(src)) & published()
+        assert not named, f"{rel} names published types {sorted(named)}: judge with the SDK instead"
+        assert "validate(" in src and "findNonconformities(" in src, f"{rel} does not call the SDK"
