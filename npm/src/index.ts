@@ -27,6 +27,7 @@ export {
   PUBLISHED_EVENT_TYPES,
   schemaUriFor,
   computeContentHash,
+  canonicalJson,
 } from "./envelope";
 export type { IAESEnvelope, IAESWireEnvelope, AssetIdentity } from "./envelope";
 

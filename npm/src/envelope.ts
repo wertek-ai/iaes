@@ -37,10 +37,56 @@ function sortKeys(obj: unknown): unknown {
   return sorted;
 }
 
-/** SHA-256 prefix (16 chars) of the data payload for idempotency. */
-export function computeContentHash(data: Record<string, unknown>): string {
-  const canonical = JSON.stringify(sortKeys(data));
-  return createHash("sha256").update(canonical).digest("hex").slice(0, 16);
+/**
+ * The RFC 8785 (JCS) serialisation of a JSON value (IAES-RFC-011).
+ *
+ * Strings and numbers are exactly what `JSON.stringify` writes (RFC 8785 is
+ * defined in those terms). Object members are written in sorted order HERE,
+ * rather than by building a sorted object: JavaScript enumerates integer-like
+ * keys first, in numeric order, whatever order they were inserted in, so
+ * `{"9":1,"10":2}` came out with "9" first. JCS sorts by UTF-16 code unit,
+ * which is what `Array.prototype.sort` does on strings: "10" before "9".
+ */
+export function canonicalJson(value: unknown): string {
+  if (value === null) return "null";
+  if (typeof value === "boolean") return value ? "true" : "false";
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) {
+      throw new Error("NaN and Infinity have no JSON form; omit content_hash");
+    }
+    return JSON.stringify(value);
+  }
+  if (typeof value === "string") return JSON.stringify(value);
+  if (Array.isArray(value)) return "[" + value.map(canonicalJson).join(",") + "]";
+  if (typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    const keys = Object.keys(obj).filter((k) => obj[k] !== undefined).sort();
+    return "{" + keys.map((k) => JSON.stringify(k) + ":" + canonicalJson(obj[k])).join(",") + "}";
+  }
+  throw new Error(`${typeof value} is not a JSON value`);
+}
+
+/** IAES-RFC-011: events that declare 2.1 or later hash by JCS; earlier ones keep their rule. */
+function usesJcs(specVersion: string): boolean {
+  const [major, minor] = String(specVersion).split(".").map((p) => parseInt(p, 10));
+  if (Number.isNaN(major) || Number.isNaN(minor)) return false;
+  return major > 2 || (major === 2 && minor >= 1);
+}
+
+/**
+ * SHA-256 prefix (16 chars) of the data payload for idempotency.
+ *
+ * The rule follows the `spec_version` the event declares (IAES-RFC-011 §5):
+ * 2.1 and later hash the UTF-8 bytes of the JCS serialisation; 2.0 and earlier
+ * keep the 2.0 computation, so an event built as 2.0 and retried after an
+ * upgrade keeps its hash and is not counted twice.
+ */
+export function computeContentHash(
+  data: Record<string, unknown>,
+  specVersion: string = SPEC_VERSION,
+): string {
+  const canonical = usesJcs(specVersion) ? canonicalJson(data) : JSON.stringify(sortKeys(data));
+  return createHash("sha256").update(canonical, "utf8").digest("hex").slice(0, 16);
 }
 
 export function uuid(): string {
