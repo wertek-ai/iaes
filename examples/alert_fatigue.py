@@ -35,14 +35,12 @@ AREA = "Cooling Tower #3"
 published = []
 
 # Two independent failure modes on the same pump
-# correlation_id MUST be a UUID (RFC 4122; IAES_SPEC.md "Normative references").
-# A name-based UUID keeps one stable id per failure mode, like the label it
-# is derived from.
-def correlation_for(label):
-    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"https://example.com/iaes/{label}"))
-
-CORR_BEARING = correlation_for(f"{ASSET}:bearing_outer_race")
-CORR_THERMAL = correlation_for(f"{ASSET}:thermal_overload")
+# correlation_id MUST be a UUID (RFC 4122; IAES_SPEC.md "References"). One
+# incident is one correlation_id, generated when it starts: two failure
+# modes here are two incidents, and the same fault months later would be a
+# third, not a continuation of the first.
+CORR_BEARING = str(uuid.uuid4())
+CORR_THERMAL = str(uuid.uuid4())
 
 # Illustrative thresholds for this demo. IAES carries the value; it does not set
 # limits. Real vibration limits come from the machine's own standard (for

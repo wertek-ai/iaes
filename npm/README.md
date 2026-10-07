@@ -72,7 +72,7 @@ const result = await client.publish(event);
 
 ## Examples
 
-### Vibration measurement with ISO 17359 metadata
+### Vibration measurement with acquisition metadata
 
 ```ts
 import { AssetMeasurement, UnitsQualifier } from "@iaes/sdk";

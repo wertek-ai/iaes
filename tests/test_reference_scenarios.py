@@ -223,6 +223,53 @@ def test_the_ignition_tag_file_is_what_its_builder_writes():
     )
 
 
+#: Syntax CPython 3 accepts and Jython 2.7 does not. run.py compiles the script
+#: with CPython, so without this a Python 3 construct would pass every test
+#: here and be a SyntaxError on the Gateway (found by a decoy on 2026-10-06:
+#: an f-string in the script left the Ignition tests green).
+_PY3_ONLY = {
+    "JoinedStr": "an f-string",
+    "NamedExpr": "the := operator",
+    "AnnAssign": "a variable annotation",
+    "Nonlocal": "nonlocal",
+    "AsyncFunctionDef": "async def",
+    "Await": "await",
+    "YieldFrom": "yield from",
+    "MatchStmt": "match",
+}
+
+
+def _py3_only_constructs(source: str) -> list:
+    import ast
+
+    found = []
+    for node in ast.walk(ast.parse(source)):
+        name = type(node).__name__
+        if name == "Match":
+            name = "MatchStmt"
+        if name in _PY3_ONLY:
+            found.append(f"line {getattr(node, 'lineno', '?')}: {_PY3_ONLY[name]}")
+        if isinstance(node, (ast.FunctionDef, ast.Lambda)):
+            args = node.args
+            if args.kwonlyargs:
+                found.append(f"line {node.lineno}: keyword-only arguments")
+            if any(a.annotation is not None for a in args.args) or getattr(node, "returns", None) is not None:
+                found.append(f"line {node.lineno}: a function annotation")
+        if isinstance(node, ast.Starred) and isinstance(getattr(node, "ctx", None), ast.Store):
+            found.append(f"line {node.lineno}: starred assignment")
+    return found
+
+
+def test_the_ignition_script_is_jython_2_7_syntax():
+    sys.path.insert(0, str(ROOT / "scenarios" / "ignition"))
+    import build_tags
+
+    assert _py3_only_constructs(build_tags.SCRIPT) == [], (
+        "the Ignition script uses syntax Jython 2.7 does not have; it would fail on the Gateway")
+    # Control: the check sees a Python 3 construct when there is one.
+    assert _py3_only_constructs('x = 1\nprint(f"{x}")\n')
+
+
 def test_implementations_agree_on_the_content_hash(tmp_path):
     """The one field derived from meaning rather than from the moment.
 
