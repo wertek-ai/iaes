@@ -8,7 +8,7 @@
 
 > A vendor-neutral event format for industrial asset measurements, diagnoses, and maintenance intents.
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18973217.svg)](https://doi.org/10.5281/zenodo.18973217)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18973216.svg)](https://doi.org/10.5281/zenodo.18973216)
 [![PyPI](https://img.shields.io/pypi/v/iaes)](https://pypi.org/project/iaes/)
 [![npm](https://img.shields.io/npm/v/@iaes/sdk)](https://www.npmjs.com/package/@iaes/sdk)
 [![Node-RED](https://img.shields.io/npm/v/node-red-contrib-iaes?label=node-red)](https://flows.nodered.org/node/node-red-contrib-iaes)
@@ -371,14 +371,13 @@ The fixture is [`scenarios/fixture.json`](scenarios/fixture.json). It names whic
 npm install node-red-contrib-iaes
 ```
 
-## Official Specification
+## Specification
 
-> **IAES-RFC-001** — Industrial Asset Event Model
-> DOI: [10.5281/zenodo.18973217](https://doi.org/10.5281/zenodo.18973217)
+> **IAES 2.0** — DOI: [10.5281/zenodo.22663498](https://doi.org/10.5281/zenodo.22663498) · every release: [10.5281/zenodo.18973216](https://doi.org/10.5281/zenodo.18973216)
 
+- **[IAES_SPEC.md](IAES_SPEC.md)** — **Normative.** The specification
 - **[GOVERNANCE.md](GOVERNANCE.md)** — **Normative.** Stewardship, compatibility policy, schema identity, and how the standard changes
-- **[IAES-RFC-001](rfc/IAES-RFC-001.md)** — Formal RFC specification
-- **[IAES_SPEC.md](IAES_SPEC.md)** — Full specification
+- **[rfc/](rfc/)** — why each change was made. **Rationale, not authority** (`GOVERNANCE.md` §6.1); `IAES-RFC-001` is the original 1.x memo
 - **[schema/](schema/)** — 8 JSON Schema files
 - **[examples/](examples/)** — 11 JSON examples
 - **[iaes.dev](https://iaes.dev)** — Website
@@ -409,9 +408,9 @@ If you use IAES in research or industrial systems, please cite:
 
 ```
 Garza, G. (2026).
-Industrial Asset Event Standard (IAES) v1.3.
+Industrial Asset Event Standard (IAES) 2.0.
 Zenodo.
-https://doi.org/10.5281/zenodo.18973217
+https://doi.org/10.5281/zenodo.22663498
 ```
 
 BibTeX:
@@ -420,11 +419,11 @@ BibTeX:
 @software{garza_iaes_2026,
   author       = {Garza, Gilberto},
   title        = {Industrial Asset Event Standard (IAES)},
-  version      = {v1.3.0},
+  version      = {2.0},
   year         = {2026},
   publisher    = {Zenodo},
-  doi          = {10.5281/zenodo.18973217},
-  url          = {https://doi.org/10.5281/zenodo.18973217}
+  doi          = {10.5281/zenodo.22663498},
+  url          = {https://doi.org/10.5281/zenodo.22663498}
 }
 ```
 
