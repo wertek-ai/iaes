@@ -47,7 +47,7 @@ every implementation changes.
     7. Worked example
     8. Proposed incorporation
     9. What this memo does not decide
-    10. Open questions
+    10. Open questions, closed
 
 # 1. The problem, measured
 
@@ -238,16 +238,18 @@ When Accepted, in the same change:
 - Whether consumers should recompute it at all.
 - A longer prefix than 16 characters.
 
-# 10. Open questions
+# 10. Open questions, closed
 
-1. **Old hashes.** Answered in this revision by the version rule (§5): the hash
-   follows the `spec_version` the event declares, so a 2.0 event keeps its 2.0
-   hash. Still open: whether the specification should also tell consumers that
-   2.0 hashes are implementation-dependent for the payloads in §1. Recommended:
-   yes, in the 2.1 version-history row.
-2. **Integers beyond 2^53.** IAES numbers are JSON numbers; should the
-   specification say that values must stay within the double-precision range,
-   so that every producer can hash them?
+Closed by the steward on 2026-10-07, before the release that carries the memo.
+
+1. **Old hashes.** The hash follows the `spec_version` the event declares
+   (§5), so a 2.0 event keeps its 2.0 hash. The 2.1 version-history row also
+   tells consumers that, for the payloads of §1, 2.0 hashes depend on which
+   implementation produced them.
+2. **Integers beyond 2^53.** No new constraint on values. §3 already answers
+   it: a value RFC 8785 cannot serialise cannot be hashed, and the producer
+   omits `content_hash`, which is optional. Constraining the range of numbers
+   in `data` would narrow every schema, which is MAJOR (`GOVERNANCE.md` §4.2).
 
 # Author
 

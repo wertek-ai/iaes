@@ -133,7 +133,7 @@ Names below are canonical. Each language spells them in its own convention.
 | `build` (per event type) | constructs an event of that type | one per published type — seven today |
 | `from_object` | constructs from a plain object | the flexible door |
 | `validate` | checks an event against its published schema | reports the failing field's path |
-| `compute_content_hash` | SHA-256 over canonical JSON, sorted keys, first 16 hex | must agree across languages |
+| `compute_content_hash` | SHA-256 over the RFC 8785 serialisation of `data`, first 16 hex, by the rule of the event's `spec_version` | must agree across languages |
 | `schema_uri_for` | derives the schema URI from an event type | this is what `dataschema` carries |
 | `route` | separates events by type | uses only the published vocabulary |
 | *vocabulary* | the published enumerations | all ten, not the ones a first use case needed |

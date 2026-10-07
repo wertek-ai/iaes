@@ -69,7 +69,7 @@ Every IAES event shares this envelope:
 | `timestamp` | RFC 3339 | yes | When the event occurred |
 | `source` | string | yes | Dot-notation producer identity (e.g. `vendor.diagnosis`, `operator.manual_inspection`) |
 | `batch_id` | string | no | Groups events from a single batch operation (e.g. gateway poll, bulk sync) |
-| `content_hash` | string | no | SHA-256 prefix (16 chars) of `data` payload for dedup |
+| `content_hash` | string | no | SHA-256 prefix (16 lowercase hex chars) of the RFC 8785 serialisation of `data`, for dedup (see *Producer Guidelines*, recommended behavior 6) |
 | `asset` | object | yes | Asset identity (see Asset Identity) |
 | `data` | object | yes | Event-specific payload |
 
@@ -392,7 +392,7 @@ Systems that emit IAES events MUST follow these rules:
 
 5. **Set `dataschema` to the schema the payload was written against.** Producers SHOULD include it. The schema for a published event type is always `https://iaes.dev/schema/v<major>/<event_type>` for the major the event declares — `https://iaes.dev/schema/v2/<event_type>` in this release, so an SDK can derive it rather than ask for it. A producer using a custom `event_type` with no published schema MUST omit the field rather than point at a URI that does not resolve.
 
-6. **Compute `content_hash` for deduplication.** Producers SHOULD compute `content_hash` as the first 16 characters of the SHA-256 hex digest of the serialized `data` payload (canonical JSON, sorted keys).
+6. **Compute `content_hash` for deduplication.** Producers SHOULD compute `content_hash` as the first 16 lowercase hexadecimal characters of the SHA-256 digest of the **UTF-8 encoding of the RFC 8785 (JSON Canonicalization Scheme) serialisation** of the `data` payload, with absent optional fields omitted. RFC 8785 fixes the order of members (by their names as UTF-16 code units), how strings are escaped (only `"`, `\` and control characters) and how numbers are written (the ECMAScript form: `1e-7`, `0.000015`, `25600`). A value RFC 8785 cannot serialise (a NaN, an infinity, an integer beyond the double-precision range) cannot be hashed: the producer omits `content_hash` rather than invent a form for it. **The rule follows the `spec_version` the event declares:** an event that declares 2.0 or earlier keeps the computation of the version it declares (canonical JSON with sorted keys), so an event built as 2.0 and retried after an upgrade keeps its hash.
 
 7. **Include `asset_name`, `plant`, and `area` when available.** These fields are optional but significantly improve human readability in logs, dashboards, and audit trails.
 
@@ -561,6 +561,7 @@ the defect.
 | RFC 4122 | **Yes** for `event_id`, `correlation_id` and `source_event_id`. | **No.** Same reason. |
 | RFC 3986 | **Yes** for `dataschema`, which carries a URI. | **No.** Same reason. |
 | RFC 2119, RFC 8174 | **Yes.** How MUST, SHOULD and MAY are to be read here. | **Not applicable.** Not a schema constraint. |
+| RFC 8785 | **Yes** for `content_hash` on events that declare 2.1 or later. | **No.** A digest is computed, not validated: the schema checks only that it is a string. |
 | ISO 4217 | **Yes.** `currency` is an ISO 4217 code. | **Partly.** `^[A-Z]{3}$` checks the shape, not membership: `ZZZ` and `QQQ` pass. |
 | ISO 14224 | No. Mentioned for the `iso_14224` object and Appendix B. | No. |
 | ISO 17359 | No. Mentioned for `units_qualifier` and the acquisition fields. | No. |

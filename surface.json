@@ -79,7 +79,7 @@
       "note": "Measured 2026-09-06: three of five have it, and the one that does not is the TypeScript SDK -- which is the one the two flow runtimes depend on."
     },
     "compute_content_hash": {
-      "what": "the digest the specification defines: SHA-256 over canonical JSON with sorted keys, first 16 hex characters",
+      "what": "the digest the specification defines (IAES_SPEC.md, Producer Guidelines, recommended behavior 6): SHA-256 over the RFC 8785 serialisation of data, first 16 hex characters, by the rule of the spec_version the event declares",
       "required": true,
       "note": "Must agree across languages. The C++ implementation shipped FNV-1a over insertion order until 2026-09-06, so the same reading hashed differently depending on which SDK produced it. Its conformance is now checked against digests produced by the Python SDK."
     },

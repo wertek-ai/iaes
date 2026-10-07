@@ -22,6 +22,7 @@
     { "id": "RFC-4122", "publisher": "IETF", "number": "4122", "availability": "public", "cited_as": "RFC 4122" },
     { "id": "RFC-8174", "publisher": "IETF", "number": "8174", "availability": "public", "cited_as": "RFC 8174" },
     { "id": "RFC-8594", "publisher": "IETF", "number": "8594", "availability": "public", "cited_as": "RFC 8594" },
+    { "id": "RFC-8785", "publisher": "IETF", "number": "8785", "availability": "public", "cited_as": "RFC 8785" },
     { "id": "RFC-9745", "publisher": "IETF", "number": "9745", "availability": "public", "cited_as": "RFC 9745" },
 
     {
