@@ -50,13 +50,37 @@ for (const c of CASES) {
   }
 }
 
+test("the hash suite has each kind of case", () => {
+  // Control: a suite with no refusal or no version switch proves nothing about either.
+  const kinds = [...new Set(HASHES.map((c) => c.status))].sort();
+  assert.deepEqual(kinds, ["agreed", "divergent_2_0", "jcs_only", "jcs_reject", "version_switch"]);
+});
+
 for (const c of HASHES) {
-  if (c.status !== "jcs_only") {
+  if (c.status === "agreed" || c.status === "divergent_2_0") {
     // 2.0 events keep the 2.0 rule (IAES-RFC-011 §5): what this SDK produced before.
     test(`content_hash 2.0: ${c.id}`, () => {
       const expected =
         c.status === "agreed" ? c.content_hash : c.by_implementation.typescript.content_hash;
       assert.equal(computeContentHash(c.data, "2.0"), expected, c.title);
+    });
+  }
+  if (c.status === "jcs_reject") {
+    // A value RFC 8785 cannot serialise is refused, never hashed some other way.
+    test(`content_hash 2.1 (JCS) refuses: ${c.id}`, () => {
+      assert.throws(() => canonicalJson(c.data), Error, c.title);
+      assert.throws(() => computeContentHash(c.data, "2.1"), Error, c.title);
+    });
+    continue;
+  }
+  if (c.status === "version_switch") {
+    // JCS only for 2.<minor> with minor >= 1; absent or unreadable keeps the 2.0
+    // rule. An absent spec_version is passed explicitly as undefined, which is
+    // what event.spec_version gives.
+    test(`content_hash rule by declared version: ${c.id}`, () => {
+      const expected =
+        c.rule === "jcs" ? c.jcs.content_hash : c.by_implementation.typescript.content_hash;
+      assert.equal(computeContentHash(c.data, c.spec_version), expected, c.title);
     });
   }
   // 2.1 and later hash RFC 8785 (JCS): the same bytes in every implementation.

@@ -1,0 +1,52 @@
+{
+  "title": "Industrial Asset Event Standard (IAES) 2.1 — Specification Release",
+  "version": "2.1",
+  "upload_type": "publication",
+  "publication_type": "standard",
+  "access_right": "open",
+  "license": "cc-by-4.0",
+  "language": "eng",
+  "creators": [
+    {
+      "name": "Gilberto Garza",
+      "affiliation": "Wertek AI"
+    }
+  ],
+  "description": "<p>A MINOR release of the Industrial Asset Event Standard. Nothing it adds changes the bytes or the meaning of an event a 2.0 producer emits.</p><p>A specification release is one indivisible object: the specification, the governance document, the schemas and the RFC record, published under one tag. manifest.json is published with the GitHub release for this tag and carries a SHA-256 of each normative file, taken from that tag, so anyone can verify what they were served.</p><h2>What 2.1 adds</h2><ul><li><strong>A new event type, <code>asset.state</code></strong> (IAES-RFC-010): whether an asset is up or down, planned or unplanned, why, and what it was doing while up &mdash; the facts MTBF, MTTR and availability are computed from, as ISO 14224:2016 asks them to be collected. Its schema is a new file at a new URI, <code>https://iaes.dev/schema/v2/asset.state</code>; the eight 2.0 schemas are unchanged, byte for byte.</li><li><strong><code>content_hash</code> by RFC 8785 (JCS)</strong> (IAES-RFC-011) for events that declare 2.1 or a later 2.x minor. An event that declares 2.0 keeps the 2.0 computation, so a retried 2.0 event keeps its hash.</li><li><strong>Where an RFC lives</strong> (IAES-RFC-013): a Draft stays in its pull request until it reaches Review.</li></ul><p>The version history in IAES_SPEC.md states the release, its known risks and its migration.</p>",
+  "keywords": [
+    "Industrial IoT",
+    "predictive maintenance",
+    "industrial telemetry",
+    "cmms integration",
+    "condition monitoring",
+    "asset management",
+    "industrial events",
+    "vendor-neutral standard",
+    "event-driven architecture",
+    "industrial reliability",
+    "maintenance systems",
+    "ISO 14224",
+    "ISO 17359",
+    "RFC 8785"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/wertek-ai/iaes/tree/spec-v2.1",
+      "relation": "isSupplementTo",
+      "resource_type": "software",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://iaes.dev",
+      "relation": "isSupplementTo",
+      "resource_type": "publication-standard",
+      "scheme": "url"
+    },
+    {
+      "identifier": "10.5281/zenodo.22663498",
+      "relation": "isNewVersionOf",
+      "resource_type": "publication-standard",
+      "scheme": "doi"
+    }
+  ]
+}

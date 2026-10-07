@@ -797,8 +797,18 @@ class AssetState:
     correlation_id: str = field(default_factory=_uuid4)
     source_event_id: Optional[str] = None
     batch_id: Optional[str] = None
-    timestamp: datetime = field(default_factory=_utcnow)
+    # REQUIRED for this type, although it sits among the defaults (a dataclass
+    # field after a defaulted one must have a default): the instant of the
+    # transition, never the time of sending (IAES_SPEC.md, asset.state, rule 2).
+    # Every other builder defaults to "now"; here "now" would be a fact the
+    # producer did not observe.
+    timestamp: datetime = None  # type: ignore[assignment]
     metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if self.timestamp is None or self.timestamp == "":
+            raise TypeError("AssetState requires timestamp: the instant of the transition "
+                            "(IAES_SPEC.md, asset.state, rule 2)")
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to an IAES wire-format dict. Never carries ``content_hash``."""

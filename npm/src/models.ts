@@ -899,7 +899,13 @@ export class SparePartUsage {
 
 // ─── asset.state (IAES 2.1) ────────────────────────────────
 
-export interface AssetStateInit extends BaseFields {
+export interface AssetStateInit extends Omit<BaseFields, "timestamp"> {
+  /**
+   * REQUIRED for this type: the instant of the transition, never the time of
+   * sending (IAES_SPEC.md, `asset.state`, rule 2). Every other builder
+   * defaults to "now"; here "now" would be a fact the producer did not observe.
+   */
+  timestamp: string | Date;
   state: UpDownState | string;
   down_kind?: DownKind | string | null;
   down_cause?: DownCause | string | null;
@@ -959,6 +965,12 @@ export class AssetState {
     this.correlation_id = init.correlation_id ?? uuid();
     this.source_event_id = init.source_event_id;
     this.batch_id = init.batch_id;
+    // Checked at run time too: a JavaScript caller has no compiler to stop it.
+    if (init.timestamp == null || init.timestamp === "") {
+      throw new Error(
+        "asset.state requires timestamp: the instant of the transition (IAES_SPEC.md, asset.state, rule 2)",
+      );
+    }
     this.timestamp = toISOString(init.timestamp);
     this.metadata = init.metadata ?? {};
   }
@@ -988,6 +1000,7 @@ export class AssetState {
         work_order_id: this.work_order_id,
         reason: this.reason,
       },
+      withContentHash: false,
     });
     return envelope;
   }

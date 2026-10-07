@@ -247,7 +247,7 @@ class TestEveryVersionSurfaceAgrees(unittest.TestCase):
                              "the Python User-Agent would lie about which SDK made the request")
 
     def test_no_shipped_node_hardcodes_a_major(self):
-        """Both validate nodes hardcoded `^1\.` and shipped as 2.0.0, so each
+        r"""Both validate nodes hardcoded `^1\.` and shipped as 2.0.0, so each
         rejected every event the SDK beside it produces. Node-RED was fixed
         first; n8n was found by review, because it has no tests at all."""
         offenders = []

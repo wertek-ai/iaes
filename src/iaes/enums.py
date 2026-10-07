@@ -170,7 +170,8 @@ class UpDownState(str, Enum):
 
 class DownKind(str, Enum):
     """The two branches of down time (ISO 14224:2016, Table 4). Required when
-    state is down.
+    state is down, absent when state is up. Never null: a down state always
+    knows which branch it is, and an up state has none.
 
     Schema: asset.state, data.down_kind.
     """

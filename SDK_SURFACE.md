@@ -136,7 +136,7 @@ Names below are canonical. Each language spells them in its own convention.
 | `compute_content_hash` | SHA-256 over the RFC 8785 serialisation of `data`, first 16 hex, by the rule of the event's `spec_version` | must agree across languages |
 | `schema_uri_for` | derives the schema URI from an event type | this is what `dataschema` carries |
 | `route` | separates events by type | uses only the published vocabulary |
-| *vocabulary* | the published enumerations | all ten, not the ones a first use case needed |
+| *vocabulary* | the published enumerations | all fifteen (`surface.json`), not the ones a first use case needed |
 
 **`publish` is not on this list, on purpose.** Sending an event somewhere is not
 yet part of this standard: IAES defines no transport, no endpoint contract and
@@ -146,6 +146,11 @@ belongs to that server's package. It becomes an IAES capability the day a
 transport binding exists — not before.
 
 ## Where the five stand, measured 2026-09-06
+
+A dated measurement, kept as it was taken: it counts against 2.0, which had seven
+types and ten enumerations. 2.1 adds the eighth type, `asset.state`, and five
+enumerations, fifteen in all (`surface.json`); `tests/test_surface.py` checks
+the current counts, and this table is not re-measured here.
 
 | | build | from_object | validate | hash | schema_uri_for | route | vocabulary |
 |---|---|---|---|---|---|---|---|
