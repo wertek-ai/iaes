@@ -179,7 +179,19 @@ def normative_files(ref: str = "HEAD") -> list:
     return files
 
 
-_RFC_STATE = re.compile(r"\*\*State:\s*(\w+)\*\*")
+# Both Markdown spellings: "**State: Draft**" (the repository's) and
+# "**State:** Draft" (the common one).
+_RFC_STATE = re.compile(r"\*\*State:\s*(\w+)|\*\*State:\*\*\s*(\w+)")
+
+#: Memos written before the State line existed. They have always been part of
+#: the rationale, and the manifests of spec-v1.4 and spec-v2.0 include them.
+PREDATE_THE_STATE_LINE = {"rfc/IAES-RFC-000.md", "rfc/IAES-RFC-001.md"}
+
+
+def memo_state(text: str):
+    """The State a memo declares, or None if it declares none."""
+    m = _RFC_STATE.search(text)
+    return (m.group(1) or m.group(2)) if m else None
 
 
 def rationale_files(ref: str = "HEAD") -> list:
@@ -189,17 +201,28 @@ def rationale_files(ref: str = "HEAD") -> list:
     The glob alone took every memo in `rfc/`, so a Draft merged for comment would
     have been shipped as the rationale of a release it is not part of (measured
     2026-10-06: `rfc/IAES-RFC-010.md`, Draft, sat on main). A memo that declares
-    a state other than Accepted is left out. RFC-000 and RFC-001 predate the
-    State line and have always been part of the rationale; they stay, so the
-    manifests of spec-v1.4 and spec-v2.0 are unchanged.
+    a state other than Accepted is left out.
+
+    A memo whose state cannot be read is an ERROR, not a pass. The first version
+    of this filter let it in, so `**State:** Draft` -- the most common Markdown
+    spelling -- would have shipped as rationale; a read-only review showed it
+    on 2026-10-06. Only the two memos that predate the State line are exempt,
+    by name.
     """
     out = []
     for f in matching(ref, RATIONALE_GLOBS):
         rel = str(f.relative_to(ROOT)).replace("\\", "/")
-        m = _RFC_STATE.search(_text_at(ref, rel))
-        if m and m.group(1) != "Accepted":
-            continue
-        out.append(f)
+        state = memo_state(_text_at(ref, rel))
+        if state is None:
+            if rel in PREDATE_THE_STATE_LINE:
+                out.append(f)
+                continue
+            raise SystemExit(
+                f"{rel} at {ref} declares no State that can be read. A memo states "
+                f"one (GOVERNANCE.md §6), as '**State: Accepted**'."
+            )
+        if state == "Accepted":
+            out.append(f)
     return out
 
 

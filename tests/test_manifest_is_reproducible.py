@@ -232,13 +232,25 @@ class TheManifestDescribesItsOwnRelease(unittest.TestCase):
         # GOVERNANCE.md §3-bis: a release carries "the accepted RFCs". The glob
         # took every memo, so a Draft merged for comment would ship as rationale.
         tool = load_tool()
-        state = re.compile(r"\*\*State:\s*(\w+)\*\*")
-        for f in tool.rationale_files("HEAD"):
-            m = state.search(f.read_text(encoding="utf-8"))
-            self.assertTrue(m is None or m.group(1) == "Accepted",
-                            f"{f.name} is rationale but declares State: {m.group(1) if m else ''}")
-        # Positive control: the filter keeps the accepted memos and the two that
-        # predate the State line.
-        names = {f.name for f in tool.rationale_files("HEAD")}
-        self.assertIn("IAES-RFC-000.md", names)
-        self.assertIn("IAES-RFC-002.md", names)
+        rationale = {f.name for f in tool.rationale_files("HEAD")}
+        # Every memo in rfc/ is accounted for: in the rationale if and only if
+        # it is Accepted or predates the State line. Read with an independent
+        # reading of the files, not with the tool's own regex.
+        for path in sorted((ROOT / "rfc").glob("IAES-RFC-*.md")):
+            text = path.read_text(encoding="utf-8")
+            head = text[:3000]
+            accepted = "State: Accepted" in head or "State:** Accepted" in head
+            predates = f"rfc/{path.name}" in tool.PREDATE_THE_STATE_LINE
+            self.assertEqual(path.name in rationale, accepted or predates, path.name)
+        # Negative control: main holds at least one memo that is not Accepted
+        # (RFC-010, a Draft), and it must be out.
+        self.assertNotIn("IAES-RFC-010.md", rationale)
+        self.assertIn("IAES-RFC-000.md", rationale)
+        self.assertIn("IAES-RFC-002.md", rationale)
+
+    def test_the_state_is_read_in_both_spellings(self):
+        tool = load_tool()
+        self.assertEqual(tool.memo_state("**State: Draft**, per GOVERNANCE.md"), "Draft")
+        self.assertEqual(tool.memo_state("**State:** Draft, per GOVERNANCE.md"), "Draft")
+        self.assertEqual(tool.memo_state("**State: Accepted**"), "Accepted")
+        self.assertIsNone(tool.memo_state("no state line here"))

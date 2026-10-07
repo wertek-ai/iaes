@@ -116,7 +116,7 @@ event = AssetMeasurement(
     value=4.2,
     unit="mm/s",
     source="acme.sensors.plant1",
-    units_qualifier="rms",           # ISO 17359
+    units_qualifier="rms",           # how the value was processed
     sampling_rate_hz=25600,
 )
 payload = event.to_dict()  # IAES wire format, ready for json.dumps()

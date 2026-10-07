@@ -29,19 +29,19 @@ from iaes import (
 ASSET = "PUMP-101"
 PLANT = "Monterrey-North"
 AREA = "Cooling Tower #3"
-# correlation_id MUST be a UUID (RFC 4122; IAES_SPEC.md "Normative references").
-# A name-based UUID keeps the useful property of the readable label: the same
-# failure mode on the same asset always gets the same id.
-CORRELATION_LABEL = f"{ASSET}:bearing_outer_race"
-CORRELATION = str(uuid.uuid5(uuid.NAMESPACE_URL, f"https://example.com/iaes/{CORRELATION_LABEL}"))
+# correlation_id MUST be a UUID (RFC 4122; IAES_SPEC.md "References"). One
+# incident is one correlation_id, generated when it starts. Not derived from
+# the failure mode: the same fault on the same pump months later is another
+# incident, and must not join this chain.
+CORRELATION = str(uuid.uuid4())
 published = []
 
 # Illustrative alarm thresholds for this demo (mm/s RMS). IAES carries the value
 # and its units_qualifier; it does not set limits. Real limits come from the
 # machine's own standard (for example the ISO 10816/20816 series) and the site.
-ZONE_B = 4.5   # satisfactory
-ZONE_C = 7.1   # unsatisfactory -> warning
-ZONE_D = 11.2  # unacceptable -> critical
+NORMAL_BELOW = 4.5
+WARNING_FROM = 7.1
+CRITICAL_FROM = 11.2
 
 
 def publish(event, pretty=True):

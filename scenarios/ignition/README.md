@@ -14,7 +14,7 @@ A folder `IAES_ReferenceStory` in the `default` tag provider:
 
 | Tag | Type | What it is |
 |---|---|---|
-| `vibration_velocity` | Float8, memory, `4.2` | the reading (mm/s RMS). In production, point it at your sensor's tag. |
+| `vibration_velocity` | Float8, memory, `4.2` | the reading (mm/s RMS). Only this value is read; the rest of the story is fixed text, so do not point `receiver_url` at a production system. |
 | `receiver_url` | String, memory, empty | where the batch is POSTed -- any IAES receiver. **Empty: nothing leaves the Gateway.** |
 | `last_events` | String, memory | the five events of the last run, as a JSON list |
 | `run` | Boolean, memory, `false` | set it to `true` to tell the story; its `valueChanged` script sets it back to `false` |
@@ -75,7 +75,9 @@ with receiver_url set       -> told the story: 5 events to <a test receiver on t
 what the receiver got       -> ONE POST with the 5 events: match the fixture, content_hash == python, valid
 ```
 
-So Jython 2.7 hashes byte-for-byte like CPython. Its timestamps carry milliseconds (`.527000Z`): `%f` on Jython is
+So, for these four payloads, Jython 2.7 hashes byte-for-byte like CPython. That is what was measured, not a
+general claim: floats in exponent form, non-ASCII text and integer-like keys were not exercised, and on
+those the SDKs themselves disagree (`conformance/content_hash.json`). Its timestamps carry milliseconds (`.527000Z`): `%f` on Jython is
 millisecond-precise; the timestamp is volatile and still a valid date-time.
 
 **What the real Gateway found that the stand-in could not:** in Jython a **Java** exception (here `java.io.IOException`

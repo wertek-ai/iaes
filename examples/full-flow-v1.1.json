@@ -106,7 +106,7 @@
     "_comment": "Step 5: Spare part usage recorded (linked to same WO and correlation)",
     "spec_version": "2.0",
     "event_type": "maintenance.spare_part_usage",
-    "event_id": "p1a2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c",
+    "event_id": "d1a2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c",
     "correlation_id": "3b2f9d8c-1c33-4a8a-9b77-54d11b2efc12",
     "source_event_id": "c4d5e6f7-a8b9-0c1d-2e3f-4a5b6c7d8e9f",
     "timestamp": "2026-03-07T09:16:00Z",

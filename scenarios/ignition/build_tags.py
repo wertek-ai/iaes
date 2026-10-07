@@ -107,7 +107,11 @@ def tell():
 		if url:
 			response = system.net.httpClient(timeout=20000).post(
 				url, data=body, headers={"Content-Type": "application/json"})
-			log.info("told the story: %d events to %s -> HTTP %s" % (len(events), url, response.statusCode))
+			# A refused batch is a failure, not a story told: the line says which.
+			if 200 <= response.statusCode < 300:
+				log.info("told the story: %d events to %s -> HTTP %s" % (len(events), url, response.statusCode))
+			else:
+				log.error("the receiver refused the story: %d events to %s -> HTTP %s" % (len(events), url, response.statusCode))
 		else:
 			log.info("told the story: %d events (no receiver_url: written to last_events only)" % len(events))
 	except (Exception, JavaThrowable) as e:
@@ -130,7 +134,9 @@ def build() -> dict:
         "tagType": "Folder",
         "tags": [
             {"name": "vibration_velocity", "tagType": "AtomicTag", "valueSource": "memory", "dataType": "Float8",
-             "value": 4.2, "documentation": "mm/s RMS. In production, point this at your sensor's tag."},
+             "value": 4.2, "documentation": "mm/s RMS. A reference scenario: only this value is read, and the rest "
+                              "of the story (severity, work order, its completion) is fixed text. Do not point "
+                              "receiver_url at a production system."},
             {"name": "receiver_url", "tagType": "AtomicTag", "valueSource": "memory", "dataType": "String",
              "value": "", "documentation": "Where the batch is POSTed (an IAES receiver). Empty: nothing is sent."},
             {"name": "last_events", "tagType": "AtomicTag", "valueSource": "memory", "dataType": "String",
