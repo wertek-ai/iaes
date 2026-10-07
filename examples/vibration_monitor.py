@@ -16,6 +16,7 @@ Run:
 
 import json
 import random
+import uuid
 from iaes import (
     AssetMeasurement,
     AssetHealth,
@@ -28,10 +29,16 @@ from iaes import (
 ASSET = "PUMP-101"
 PLANT = "Monterrey-North"
 AREA = "Cooling Tower #3"
-CORRELATION = f"{ASSET}:bearing_outer_race"
+# correlation_id MUST be a UUID (RFC 4122; IAES_SPEC.md "Normative references").
+# A name-based UUID keeps the useful property of the readable label: the same
+# failure mode on the same asset always gets the same id.
+CORRELATION_LABEL = f"{ASSET}:bearing_outer_race"
+CORRELATION = str(uuid.uuid5(uuid.NAMESPACE_URL, f"https://example.com/iaes/{CORRELATION_LABEL}"))
 published = []
 
-# ISO 17359 vibration alarm zones (mm/s RMS, Zone A-D)
+# Illustrative alarm thresholds for this demo (mm/s RMS). IAES carries the value
+# and its units_qualifier; it does not set limits. Real limits come from the
+# machine's own standard (for example the ISO 10816/20816 series) and the site.
 ZONE_B = 4.5   # satisfactory
 ZONE_C = 7.1   # unsatisfactory -> warning
 ZONE_D = 11.2  # unacceptable -> critical
@@ -150,7 +157,7 @@ wo = WorkOrderIntent(
     area=AREA,
     title="Replace outer race bearing -- PUMP-101",
     priority="critical",
-    description="Vibration RMS exceeded Zone D (11.2 mm/s). AI diagnosis: bearing outer race defect. RUL: 3 days.",
+    description="Vibration RMS exceeded the critical threshold (11.2 mm/s). AI diagnosis: bearing outer race defect. RUL: 3 days.",
     correlation_id=CORRELATION,
     source="acme.auto_wo",
 )
