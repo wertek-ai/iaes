@@ -1,14 +1,14 @@
 {
   "$comment": "The IAES SDK profile: what a library must expose to claim it. Normative for the profile and not for the wire (GOVERNANCE.md §9.2); SDK_SURFACE.md is the reasoning and does not govern. What each implementation currently offers is measured in implementations.json, which is not normative and not part of a release: a file that both defined the profile and recorded who meets it would be edited every time a package shipped.",
-  "iaes_spec_version": "2.0",
+  "iaes_spec_version": "2.1",
   "status": {
     "state": "normative",
     "normative_for": "the IAES SDK profile (GOVERNANCE.md §9.2)",
     "normative_for_the_wire": false,
-    "profile_of": "IAES 2.0",
+    "profile_of": "IAES 2.1",
     "adopted_by": "rfc/IAES-RFC-006.md",
     "notice": "Changing this file does not change what an IAES event is. It changes what a library must expose to claim the IAES SDK profile. A library that does not claim the profile is unaffected, and may still be wire-conformant.",
-    "claimed_not_granted": "No one grants this profile. A library claims it by stating, in its published documentation, that it implements the IAES SDK profile of IAES 2.0; any third party checks the claim against this file. See GOVERNANCE.md §9.3 for why the steward must not be the grantor."
+    "claimed_not_granted": "No one grants this profile. A library claims it by stating, in its published documentation, that it implements the IAES SDK profile of IAES 2.1; any third party checks the claim against this file. See GOVERNANCE.md §9.3 for why the steward must not be the grantor."
   },
   "naming": {
     "rule": "The same word, in each language's convention. Never a different verb.",

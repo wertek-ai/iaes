@@ -630,7 +630,7 @@ class TestDataschema:
 
 class TestVersion:
     def test_spec_version(self):
-        assert SPEC_VERSION == "2.0"
+        assert SPEC_VERSION == "2.1"
 
     def test_package_version(self):
         """Derived from pyproject, not typed here.

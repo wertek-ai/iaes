@@ -52,7 +52,7 @@ annotations from the schemas each package ships.
 
 | File | What it holds |
 |---|---|
-| `validation.json` | Events with their expected `schema_valid`, `conforming` and `nonconforming_fields` |
+| `validation.json` | Events with their expected `schema_valid`, `conforming` and `nonconforming_fields`. Most declare 2.0, which a 2.1 reader still reads; the `asset.state` cases declare 2.1, where the type exists |
 | `content_hash.json` | `data` payloads with the canonical bytes and the `content_hash` each implementation must produce |
 
 Both are **generated** by `tools/build_conformance_cases.py`; edit the
@@ -66,8 +66,8 @@ itself written out by hand.
 
 ## `content_hash`: two rules, by declared version
 
-The rule follows the `spec_version` the event declares (IAES-RFC-011, in Review
-with target 2.1):
+The rule follows the `spec_version` the event declares (IAES-RFC-011, accepted
+in 2.1):
 
 - **2.0 and earlier** keep the 2.0 computation. `agreed` cases must produce exactly
   the recorded bytes in every implementation. `divergent_2_0` cases record what each

@@ -106,7 +106,7 @@ measured this* is indistinguishable, six months later, from a `0.0` that means
 
 `event_type` is a pattern, not a list. A producer MAY define its own type in a
 namespace it controls, and a consumer MUST NOT error on one it does not
-recognise. The seven published types are interoperability defaults, not the
+recognise. The eight published types are interoperability defaults, not the
 limit. `measurement_type` works the same way: any published list is advisory.
 
 **Why it had to be fixed.** The field was a closed enumeration while the same
@@ -115,7 +115,7 @@ contradiction that made an unknown type impossible to produce. Both flow
 validators then reintroduced the closed list in their own code, which is how a
 contradiction survives being corrected once.
 
-**What it costs.** We cannot promise that every IAES event is one of seven
+**What it costs.** We cannot promise that every IAES event is one of eight
 known shapes. What we promise instead is that an unknown one does not break the
 reader.
 

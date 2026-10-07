@@ -13,11 +13,11 @@ ISSN: N/A
 > it. It is **not** normative authority for how IAES behaves. The applicable
 > normative artifacts, as released, govern IAES. See `GOVERNANCE.md` §6.1.
 
-**State: Review**, per `GOVERNANCE.md` §6: accepted for consideration by the steward
-on 2026-10-07. Still open for comment; it becomes Accepted only when its change is
-incorporated (§8) in the release that carries it.
+**State: Accepted**, per `GOVERNANCE.md` §6, on 2026-10-07: the 2.1 cut
+incorporated its change (§8) into `IAES_SPEC.md`, `references/registry.json` and
+`surface.json`, and both SDKs and the Ignition scenario compute it.
 **Compatibility: MINOR**, by the tests of `GOVERNANCE.md` §4.4 (§5).
-**Target version: 2.1.** Distribution is unlimited.
+**Version: IAES 2.1.** Distribution is unlimited.
 
 # Copyright Notice
 

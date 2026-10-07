@@ -34,7 +34,7 @@ export const DEFAULT_INGEST_PATH = "/iaes/ingest";
 /** Maximum envelopes a server accepts in one POST. */
 export const MAX_BATCH_SIZE = 100;
 
-const SDK_VERSION = "2.0.2";
+const SDK_VERSION = "2.1.0";
 
 /** Options for the IAES client. */
 export interface IaesClientOptions {

@@ -42,26 +42,92 @@ reading, receiver = system.tag.readBlocking([root + "vibration_velocity", root +
 ASSET = {"asset_id": "MOTOR-001", "asset_name": "Feed Pump Motor", "plant": "North Plant", "area": "Pumping"}
 SCHEMA_BASE = "https://iaes.dev/schema/v2/"
 
-def normalize(obj):
-	# Whole-number floats hash as integers, as in every other implementation.
-	if isinstance(obj, float) and obj == int(obj):
-		return int(obj)
-	if isinstance(obj, dict):
-		return dict((k, normalize(v)) for k, v in obj.items())
-	if isinstance(obj, list):
-		return [normalize(v) for v in obj]
-	return obj
+# content_hash for IAES 2.1 (IAES-RFC-011): SHA-256 of the UTF-8 bytes of the RFC 8785
+# (JCS) serialisation of data, first 16 hex. json.dumps is not JCS (it escapes non-ASCII,
+# writes 1e-07, sorts by code point), so the serialisation is written out here. The same
+# code runs on Jython 2.7 and on CPython 3, hence TEXT and INTEGERS.
+try:
+	TEXT = unicode
+	INTEGERS = (int, long)
+except NameError:
+	TEXT = str
+	INTEGERS = (int,)
+
+SHORT = {u'"': u'\\"', u'\\': u'\\\\', u'\b': u'\\b', u'\f': u'\\f', u'\n': u'\\n', u'\r': u'\\r', u'\t': u'\\t'}
+
+def as_text(s):
+	if isinstance(s, TEXT):
+		return s
+	return s.decode("utf-8")
+
+def jcs_string(s):
+	# Only the quote, the backslash and control characters are escaped; everything else as is.
+	out = [u'"']
+	for ch in as_text(s):
+		if ch in SHORT:
+			out.append(SHORT[ch])
+		elif ord(ch) < 0x20:
+			out.append(u"\\u%04x" % ord(ch))
+		else:
+			out.append(ch)
+	out.append(u'"')
+	return u"".join(out)
+
+def jcs_number(x):
+	# The ECMAScript form: repr gives the shortest round-trip digits, laid out as ECMAScript does.
+	from decimal import Decimal
+	if isinstance(x, INTEGERS):
+		if abs(x) > 2 ** 53:
+			raise ValueError("an integer beyond 2**53 has no exact JSON number form")
+		x = float(x)
+	if x != x or x in (float("inf"), float("-inf")):
+		raise ValueError("NaN and Infinity have no JSON form")
+	if x == 0:
+		return u"0"
+	sign = u"-" if x < 0 else u""
+	t = Decimal(repr(abs(x))).normalize().as_tuple()
+	digits = u"".join([TEXT(d) for d in t.digits])
+	k = len(digits)
+	n = t.exponent + k
+	if k <= n <= 21:
+		body = digits + u"0" * (n - k)
+	elif 0 < n <= 21:
+		body = digits[:n] + u"." + digits[n:]
+	elif -6 < n <= 0:
+		body = u"0." + u"0" * (-n) + digits
+	else:
+		e = n - 1
+		body = digits[0] + (u"." + digits[1:] if k > 1 else u"") + u"e" + (u"+" if e >= 0 else u"-") + TEXT(abs(e))
+	return sign + body
+
+def canonical(v):
+	if v is None:
+		return u"null"
+	if v is True:
+		return u"true"
+	if v is False:
+		return u"false"
+	if isinstance(v, (TEXT, str)):
+		return jcs_string(v)
+	if isinstance(v, INTEGERS) or isinstance(v, float):
+		return jcs_number(v)
+	if isinstance(v, (list, tuple)):
+		return u"[" + u",".join([canonical(i) for i in v]) + u"]"
+	if isinstance(v, dict):
+		# Members sorted by their names as UTF-16 code units, not code points.
+		keys = sorted(v.keys(), key=lambda key: as_text(key).encode("utf-16-be"))
+		return u"{" + u",".join([jcs_string(key) + u":" + canonical(v[key]) for key in keys]) + u"}"
+	raise TypeError("not a JSON value: %r" % (v,))
 
 def content_hash(data):
-	canonical = json.dumps(normalize(data), sort_keys=True, separators=(",", ":"))
-	return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:16]
+	return hashlib.sha256(canonical(data).encode("utf-8")).hexdigest()[:16]
 
 def stamp():
 	return datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
 def published(event_type, source, data, parent=None):
 	event = {
-		"spec_version": "2.0",
+		"spec_version": "2.1",
 		"event_type": event_type,
 		"event_id": str(uuid.uuid4()),
 		"correlation_id": parent["correlation_id"] if parent else str(uuid.uuid4()),
@@ -92,7 +158,7 @@ def story():
 		"work_order_id": "WO-2026-0912", "status": "completed"}, intent)
 	# An event type IAES does not publish, in a namespace the producer controls: written by hand, no hash.
 	custom = {
-		"spec_version": "2.0", "event_type": "acme.press_stroke", "event_id": str(uuid.uuid4()),
+		"spec_version": "2.1", "event_type": "acme.press_stroke", "event_id": str(uuid.uuid4()),
 		"correlation_id": measurement["correlation_id"], "timestamp": measurement["timestamp"],
 		"source": "acme.press_line", "asset": {"asset_id": ASSET["asset_id"]},
 		"data": {"strokes": 412, "tonnage_peak": 88.4}}

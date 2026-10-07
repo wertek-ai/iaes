@@ -1,4 +1,4 @@
-# IAES — Industrial Asset Event Standard v2.0
+# IAES — Industrial Asset Event Standard v2.1
 
 > A vendor-neutral event format for industrial asset intelligence.
 
@@ -36,7 +36,7 @@ Every IAES event shares this envelope:
 
 ```json
 {
-  "spec_version": "2.0",
+  "spec_version": "2.1",
   "event_type": "asset.health",
   "event_id": "uuid",
   "correlation_id": "uuid",
@@ -60,7 +60,7 @@ Every IAES event shares this envelope:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `spec_version` | string | yes | IAES spec version. This release is `"2.0"`; each major's envelope accepts that major's versions and no others |
+| `spec_version` | string | yes | IAES spec version. This release is `"2.1"`; each major's envelope accepts that major's versions and no others |
 | `dataschema` | URI | no | Canonical URI of the schema the `data` payload was written against (v1.4) |
 | `event_type` | string | yes | Dot-notation event type, matching `^[a-z][a-z0-9_]*\.[a-z][a-z0-9_.]*$`. Open: a producer MAY define its own (v1.4) |
 | `event_id` | UUID | yes | Unique identifier for this event |
@@ -593,6 +593,7 @@ IAES uses semantic versioning for the specification itself:
 | 1.3 | March 2026 | State transition model: `condition_trend` field on asset.health (`worsening`, `stable`, `improving`) based on ISO 13374-4 §5.3. Formalized recovery event pattern. State Transition Guidance in Architecture Guide (ISO 13374-4, ISO 17359, ISO 14224, ISO 55000). Recovery event example. All new fields optional — full backward compatibility. |
 | 1.4 | September 2026 | **Governance and compatibility policy become normative** ([GOVERNANCE.md](GOVERNANCE.md)): stated stewardship, BACKWARD compatibility as the default mode, a 24-month support window, canonical and resolvable `$id` versioned by URI, and an RFC-based change process. Scope boundaries made explicit: IAES defines no asset hierarchy, no equipment catalog, and no commercial terms. **No schema changed in this release.** **Schema identity corrected** under GOVERNANCE.md §5.1: the eight schemas declared `$id` under `https://iaes.wertek.ai/schema/v1/`, a host that has never resolved (verified 2026-09-03: no DNS answer). They now declare `https://iaes.dev/schema/v1/`, which is served. The old base is permanently reserved and will not be reassigned. Schema content is otherwise unchanged. **New optional envelope field `dataschema`**: the canonical URI of the schema the payload was written against, following the CloudEvents attribute of the same name. Derivable from `event_type`, so both SDKs set it automatically for published event types and omit it otherwise. Optional and additive: fully backward compatible. **`event_type` opened**: it was a closed enumeration of seven values while this same document ordered consumers to tolerate values they do not recognise — a contradiction that made unknown types impossible to produce. It is now a dot-notation pattern with the published types as examples. Widening, therefore backward compatible: every previously valid value still validates, and the compatibility guard verifies that rather than assuming it. |
 | 2.0 | September 2026 | **First MAJOR release.** Two things make it major, and only one can affect a producer's existing output. **(1) Timestamps must be RFC 3339**, not merely ISO 8601 — a narrowing, since ordinal dates, week dates and some offset forms are valid ISO 8601 and not valid RFC 3339. No schema enforces it in either direction, because `format` is an annotation in Draft 2020-12, so it will not surface as a validation failure. **(2) The eight schemas publish under `https://iaes.dev/schema/v2/`**, and the envelope constrains `spec_version` to `^2\.[0-9]+$`. The eight `/schema/v1/` URIs continue to resolve, permanently, to the schemas the 1.x line published: a representation served under a major's URI stays that major's and is never regenerated from a later release. A consumer validates an event against the schemas of the major the event declares, which is how a 2.0 consumer reads a 1.4 event. **Wire contract stabilized** (`rfc/IAES-RFC-002.md`): `severity` is not `priority` and neither may be presented as the other; the ISO 13374 attributions on `iso_13374_status` and `condition_trend` are **withdrawn** — the values are IAES's own and the field names are kept for compatibility; an **absent optional field is not an assertion**, so a producer MUST omit rather than substitute and a consumer MUST NOT read absence as a default; `measurement_type` is **open** and any published list is advisory. None of those invalidates a 1.4 event: everything schema-valid under 1.4 stays schema-valid, and a 1.4 producer that keeps substituting stays conforming to 1.4 — it simply cannot declare 2.0. **Governance became testable** (RFC-003 through RFC-007): a criterion for changes to producer and consumer obligations (§4.4), one for changes to the policy itself and the rule that a release takes the maximum level of the changes it carries (§4.5), two classes of conformance with an SDK profile that is claimed and checked rather than granted (§9), and the ratification of everything that had accumulated since 1.4. **Migration:** declare `2.0`, point at `/schema/v2/`, emit RFC 3339 timestamps, take the `2.0.x` packages, and stop substituting values for optional fields the caller did not supply. `from_object` is the canonical constructor name; `from_dict` and `fromJSON` keep working as deprecated aliases. |
+| 2.1 | October 2026 | **MINOR.** Three accepted decisions; none changes the bytes or the meaning of an existing event. **(1) A new event type, `asset.state`** (`rfc/IAES-RFC-010.md`): whether an asset is up or down, planned or unplanned, why, and what it was doing while up — the facts MTBF, MTTR and availability are computed from, as ISO 14224:2016 asks them to be collected. It carries no `content_hash`. Its schema is a new file at a new URI, `https://iaes.dev/schema/v2/asset.state`; no 2.x schema was edited. **Recovery Events no longer claim MTTR:** the interval between a condition's onset and its recovery is not the restoration of the asset, and a consumer that declares 2.1 MUST NOT present it as one; a 2.0 consumer that does stays conforming to 2.0. **(2) `content_hash` by RFC 8785 (JCS)** (`rfc/IAES-RFC-011.md`) for events that declare 2.1 or later; an event that declares 2.0 keeps the 2.0 computation, so a retried 2.0 event keeps its hash. *Known risk, disclosed:* for 2.0 events whose `data` holds non-ASCII text, exponents, integer-like keys or characters outside the BMP, the 2.0 hash depended on the implementation that produced it (the Python and TypeScript SDKs disagreed on six of eleven shared cases). A consumer that recomputes the hashes of mixed-version events gets different values: a missed duplicate, never a false merge. **(3) Where an RFC lives** (`rfc/IAES-RFC-013.md`): a Draft stays in its pull request until it reaches Review. **Migration:** none is required. To produce `asset.state`, declare 2.1 and take the `2.1.x` packages; a consumer adds the type when it wants the timeline. The SDK profile adds the new builder and five enumerations, and a library that met the 2.0 profile keeps claiming 2.0. The Node-RED route node gains output 8 for `asset.state`, after the seven a 2.0 flow is wired to. |
 
 ## References
 
@@ -836,7 +837,7 @@ IAES is an open specification licensed under [CC BY 4.0](https://creativecommons
 
 ---
 
-*IAES v2.0 — September 2026*
+*IAES v2.1 — October 2026*
 *Created by the [Wertek AI](https://wertek.ai) team.*
 *Implementations are listed in [README.md](README.md). None of them is
 privileged: conformance is measured on the wire, not against any one of

@@ -190,7 +190,7 @@ def main() -> None:
     ap.add_argument("--base", required=True, help="the published release tag")
     ap.add_argument("--head", default="HEAD", help="the release candidate")
     ap.add_argument("--ledger", type=Path,
-                    default=ROOT / "release" / "accounting-2.0.json")
+                    default=ROOT / "release" / "accounting-2.1.json")
     args = ap.parse_args()
     raise SystemExit(check(args.ledger, args.base, args.head))
 

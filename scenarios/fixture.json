@@ -20,7 +20,7 @@
     "would quietly teach a rule the specification does not have."
   ],
 
-  "spec_version": "2.0",
+  "spec_version": "2.1",
 
   "volatile": {
     "$comment": "Excluded from cross-implementation comparison, with the reason.",
