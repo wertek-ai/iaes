@@ -13,6 +13,32 @@ The normative history of the specification is the version history in `IAES_SPEC.
 
 ## Unreleased
 
+### Shape rules are generated from `schema/`, never copied
+
+`tools/generate_from_schema.py` writes the published types, their schema files,
+the required data fields and the closed catalogues, plus both SDKs'
+enumerations. It writes them into `src/iaes/_from_schema.py`,
+`src/iaes/enums.py`, `npm/src/fromSchema.ts` and `npm/src/enums.ts`. The SDKs
+import from those files, and `tests/test_rules_live_in_the_schema.py` fails if
+a generated file is stale or a catalogue is copied by hand elsewhere.
+
+- **The enumerations are unchanged.** All ten are identical, member by member,
+  to the hand-written ones. Their docstrings now come from the schema's
+  descriptions.
+- **New exports:** `CATALOGS` and `REQUIRED_DATA_FIELDS` in both SDKs.
+- **n8n IAES Emit:** its option lists now come from the SDK. On the hand-written
+  form, three fields did not match the schemas:
+  - `iso_13374_status` had no `unknown`;
+  - `triggered_by` had no `alert`;
+  - `units_qualifier` was free text with the placeholder `peak-peak`, which the
+    schema rejects. It is now a menu of the five values the schema allows.
+
+  `measurement_type` now lists the SDK's seventeen advisory values; it listed
+  fourteen.
+- **Unchanged on purpose:** the Node-RED route node keeps its own ordered list.
+  The position of a type is the output it leaves by, and deployed flows are
+  wired to it.
+
 ### One set of cases for four implementations (`conformance/`)
 
 The Python SDK, the TypeScript SDK, the Node-RED nodes and the n8n nodes now

@@ -15,15 +15,8 @@ SCHEMA_BASE = "https://iaes.dev/schema/v2/"
 #: Event types whose schema is published. ``dataschema`` is only emitted for
 #: these: pointing at a URI that does not resolve is worse than omitting the
 #: field, and is the exact defect v1.4 corrected.
-PUBLISHED_EVENT_TYPES = frozenset({
-    "asset.measurement",
-    "asset.health",
-    "asset.hierarchy",
-    "sensor.registration",
-    "maintenance.work_order_intent",
-    "maintenance.completion",
-    "maintenance.spare_part_usage",
-})
+#: Generated from schema/ (tools/generate_from_schema.py), never written here.
+from ._from_schema import PUBLISHED_EVENT_TYPES  # noqa: E402
 
 
 def schema_uri_for(event_type: str):

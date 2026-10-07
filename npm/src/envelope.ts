@@ -17,15 +17,9 @@ export const SCHEMA_BASE = "https://iaes.dev/schema/v2/";
  * these: pointing at a URI that does not resolve is worse than omitting the
  * field, and is the exact defect v1.4 corrected.
  */
-export const PUBLISHED_EVENT_TYPES = new Set([
-  "asset.measurement",
-  "asset.health",
-  "asset.hierarchy",
-  "sensor.registration",
-  "maintenance.work_order_intent",
-  "maintenance.completion",
-  "maintenance.spare_part_usage",
-]);
+// Generated from schema/ (tools/generate_from_schema.py), never written here.
+import { PUBLISHED_EVENT_TYPES } from "./fromSchema";
+export { PUBLISHED_EVENT_TYPES };
 
 /** The schema URI for an event type, or undefined if none is published. */
 export function schemaUriFor(eventType: string): string | undefined {

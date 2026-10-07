@@ -10,16 +10,9 @@ from typing import Any, Dict, Optional
 
 _SCHEMA_DIR = Path(__file__).parent / "schemas"
 
-# Map event_type to schema filename
-_SCHEMA_FILES = {
-    "asset.measurement": "asset-measurement.schema.json",
-    "asset.health": "asset-health.schema.json",
-    "maintenance.work_order_intent": "maintenance-work-order-intent.schema.json",
-    "maintenance.completion": "maintenance-completion.schema.json",
-    "asset.hierarchy": "asset-hierarchy.schema.json",
-    "sensor.registration": "sensor-registration.schema.json",
-    "maintenance.spare_part_usage": "maintenance-spare-part-usage.schema.json",
-}
+# Map event_type to schema filename: generated from schema/
+# (tools/generate_from_schema.py), never written here.
+from ._from_schema import SCHEMA_FILES as _SCHEMA_FILES
 
 _schema_cache: Dict[str, Any] = {}
 

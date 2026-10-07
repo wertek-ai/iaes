@@ -7,6 +7,8 @@ import type {
 } from 'n8n-workflow';
 
 import {
+	CATALOGS,
+	MeasurementType,
 	AssetMeasurement,
 	AssetHealth,
 	WorkOrderIntent,
@@ -14,6 +16,42 @@ import {
 	SensorRegistration,
 	SparePartUsage,
 } from '@iaes/sdk';
+
+/**
+ * Option lists come from the SDK, which takes them from schema/
+ * (tools/generate_from_schema.py). They used to be written here by hand, and on
+ * 2026-10-06 two had drifted: iso_13374_status had no `unknown` and
+ * triggered_by no `alert`, so this form could not emit two values the schemas
+ * allow. tests/test_rules_live_in_the_schema.py now fails if a catalogue is
+ * copied into this file again.
+ */
+const LABELS: Record<string, string> = {
+	ai_diagnosis: 'AI Diagnosis',
+	threshold: 'Threshold Alert',
+	thd_voltage: 'THD Voltage',
+	thd_current: 'THD Current',
+	rms: 'RMS',
+	true_rms: 'True RMS',
+};
+
+function label(value: string): string {
+	return LABELS[value] ?? value.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+function valueOptions(values: readonly string[]): Array<{ name: string; value: string }> {
+	return values.map((value) => ({ name: label(value), value }));
+}
+
+/** The closed catalogue of a schema field, optionally led by an empty choice. */
+function catalogOptions(
+	eventType: string,
+	field: string,
+	none?: string,
+): Array<{ name: string; value: string }> {
+	const values = CATALOGS[eventType]?.[field];
+	if (!values) throw new Error(`no catalogue for ${eventType} data.${field} in @iaes/sdk`);
+	return (none === undefined ? [] : [{ name: none, value: '' }]).concat(valueOptions(values));
+}
 
 /**
  * The tri-state Failure Confirmed parameter, plus the boolean that workflows
@@ -142,13 +180,7 @@ export class IaesEmit implements INodeType {
 				displayName: 'Severity',
 				name: 'severity',
 				type: 'options',
-				options: [
-					{ name: 'Info', value: 'info' },
-					{ name: 'Low', value: 'low' },
-					{ name: 'Medium', value: 'medium' },
-					{ name: 'High', value: 'high' },
-					{ name: 'Critical', value: 'critical' },
-				],
+				options: catalogOptions('asset.health', 'severity'),
 				default: 'info',
 				displayOptions: { show: { eventType: ['asset.health'] } },
 			},
@@ -156,12 +188,7 @@ export class IaesEmit implements INodeType {
 				displayName: 'Condition Trend',
 				name: 'conditionTrend',
 				type: 'options',
-				options: [
-					{ name: '(None)', value: '' },
-					{ name: 'Worsening', value: 'worsening' },
-					{ name: 'Stable', value: 'stable' },
-					{ name: 'Improving', value: 'improving' },
-				],
+				options: catalogOptions('asset.health', 'condition_trend', '(None)'),
 				default: '',
 				description: 'Condition trend direction',
 				displayOptions: { show: { eventType: ['asset.health'] } },
@@ -193,15 +220,7 @@ export class IaesEmit implements INodeType {
 				displayName: 'ISO 13374 Status',
 				name: 'iso13374Status',
 				type: 'options',
-				options: [
-					{ name: '(None)', value: '' },
-					{ name: 'Normal', value: 'normal' },
-					{ name: 'Satisfactory', value: 'satisfactory' },
-					{ name: 'Unsatisfactory', value: 'unsatisfactory' },
-					{ name: 'Unacceptable', value: 'unacceptable' },
-					{ name: 'Imminent Failure', value: 'imminent_failure' },
-					{ name: 'Failed', value: 'failed' },
-				],
+				options: catalogOptions('asset.health', 'iso_13374_status', '(None)'),
 				default: '',
 				displayOptions: { show: { eventType: ['asset.health'] } },
 			},
@@ -211,22 +230,7 @@ export class IaesEmit implements INodeType {
 				displayName: 'Measurement Type',
 				name: 'measurementType',
 				type: 'options',
-				options: [
-					{ name: 'Vibration Velocity', value: 'vibration_velocity' },
-					{ name: 'Vibration Acceleration', value: 'vibration_acceleration' },
-					{ name: 'Temperature', value: 'temperature' },
-					{ name: 'Current', value: 'current' },
-					{ name: 'Voltage', value: 'voltage' },
-					{ name: 'Power', value: 'power' },
-					{ name: 'Power Factor', value: 'power_factor' },
-					{ name: 'THD Voltage', value: 'thd_voltage' },
-					{ name: 'THD Current', value: 'thd_current' },
-					{ name: 'Frequency', value: 'frequency' },
-					{ name: 'Pressure', value: 'pressure' },
-					{ name: 'Flow', value: 'flow' },
-					{ name: 'Speed', value: 'speed' },
-					{ name: 'Custom', value: 'custom' },
-				],
+				options: valueOptions(Object.values(MeasurementType)),
 				default: 'vibration_velocity',
 				displayOptions: { show: { eventType: ['asset.measurement'] } },
 			},
@@ -256,9 +260,9 @@ export class IaesEmit implements INodeType {
 			{
 				displayName: 'Units Qualifier',
 				name: 'unitsQualifier',
-				type: 'string',
+				type: 'options',
+				options: catalogOptions('asset.measurement', 'units_qualifier', '(None)'),
 				default: '',
-				placeholder: 'rms, peak, peak-peak',
 				description: 'How the value was derived from the signal (optional). The schema field is units_qualifier.',
 				displayOptions: { show: { eventType: ['asset.measurement'] } },
 			},
@@ -277,12 +281,7 @@ export class IaesEmit implements INodeType {
 				displayName: 'Priority',
 				name: 'woPriority',
 				type: 'options',
-				options: [
-					{ name: 'Low', value: 'low' },
-					{ name: 'Medium', value: 'medium' },
-					{ name: 'High', value: 'high' },
-					{ name: 'Emergency', value: 'emergency' },
-				],
+				options: catalogOptions('maintenance.work_order_intent', 'priority'),
 				default: 'medium',
 				displayOptions: { show: { eventType: ['maintenance.work_order_intent'] } },
 			},
@@ -305,13 +304,7 @@ export class IaesEmit implements INodeType {
 				displayName: 'Triggered By',
 				name: 'triggeredBy',
 				type: 'options',
-				options: [
-					{ name: '(Not specified)', value: '' },
-					{ name: 'AI Diagnosis', value: 'ai_diagnosis' },
-					{ name: 'Threshold Alert', value: 'threshold' },
-					{ name: 'Schedule', value: 'schedule' },
-					{ name: 'Manual', value: 'manual' },
-				],
+				options: catalogOptions('maintenance.work_order_intent', 'triggered_by', '(Not specified)'),
 				default: '',
 				displayOptions: { show: { eventType: ['maintenance.work_order_intent'] } },
 			},
@@ -337,12 +330,7 @@ export class IaesEmit implements INodeType {
 				displayName: 'Completion Status',
 				name: 'completionStatus',
 				type: 'options',
-				options: [
-					{ name: 'Completed', value: 'completed' },
-					{ name: 'Partially Completed', value: 'partially_completed' },
-					{ name: 'Cancelled', value: 'cancelled' },
-					{ name: 'Deferred', value: 'deferred' },
-				],
+				options: catalogOptions('maintenance.completion', 'status'),
 				default: 'completed',
 				displayOptions: { show: { eventType: ['maintenance.completion'] } },
 			},
@@ -383,12 +371,7 @@ export class IaesEmit implements INodeType {
 				displayName: 'Registration Status',
 				name: 'registrationStatus',
 				type: 'options',
-				options: [
-					{ name: 'Discovered', value: 'discovered' },
-					{ name: 'Registered', value: 'registered' },
-					{ name: 'Calibrated', value: 'calibrated' },
-					{ name: 'Decommissioned', value: 'decommissioned' },
-				],
+				options: catalogOptions('sensor.registration', 'registration_status'),
 				default: 'registered',
 				displayOptions: { show: { eventType: ['sensor.registration'] } },
 			},

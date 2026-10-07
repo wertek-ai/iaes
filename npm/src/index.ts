@@ -32,6 +32,7 @@ export type { IAESEnvelope, IAESWireEnvelope, AssetIdentity } from "./envelope";
 
 export { validate, loadSchema, loadEnvelopeSchema, ValidationError } from "./validation";
 export { findNonconformities } from "./conformance";
+export { CATALOGS, REQUIRED_DATA_FIELDS } from "./fromSchema";
 
 export {
   Severity,

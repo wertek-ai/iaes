@@ -50,6 +50,7 @@ from .models import (
 )
 from .validation import ValidationError, validate, load_schema
 from .conformance import find_nonconformities
+from ._from_schema import CATALOGS, REQUIRED_DATA_FIELDS
 from .client import Client, IaesClientError
 
 # AsyncClient is only available if httpx is installed
@@ -92,6 +93,8 @@ __all__ = [
     "from_dict",
     "validate",
     "find_nonconformities",
+    "CATALOGS",
+    "REQUIRED_DATA_FIELDS",
     "load_schema",
     "compute_content_hash",
     "schema_uri_for",

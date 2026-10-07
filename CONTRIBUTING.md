@@ -49,6 +49,25 @@ would have told you which.
 Changing prose to match the schema is an ordinary pull request. Changing what
 an event is, or what an implementation must do, is an RFC.
 
+### A rule is written once
+
+A rule about **shape** — which types are published, which fields exist, which
+are required, which values a closed field takes — is written in `schema/` and
+nowhere else. The implementations never copy it:
+
+- the validators read the schemas at run time;
+- the lists the code needs are **generated** by `tools/generate_from_schema.py`
+  into `src/iaes/_from_schema.py`, `src/iaes/enums.py`, `npm/src/fromSchema.ts`
+  and `npm/src/enums.ts`. Do not edit those files: change the schema and run
+  `python tools/generate_from_schema.py`;
+- `tests/test_rules_live_in_the_schema.py` fails if a generated file is stale,
+  or if a closed catalogue or the list of published types is written by hand
+  anywhere else (two exceptions are declared there, with their reasons).
+
+A rule about **meaning** that a schema cannot express (UTC, how `content_hash`
+is computed, how a consumer deduplicates) is written in `IAES_SPEC.md`, and its
+executable part is a case in `conformance/`, which every implementation runs.
+
 ## Running the tests
 
 Everything CI runs, you can run. There is nothing you need from us to do it.
