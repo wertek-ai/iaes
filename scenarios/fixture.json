@@ -86,7 +86,7 @@
     },
     {
       "scenario": "05-custom",
-      "$comment": "An event type IAES does not publish, in a namespace the producer controls. Every implementation must accept it: the catalog is open, an unknown event_type MUST NOT cause an error, and an unsupported one may be logged and skipped. This is the scenario that proves IAES is not a closed catalogue of seven Wertek types.",
+      "$comment": "An event type IAES does not publish, in a namespace the producer controls. Every implementation must accept it: the catalog is open, an unknown event_type MUST NOT cause an error, and an unsupported one may be logged and skipped. This is the scenario that proves IAES is not a closed catalogue of the types it publishes.",
       "event_type": "acme.press_stroke",
       "source": "acme.press_line",
       "data": {

@@ -19,6 +19,7 @@ Run:
 
 import json
 import random
+import uuid
 from iaes import (
     AssetMeasurement,
     AssetHealth,
@@ -34,12 +35,20 @@ AREA = "Cooling Tower #3"
 published = []
 
 # Two independent failure modes on the same pump
-CORR_BEARING = f"{ASSET}:bearing_outer_race"
-CORR_THERMAL = f"{ASSET}:thermal_overload"
+# correlation_id MUST be a UUID (RFC 4122; IAES_SPEC.md "Normative references").
+# A name-based UUID keeps one stable id per failure mode, like the label it
+# is derived from.
+def correlation_for(label):
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"https://example.com/iaes/{label}"))
 
-# ISO 17359 thresholds
-VIB_WARNING = 7.1    # mm/s RMS -- Zone C
-VIB_CRITICAL = 11.2  # mm/s RMS -- Zone D
+CORR_BEARING = correlation_for(f"{ASSET}:bearing_outer_race")
+CORR_THERMAL = correlation_for(f"{ASSET}:thermal_overload")
+
+# Illustrative thresholds for this demo. IAES carries the value; it does not set
+# limits. Real vibration limits come from the machine's own standard (for
+# example the ISO 10816/20816 series) and the site.
+VIB_WARNING = 7.1    # mm/s RMS
+VIB_CRITICAL = 11.2  # mm/s RMS
 TEMP_WARNING = 85.0   # degrees C -- bearing housing
 CURR_WARNING = 1.15   # x FLA -- overload
 
@@ -161,7 +170,7 @@ wo = WorkOrderIntent(
     title="Replace outer race bearing -- PUMP-101",
     priority="critical",
     description=(
-        "Vibration RMS exceeded Zone D (11.2 mm/s). "
+        "Vibration RMS exceeded the critical threshold (11.2 mm/s). "
         "AI diagnosis: bearing outer race defect. RUL: 3 days. "
         "18 threshold crossings correlated into single incident."
     ),
