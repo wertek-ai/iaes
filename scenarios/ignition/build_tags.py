@@ -10,8 +10,8 @@ what this script writes.
     python scenarios/ignition/build_tags.py
 
 Ignition is where IAES belongs when the reading already lives in a SCADA/MES
-Gateway: the tag is there, and so are the downtime and maintenance screens that
-compute MTTR and MTBF. The script uses only the Python standard library and
+Gateway: the tag is there, and so are the downtime and maintenance screens. The
+script uses only the Python standard library and
 `system.*`, so it runs on Ignition's Jython 2.7 and, in CI, on CPython.
 """
 import json
