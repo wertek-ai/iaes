@@ -18,13 +18,40 @@ ISSN: N/A
 not merged to the default branch until it moves to Review or is closed
 (`rfc/IAES-RFC-013.md`).
 **Compatibility, as proposed: MINOR** under `GOVERNANCE.md` §4.1 and §4.4,
-analysed part by part in §7.
+analysed part by part in §8.
 **Target version: none stated.** A target is stated by the steward when the
 memo moves to Review; the next minor after 2.1 is the natural one.
 Distribution is unlimited.
 
 Numbered 014 because 009 is held by an open draft (the Appendix C memo,
 wertek-ai/iaes#44) and 010 to 013 are taken.
+
+**Revised 2026-11-12** after an adversarial review of the first draft
+(`dc3df52`). The changes:
+
+- The safety boundary now forbids using IAES events, their contents **or their
+  absence** to trigger, reset, acknowledge, bypass or authorize a safety
+  function or a restart, or as a safety permissive, for events of any version
+  (§5). Every safety obligation is incorporated, not only a quotation, and the
+  memo says that validating events cannot show compliance (§10).
+- The values are **producer declarations**, not established facts. Device
+  activation, the asset's declared transition and the interruption of the
+  electrical supply are separated, and neither value establishes that a safety
+  function performed, that anything was isolated, or that hazardous energy is
+  absent (§2).
+- The placement on the timeline is **conditional** on an actual transition into
+  an unplanned outage, with cases for a maintenance test, an asset already down,
+  idle or standby, and a fault-triggered stop (§3).
+- "Not a failure" becomes "does not establish a failure" (§3, §6).
+- The test for `emergency_switching_off` is a **documented functional
+  relationship** between the device and the asset, not "the asset's own
+  device"; unknown topology means the value is not used (§3).
+- A multi-asset example: one button, a line of assets (§7).
+- The counting claim is narrowed: these values mark qualifying outage
+  declarations, not a complete log of activations or resets (§4).
+- The numeric stop-category idea and the scope sentence about the external
+  standards are removed (§11, Appendix A).
+- The event-version gate is incorporated, with a mixed-version case (§9, §10).
 
 # Copyright Notice
 
@@ -33,32 +60,33 @@ Creative Commons Attribution 4.0 International License (CC BY 4.0).
 
 # Abstract
 
-`asset.state` (`rfc/IAES-RFC-010.md`) can already say that an asset went down
-unplanned, and its open `detail` field already carries `trip` and
-`manual_shutdown` as examples. It cannot say, in a way two consumers read the
-same, that the stop came from an **emergency stop** -- the most deliberate
-stop an operator makes, and one a plant may want to count apart from a trip.
+`asset.state` (`rfc/IAES-RFC-010.md`) can already declare that an asset went
+down unplanned, and its open `detail` field already carries `trip` and
+`manual_shutdown` as examples. It cannot declare, in a way two consumers read
+the same, that the outage was caused by operating an **emergency stop**
+device, or by an **emergency switching-off** of the asset's electrical supply.
 
 This memo proposes **no new field and no schema change**. It publishes two
-values for `detail` -- `emergency_stop` and `emergency_switching_off` --
-places both in the down-time family RFC-010 already uses for a trip and a
-manual shutdown, and states a boundary: IAES reports that a stop happened; it
-never triggers, resets, bypasses or commands a safety function.
+values for `detail`, says when a producer may use them, places them on the
+RFC-010 timeline only when the act actually took the asset into an unplanned
+outage, and states a boundary: IAES events, their contents and their absence
+are never an input to a safety function or to a decision to restart.
 
 # Table of Contents
 
     1. The problem
-    2. The two values
+    2. The two values, as producer declarations
     3. Where they sit on the timeline
-    4. Optional and advisory
-    5. The boundary: a record, never a command
-    6. Worked example
-    7. Compatibility level, part by part
-    8. Effect on existing implementers
-    9. Proposed incorporation
-    10. What this memo does not decide, and future work
-    11. Open questions
-    Appendix A. Informative note on standards not consulted
+    4. What the values can and cannot be used for
+    5. The boundary: never a safety input
+    6. Worked example: one asset
+    7. Worked example: one button, a line of assets
+    8. Compatibility level, part by part
+    9. Effect on existing implementers, and the version gate
+    10. Proposed incorporation
+    11. What this memo does not decide, and future work
+    12. Open questions
+    Appendix A. Standards not consulted
 
 # 1. The problem
 
@@ -70,130 +98,190 @@ Measured on `main` at `59765fe` (2026-11-12):
    published catalog)". The schema says the same: "Open, and not a published
    catalog" (`schema/asset-state.schema.json`, `data.detail`). RFC-010 §12 left
    "a published catalog for `detail`" undecided, on purpose.
-2. **So an emergency stop can have as many spellings as producers.** One SCADA
-   could send `estop`, another `e_stop`, a third `emergency`, a fourth put it
-   only in `reason`. Each is valid. A consumer that wants "how many emergency stops on
-   this press this month" has to know every producer's spelling, and a second
-   consumer with a different list reports a different number. That is the
-   failure RFC-010 §1 describes for MTBF, one level finer.
+2. **So an outage caused by an emergency stop can be spelled as many ways as
+   there are producers.** One SCADA could send `estop`, another `e_stop`, a
+   third `emergency`, a fourth put it only in `reason`. Each is valid. A
+   consumer that wants the outages of a press that were declared as caused by
+   its emergency stop has to know every producer's spelling, and a second
+   consumer with a different list gets a different answer.
 3. **Two different acts can get one word.** "Emergency stop" can be used
-   loosely both for stopping a hazardous movement and for cutting the electrical
-   supply. They are different acts with different consequences for what has to happen before
-   the machine runs again (§2). A free-text field will not keep them apart.
+   loosely both for operating a device that stops a hazardous movement and for
+   switching off a machine's electrical supply. A free-text field will not keep
+   them apart.
 
-# 2. The two values
+# 2. The two values, as producer declarations
 
-Both are values of `asset.state` `data.detail`. The definitions are this
-memo's own words; no external text is quoted or relied on (Appendix A).
+Both are values of `asset.state` `data.detail`. Like everything in an IAES
+event, they are **declarations by the producer**: what the producer states,
+from the evidence it has. They are not established facts about the plant.
 
-| Value | Meaning |
+**Three observations, kept apart.** An emergency stop involves three different
+observations, and a producer may have evidence of one and not the others:
+
+| Observation | Example of evidence a producer may have | Carried by |
+|---|---|---|
+| **A. Device activation** -- the emergency stop or emergency switching-off device was operated | a status signal from the device or from the system that monitors it; an operator's record | not by `asset.state` on its own (§4) |
+| **B. The asset's transition** -- the asset became unable to perform as required | the producer's usual evidence for `state: down` (RFC-010 §3: how a producer infers a state is its own business) | `state`, `down_kind`, `down_cause` |
+| **C. Supply interruption** -- the asset's electrical supply was interrupted | a supply-status signal, a contactor or breaker feedback | not carried as a separate fact |
+
+**The values.**
+
+| Value | A producer declares it when |
 |---|---|
-| `emergency_stop` | The asset was stopped on purpose by its **emergency stop device**, to halt a hazardous movement or process. The event records that the stop happened. It does not say why the device was operated, nor whether the stop performed as designed. |
-| `emergency_switching_off` | The asset's **electrical supply was removed on purpose** by its emergency switching-off device. A different act from `emergency_stop`: there, the movement is stopped; here, the energy is removed. What has to be checked and restored before the asset runs again is different, and a consumer that counts one must not count the other under the same name. |
+| `emergency_stop` | it declares a **down transition (B)** of the asset **and** has evidence that an **emergency stop device was activated (A)** and that the transition followed from that activation. |
+| `emergency_switching_off` | it declares a **down transition (B)** **and** has evidence that an **emergency switching-off device was activated (A)** **and** that the device has a documented functional relationship with this asset's electrical supply (§3). |
 
-**Who uses them.** A producer that knows the down transition was caused by one
-of these acts SHOULD use the matching value, rather than a spelling of its own.
-A producer that cannot tell the two apart -- for example, one that sees only a
-loss of motion -- SHOULD NOT guess: it sends the stop with no `detail`, or with
-its own value, and says what it observed in `reason`.
+**What neither value establishes.** Neither establishes that a safety function
+performed as designed, that the asset or any part of it was isolated, that its
+electrical supply was actually removed, or that hazardous energy of any kind --
+electrical, stored, mechanical, pneumatic, hydraulic, thermal -- is absent.
+Neither establishes who operated the device or why: `source` identifies the
+system that reports, not the person who acted, and `reason` is free text. Nor
+does either establish a root cause.
 
-**What they are not.** Neither value says anything about the safety function
-itself: whether it was tested, certified, adequate, or bypassed. IAES carries
-the fact that the asset stopped and by which act. Everything about the safety
-function belongs to the system that implements it (§5).
+**Activation without a declared transition.** If a producer has evidence of A
+but not of B -- it sees the device operated and cannot tell what the asset did
+-- it does **not** use these values to assert a stop. `asset.state` declares
+transitions; it is not an activation log (§4).
+
+**When the producer cannot tell which.** A producer that sees an outage but
+cannot tell an emergency stop from an emergency switching-off, or from any
+other stop, does not choose one. It declares the transition with no `detail`,
+or with a value of its own, and says what it observed in `reason`.
+
+**Using `reason` honestly.** A producer SHOULD use `reason` to say what its
+declaration rests on and any timing limitation it knows of -- for example, that
+the state is inferred from motion sampled every few seconds. This adds no
+field; it uses the one RFC-010 already provides.
 
 # 3. Where they sit on the timeline
 
-Both values go with:
+**The ordinary case.** When the activation takes an asset that was **up** into
+an outage that was **not planned**, the producer declares:
 
 ```
 state:      down
 down_kind:  unplanned
 down_cause: other_unplanned
+detail:     emergency_stop | emergency_switching_off
 ```
 
-This is the family RFC-010 already uses for a trip and a manual shutdown.
-RFC-010 §2 cites ISO 14224:2016, Table 4, note d: a trip and a manual shutdown
-are *other unplanned outages*, not corrective maintenance. An emergency stop is
-a manual shutdown made through a particular device, so it takes the same
-place. This memo cites ISO 14224 only through that citation in RFC-010 and adds
-no reading of its own.
+RFC-010 §2, citing ISO 14224:2016 Table 4 note d, places a trip and a manual
+shutdown under *other unplanned outages*, not corrective maintenance. This memo
+does **not** claim that the citation decides the case of an emergency stop: it
+proposes, as its own judgment, that the ordinary case belongs in the same
+place, because it is a deliberate unplanned stop that is not, by itself, a
+repair. ISO 14224 is cited only through RFC-010, with no reading of its own.
 
-**An emergency stop is not, by itself, a failure.** It is an unplanned outage.
-If the stop reveals that the item needs repair, the outage becomes corrective
-maintenance, and that is a second `asset.state` event under RFC-010 §6 rule 1,
-exactly as a trip that turns out to need repair. Whether a given emergency stop
-counts towards an MTBF stays the consumer's classification, which the consumer
-states (RFC-010 §3 and §6); with these values, it is made on a declared fact rather
-than on a spelling.
+**The cases that are not ordinary.** The `detail` value describes the act; the
+cause stays what the producer would declare under RFC-010 anyway.
 
-**A boundary this memo draws, and asks the steward to confirm (§11 item 2).**
-RFC-010 §2 notes that an item which cannot run because something *outside* it
-is missing -- no feed, no power -- is not down by ISO 14224's definition, and
-that 3.38 Note 3 counts that time as externally disabled **up** time
-(`up_mode: externally_disabled`). `emergency_switching_off` is not that case:
-the supply is removed **by the asset's own emergency switching-off device**, on
-purpose, as a stop of that asset. A supply lost upstream for reasons outside the
-asset -- a utility outage, a breaker elsewhere in the plant -- is externally
-disabled time and does not use this value.
+| Case | What the producer declares |
+|---|---|
+| **The asset is already down** (planned maintenance, corrective maintenance, another outage) and the device is operated | **No new event** if `state`, `down_kind`, `down_cause` and `up_mode` do not change: a change of `detail` alone is not a transition (`IAES_SPEC.md`, *`asset.state`*, rule 1). The existing classification stands. |
+| **An authorized test of the device during a planned activity**, with the asset up | A planned outage, if the producer knows it was planned: `down_kind: planned`, `down_cause: other_planned`, with the `detail` value. |
+| **The asset is up and idle or in standby** when the device is operated | The ordinary case **only if** the producer declares a transition: the asset is now unable to perform until the device is reset. A producer that cannot tell declares nothing. |
+| **An automatic protective trip** -- no emergency device was operated | Not these values. RFC-010's `trip`. |
+| **A person operates the device in response to a fault they saw** | The ordinary case for the stop. If the item then needs repair, that is a second event with `corrective_maintenance` (RFC-010 §6 rule 1). A fault the producer can describe belongs in `asset.health`, not in `detail`. |
+| **One device stops several assets** | Each asset is declared on its own, from that asset's own evidence (§7). |
 
-# 4. Optional and advisory
+**Emergency switching-off and externally disabled time.** RFC-010 §2 notes that
+an item which cannot run because something outside it is missing -- no feed, no
+power -- is not down by ISO 14224's definition, and that 3.38 Note 3 counts that
+time as externally disabled **up** time (`up_mode: externally_disabled`). A loss
+of supply could therefore be declared either way, and the producer needs a rule
+it can apply.
 
-- **Not every asset is a machine.** A transformer, a tank or a building has no
-  hazardous movement to stop. Nothing in this memo asks a producer to send
-  either value, or to have an emergency stop to declare.
-- **The field stays open.** `detail` remains a free string. Any other value
-  stays valid, including the spellings producers use today.
+The rule proposed: a producer uses `emergency_switching_off` for an asset only
+when its own configuration **documents** that the operated device interrupts
+**this asset's** electrical supply as part of an emergency function -- a
+functional relationship, recorded by whoever configured the producer. Not where
+the device is mounted, not who owns it.
+
+- **Relationship documented, device activated, asset down** -- the ordinary
+  case, with `emergency_switching_off`.
+- **Supply lost and no documented relationship** with an operated device -- a
+  utility outage, a breaker elsewhere, a cause the producer cannot see -- the
+  producer declares what RFC-010 already allows (for example `up` with
+  `up_mode: externally_disabled`), never `emergency_switching_off`.
+- **Topology unknown** -- the producer does not use the value.
+
+§12 item 2 asks whether this rule is workable or the value should be deferred.
+
+# 4. What the values can and cannot be used for
+
+- **They mark qualifying outage declarations.** A consumer can select the
+  down transitions a producer declared as caused by an emergency stop or an
+  emergency switching-off, and the declared down time of those intervals.
+- **They are not a complete log of activations or resets.** A second activation
+  while the asset is already down produces no event (§3). A reset does not
+  necessarily change the asset's state. One activation can produce several
+  asset events (§7). So counting these events is counting **declared asset
+  transitions**, not counting how many times a device was operated.
+  Counting activations needs other evidence.
+- **Optional and advisory.** Not every asset is a machine. Nothing here asks a
+  producer to send either value.
+- **The field stays open.** `detail` remains a free string; any other value,
+  including the spellings producers use today, stays valid.
 - **Consumers.** A consumer MUST treat a `detail` value it does not recognise,
   and an absent `detail`, as *not classified* -- never as an error, and never as
-  "not an emergency stop". This is the rule RFC-010 §6 already gives
-  `down_cause` and `up_mode`, extended to `detail`. Absence asserts nothing, as
-  `IAES_SPEC.md` *Producer Guidelines*, required behavior 3, already says of
-  every optional field.
+  "not an emergency stop". Absence asserts nothing (`IAES_SPEC.md`, *Producer
+  Guidelines*, required behavior 3).
 - **No SDK requirement.** The SDK profile (`GOVERNANCE.md` §9.2) is not changed
-  by this memo (§7). An SDK MAY expose the two values as constants.
+  (§8). An SDK MAY expose the two values as constants.
 
-# 5. The boundary: a record, never a command
+# 5. The boundary: never a safety input
 
-**IAES reports that a stop happened. It never triggers, resets, bypasses or
-commands a safety function.**
+**IAES events are records. They are never an input to a safety function or to
+a decision that a machine may run.**
 
 The emergency stop function -- the device, its circuit, its reset, and the
 decision that the machine may run again -- lives in the safety controller or
-safety relay that implements it, which is designed, validated and maintained
-for that purpose. An IAES producer reads that a stop happened, after it
-happened, and declares it. An IAES consumer records it, counts it, shows it.
+safety relay that implements it. An IAES producer declares, after the fact,
+what it observed. An IAES consumer records it, counts it, shows it, notifies
+people about it.
 
-So this memo proposes, for `IAES_SPEC.md`:
+So this memo proposes these consumer obligations. They apply to a consumer that
+declares the release carrying this memo, **whatever version the event it is
+processing declares**, and to **every** event type, not only `asset.state`:
 
-> An `asset.state` event records that a stop happened. It is not a command.
-> IAES defines no event that triggers, resets, bypasses or commands a safety
-> function, and a consumer MUST NOT act on an IAES event as if it were one.
+1. A consumer MUST NOT use an IAES event, any of its contents, or the absence
+   of an event, to trigger, reset, acknowledge, bypass or authorize a safety
+   function.
+2. A consumer MUST NOT use them to authorize, enable or permit a restart, or as
+   a permissive in any safety-related decision. In particular, `state: up`, the
+   end of a down interval, or a `reason` that mentions a reset is not
+   permission to run.
+3. A consumer MUST NOT treat the absence of an event -- of an `emergency_stop`,
+   of any `down` -- as evidence that a machine is stopped, running, or safe to
+   operate.
+
+**What stays allowed.** Recording, counting, dashboards, analytics and
+notifying people -- an alarm on a screen, a message to a supervisor -- are
+ordinary uses. The line is not whether the consumer reacts; it is whether its
+output takes part in a safety function or in permission to run.
 
 This is the stance IAES already takes for work orders: "A
 `maintenance.work_order_intent` is a suggestion, not a command"
-(`IAES_SPEC.md`, *Consumer Guidelines*, recommended behavior 6). It is stated again here, in
-stronger words, because the cost of a misreading is not a wrong work order.
+(`IAES_SPEC.md`, *Consumer Guidelines*, recommended behavior 6). Here it is a
+required behavior, because the cost of a misreading is not a wrong work order.
 
-Two consequences, stated so they are not inferred:
+**Latency is not a property of these events.** They arrive when the transport
+delivers them, after the act. Nothing in IAES is fast enough, or meant, to take
+part in stopping anything.
 
-- **Latency is not a property of this event.** `asset.state` is delivered when
-  the transport delivers it. Nothing in IAES is fast enough, or meant, to take
-  part in stopping anything.
-- **Absence proves nothing.** No `emergency_stop` event does not mean no
-  emergency stop: the producer may be down, or may not see the device. A
-  consumer MUST NOT use the absence of these events as evidence that a machine
-  is safe to operate.
-
-# 6. Worked example
+# 6. Worked example: one asset
 
 A press is running. At 10:02 an operator presses its emergency stop. At 10:09
 the device is reset, the cause is cleared, and the press is restarted. No repair
-is needed.
+is declared.
+
+The producer, a SCADA, has a status signal from the emergency stop device (A)
+and infers the press's state from its motion (B). The example assumes that
+timeline is complete and its clock accurate.
 
 The events declare `spec_version` `2.2` as a placeholder for the release that
-would carry this memo. The same bytes declaring `2.1` validate today; the value
-simply has no published meaning there. The UUIDs are illustrative.
+would carry this memo. The UUIDs are illustrative.
 
 ```json
 [
@@ -203,7 +291,7 @@ simply has no published meaning there. The UUIDs are illustrative.
    "asset": {"asset_id": "PRESS-201"},
    "data": {"state": "down", "down_kind": "unplanned", "down_cause": "other_unplanned",
             "previous_state": "up", "detail": "emergency_stop",
-            "reason": "emergency stop button operated at the press"}},
+            "reason": "e-stop status signal active; press motion stopped (motion sampled every 2 s)"}},
 
   {"spec_version": "2.2", "event_type": "asset.state",
    "event_id": "d861b5a6-17c6-4851-ab76-d567f9701f8e", "correlation_id": "94572db2-3363-48da-bf75-cc9f969b8508",
@@ -211,156 +299,209 @@ simply has no published meaning there. The UUIDs are illustrative.
    "timestamp": "2026-11-12T10:09:00Z", "source": "plant.scada",
    "asset": {"asset_id": "PRESS-201"},
    "data": {"state": "up", "up_mode": "running", "previous_state": "down",
-            "reason": "emergency stop reset; press restarted"}}
+            "reason": "press motion observed again after e-stop reset"}}
 ]
 ```
 
-Any consumer gets the same facts:
+What any consumer can read, as declarations:
 
-- **7 minutes of unplanned down time** (10:02 to 10:09), cause
-  `other_unplanned`, by emergency stop;
-- **not a failure**: the cause never became `corrective_maintenance`, so a
-  consumer that counts failures by declared cause does not count this one;
-- one chain (RFC-010 §6 rule 7): the second event shares the first's
-  `correlation_id` and points at it with `source_event_id`;
-- no `content_hash` on either event (RFC-010 §6 rule 3), so a second
+- **7 minutes of declared unplanned down time** (10:02 to 10:09), declared cause
+  `other_unplanned`, declared as caused by an emergency stop. The timestamps are
+  the instants the producer declares (RFC-010 §6 rule 2); the events do not show
+  the producer's detection delay or clock accuracy, which is why `reason` states
+  the sampling.
+- **These events do not establish a failure.** The declared cause never became
+  `corrective_maintenance`. A consumer whose stated policy counts failures by
+  declared cause excludes this interval; a consumer with a different stated
+  policy may not. The absence of a later `corrective_maintenance` does not prove
+  that nothing failed.
+- One chain (RFC-010 §6 rule 7); no `content_hash` (rule 3), so a second
   emergency stop on the same press later that day is not mistaken for a
   duplicate.
+- **What the events do not say:** who pressed the button, why, whether the
+  safety function performed as designed, and whether it was safe to restart.
+  The restart at 10:09 was decided by people and the safety system, not by
+  these events (§5).
 
-The reset at 10:09 is not a separate event. The asset's state changed once
-down and once up; the reset is how it came back, and `reason` says so. A
-producer that cannot see the restart, only the reset, declares `up` when it
-sees operation, as RFC-010 §6 rule 5 already says of a producer that cannot
-tell a test run from a return to service.
+# 7. Worked example: one button, a line of assets
 
-# 7. Compatibility level, part by part
+A line has three machines on one emergency stop circuit -- **FEEDER-1**,
+**PRESS-201** and **WRAPPER-3** -- and a **CONVEYOR-4** downstream that is not
+on that circuit. At 10:02 an operator presses one emergency stop button because
+FEEDER-1 is jamming. The producer's configuration documents which assets the
+circuit stops.
+
+| Asset | What the producer observes | What it declares at 10:02 |
+|---|---|---|
+| FEEDER-1 | on the circuit; motion stopped; a jam the operator reported | `down`, `unplanned`, `other_unplanned`, `detail: emergency_stop`. When the jam needs repair, a second event: `corrective_maintenance` |
+| PRESS-201 | on the circuit; motion stopped | `down`, `unplanned`, `other_unplanned`, `detail: emergency_stop` |
+| WRAPPER-3 | on the circuit; motion stopped | `down`, `unplanned`, `other_unplanned`, `detail: emergency_stop` |
+| CONVEYOR-4 | not on the circuit; running empty, then stopped by its own logic for lack of material | not `emergency_stop`. What RFC-010 already allows for a lack of feed, for example `up` with `up_mode: externally_disabled`, if the producer can tell |
+
+- **Each asset is declared on its own**, with its own chain and its own
+  `correlation_id` (RFC-010 §6 rule 7: one down interval is one chain, per
+  asset). The producer does not copy one asset's classification to the others;
+  each rests on that asset's own evidence and the documented circuit.
+- **Three asset transitions, one button press.** A consumer that counts these
+  events counts three declared outages. It cannot conclude that the button was
+  pressed three times, nor that it was pressed once, from these events alone.
+- **Which asset caused it** is not carried by `detail`. FEEDER-1's jam is
+  declared by its own later event and, if the producer can describe it, by
+  `asset.health`.
+
+# 8. Compatibility level, part by part
 
 - **Publishing two values for an open field: MINOR**, `GOVERNANCE.md` §4.1
   ("Adding a value to an open catalog") and §7 (adding a value to a published
   catalog requires an RFC, which this is). `detail` stays an open string, so
-  nothing that validates today stops validating. This is also the first time
-  `detail` has any published value; RFC-010 §12 left that open, and §11 item 1
-  asks whether other values should join at the same time.
+  nothing that validates today stops validating. This is the first time
+  `detail` has any published value; RFC-010 §12 left that open (§12 item 1).
 - **The meaning of the two values**, `GOVERNANCE.md` §4.4:
   - **T1 (meaning).** No previous version stated a meaning for any `detail`
-    value; they were examples. This memo *supplies* a meaning where the
-    standard was silent, which §4.4 says is not changing one. T1 does not
-    answer.
+    value; they were examples. This memo *supplies* a meaning where the standard
+    was silent, which §4.4 says is not changing one. T1 does not answer.
   - **T2 (cross-version).** A consumer that declares the release carrying this
-    memo can still consume a 2.1 event with `detail: emergency_stop`, and
-    reads it as 2.1 did -- an unclassified string -- unless the event declares
-    the new release. **MINOR**; only implementations that declare that release
-    adopt the meaning.
+    memo can still consume a 2.1 event with `detail: emergency_stop` with the
+    meaning 2.1 gave it -- an unclassified string -- because the published
+    meaning applies only to events that declare the new release (§9). **MINOR.**
   - **Disclosed risk** (`GOVERNANCE.md` §8 item 2): a 2.1 producer may already
-    send `emergency_stop` meaning something wider, such as any stop including
-    loss of supply. That is a broken expectation, not a broken guarantee, and
-    the release notes should say so.
-- **The consumer rule in §4** (unknown or absent `detail` is *not classified*):
-  a new consumer obligation, by §4.4. T1 does not answer -- no byte changes
+    send `emergency_stop` meaning something wider. The version gate keeps that
+    meaning from being reinterpreted; the release notes should still say so.
+- **The consumer rule of §4** (unknown or absent `detail` is *not classified*):
+  a new consumer obligation, §4.4. T1 does not answer -- no byte changes
   meaning. T2 answers yes. **MINOR**, for consumers that declare the release.
-- **The boundary sentence in §5**, including its MUST NOT: a new consumer
-  obligation, by §4.4. No previous version stated that an event could be acted
-  on as a command; it is silent, and supplying a rule is not changing one. T2
-  answers yes. **MINOR**, for consumers that declare the release.
+- **The safety obligations of §5**, which apply to events of every version: a
+  new consumer obligation, §4.4. T1: no previous version stated that any event
+  could be used as a safety input; it was silent, and supplying a rule is not
+  changing one. T2: a consumer that declares the new release still consumes a
+  2.0 or 2.1 event with the meaning that version gave it; it is only forbidden
+  to use it as a safety input, which no version authorized. **MINOR**, adopted
+  by consumers that declare the release.
 - **No schema change.** The bytes at `https://iaes.dev/schema/v2/asset.state`
   do not change: within a major they never do (RFC-008, as restated in the
-  reason for rejecting RFC-012). Adding the two values to the schema's
-  `examples` would change those bytes, so it is **not** proposed for 2.x
-  (§9).
+  reason for rejecting RFC-012; `IAES_SPEC.md`, version history, 2.0 row). That
+  includes the `examples` annotation (§10).
 
-# 8. Effect on existing implementers
+# 9. Effect on existing implementers, and the version gate
 
-- **Producers:** nothing changes for any existing event. A producer that knows
-  an emergency stop or an emergency switching-off MAY start using the values
-  today; once it declares the release carrying this memo, it SHOULD (§2). A
-  producer that uses its own spelling stays valid.
-- **Consumers:** unknown `detail` values are already tolerated, because the
-  field is a free string. A consumer that declares the release treats them,
-  and absence, as not classified, and does not act on any IAES event as a
-  safety command.
-- **SDKs:** no change required, and the SDK profile is unchanged. The schema
-  copies in both SDKs stay byte-identical to the published schema.
+**The version gate.** The published meaning of `emergency_stop` and
+`emergency_switching_off` applies to an event that declares the release
+carrying this memo, or a later one. In an event that declares an earlier
+version, the same string is an unclassified `detail` value. A consumer MAY map
+it to its own category by a private rule, and say so; it MUST NOT attribute the
+IAES meaning to it.
+
+**A mixed-version case.** A consumer that declares the new release receives, for
+the same press, a 2.1 event with `detail: emergency_stop` at 08:15 and a 2.2
+event with the same `detail` at 10:02. The 10:02 event is a declared emergency
+stop in IAES's sense. The 08:15 event is an unclassified value. If the consumer
+maps it with its own rule, its report says so rather than presenting both as
+IAES-classified.
+
+- **Producers:** nothing changes for any existing event. A producer MAY use the
+  values when it declares the new release and meets §2; a producer with its own
+  spelling stays valid.
+- **Consumers:** unknown `detail` values are already tolerated. A consumer that
+  declares the release applies the version gate, treats unknown or absent values
+  as not classified, and observes §5 for every event it processes.
+- **SDKs:** no change required; the profile is unchanged. The schema copies in
+  both SDKs stay byte-identical to the published schema.
 - **Node-RED and n8n:** none. Producing `asset.state` truthfully still needs a
-  flow that can set the envelope `timestamp`, as RFC-010 §10 already says.
-- **Reference scenarios:** none required. An emergency-stop scenario would be
-  informative and could follow the trip scenario RFC-010 §10 proposes.
+  flow that can set the envelope `timestamp` (RFC-010 §10).
+- **Reference scenarios:** none required.
 
-# 9. Proposed incorporation
+# 10. Proposed incorporation
 
 When Accepted, in the same change:
 
+- `IAES_SPEC.md`, *Consumer Guidelines*, **Required behavior**: a new item, *Never
+  a safety input*, carrying all three obligations of §5 and its "what stays
+  allowed" paragraph, stated for every event type and every event version.
 - `IAES_SPEC.md`, *`asset.state`*:
   - the `detail` row: "**Open.** Published values: `emergency_stop`,
-    `emergency_switching_off` (below). Other values, such as `trip`,
-    `manual_shutdown`, `modification`, `reserve` and `testing`, are examples,
-    not published values";
-  - a short paragraph *Emergency stops* with §2's two definitions, §3's
-    placement and its boundary with externally disabled time, and §4's consumer
-    rule;
-  - the boundary of §5, in the words of its quotation;
+    `emergency_switching_off` (below), for events that declare this release or a
+    later one. Other values, such as `trip`, `manual_shutdown`, `modification`,
+    `reserve` and `testing`, are examples, not published values";
+  - a paragraph *Emergency stops* with §2 (the three observations, the two
+    values, what neither establishes), §3 (the ordinary case, the table of other
+    cases, the rule for `emergency_switching_off`), §4 (qualifying outage
+    declarations, not an activation log) and the version gate of §9, with its
+    mixed-version case;
+  - a cross-reference to the new *Never a safety input* item;
   - the version history row.
-- `conformance/`: a case where `detail: emergency_stop` validates, and one where
-  an unknown `detail` validates.
-- **Not changed in 2.x:** `schema/asset-state.schema.json` and its SDK copies
-  (§7). Whether the `examples` annotation should list the published values is
-  left to the next major, where the schema may change anyway.
+- **Verification, said in the specification:** the §5 obligations are about what
+  a consumer does with events, so **validating events cannot show compliance
+  with them**. A reviewer checks it as a behaviour: *can any output of this
+  consumer trigger, reset, acknowledge, bypass or authorize a safety function or
+  a restart, or act as a safety permissive, on the basis of an IAES event, its
+  contents or its absence?* If yes, the consumer does not conform.
+- `conformance/`: a case where `detail: emergency_stop` validates and one where
+  an unknown `detail` validates. These check only that the values are accepted,
+  and the cases say so; they are not evidence about §5.
+- **Not changed in 2.x:** `schema/asset-state.schema.json` and its SDK copies,
+  including the `examples` annotation (§8). Whether it should list published
+  values is left to the next major.
 - **Not added:** any reference to the standards named in Appendix A, in any
-  normative artifact. They are not held, and `references/registry.json` would
-  have to record them as unavailable before any normative text could name
-  them.
+  normative artifact. Before any normative text could cite them, the edition
+  would first have to be identified and its availability declared in
+  `references/registry.json`; and registering a document would still not show
+  that it supports a claim, which needs the document opened.
 
-# 10. What this memo does not decide, and future work
+# 11. What this memo does not decide, and future work
 
 Not decided:
 
-- What makes an emergency stop device adequate, how it must be wired, tested or
-  reset, or which stop it must perform. That belongs to the system that
-  implements it and to the standards that govern it, not to an event format.
-- Any indicator built on these values, such as a count of emergency stops per
-  month or a threshold for one.
-- A published value for any other `detail` (§11 item 1).
+- What makes an emergency stop device or an emergency switching-off adequate,
+  how either must be designed, wired, tested or reset. That belongs to the
+  system that implements them and to the documents that govern them, not to an
+  event format.
+- Any indicator built on these values.
+- A published value for any other `detail` (§12 item 1).
 
 Future work, mentioned so it is not proposed by accident:
 
-- **`stop_category`**, an optional field with values `0` and `1`, for how the
-  stop was made. Defining those values would need the standard that defines
-  stop categories, which nobody working on this memo has opened (Appendix A).
-  And adding a field to `asset.state` would change the schema's bytes, which
-  waits for the next major (§7). Not proposed.
-- **A `safety.*` event type**, for safety-relevant facts that are not a change
-  of state: a guard opened, or a light curtain interrupted, while the asset was
-  not running. A new event type at a new URI can be MINOR (`GOVERNANCE.md`
-  §4.1), but what it should carry, and how it keeps §5's boundary, needs its
-  own memo.
+- **A record of device activations and resets**, separate from `asset.state`,
+  for the counts §4 says these values cannot give: repeated activations while
+  already down, resets, and activations that do not change an asset's state.
+  It would be a new event type, and it would carry §5's boundary.
+- **A `safety.*` event type** for safety-relevant observations that are not a
+  change of state, such as a guard opened or a light curtain interrupted while
+  the asset was not running. It needs its own memo.
+- A field describing **how** a stop was performed was suggested and is not
+  proposed: defining its values would depend on documents nobody working on
+  this memo has consulted (Appendix A), and adding a field would change the
+  schema, which waits for the next major (§8).
 
-# 11. Open questions
+# 12. Open questions
 
 1. **Only these two?** Publishing two values makes `detail` a field with
    published values for the first time. Should `trip` and `manual_shutdown`,
-   which RFC-010 already uses and places under note d, be published at the same
-   time, so that the catalog does not start lopsided? This memo does not
-   propose it, to stay within the direction it was written for.
-2. **The line between `emergency_switching_off` and externally disabled time**
-   (§3). Is "removed by the asset's own emergency switching-off device" the
-   right test, and is it one a SCADA can actually apply?
-3. **Where the boundary of §5 lives.** In `IAES_SPEC.md` only, as proposed, or
-   also as a commitment in `GOVERNANCE.md` §1, next to "no asset hierarchy, no
-   equipment catalog, no commercial terms"? The second is a new obligation of
-   the steward and would be classified under `GOVERNANCE.md` §4.5 R3.
+   which RFC-010 already uses, be published at the same time?
+2. **Is the rule of §3 for `emergency_switching_off` workable, or should the
+   value be deferred?** It rests on a functional relationship documented in the
+   producer's configuration. If integrators cannot record it reliably,
+   publishing only `emergency_stop` now is the safer choice.
+3. **Repeated activations and resets.** Should anything in 2.x let a producer
+   declare a second activation while the asset is already down, or a reset that
+   does not change the state, or does that wait for the activation record of
+   §11?
+4. **Where the boundary of §5 lives.** In `IAES_SPEC.md` only, as proposed, or
+   also as a commitment in `GOVERNANCE.md` §1? The second is a new obligation
+   of the steward, classified under `GOVERNANCE.md` §4.5 R3.
 
-# Appendix A. Informative note on standards not consulted
+# Appendix A. Standards not consulted
 
-> **Informative, not normative, not verified against the text.** ISO 13850 is
-> the international standard for the emergency stop function; IEC 60204-1 for
-> its electrical implementation.
+> **Informative, not normative.** ISO 13850 and IEC 60204-1 are named here only
+> so that a reader knows they exist. They were **not consulted**: the steward
+> does not hold them and nobody working on this memo has opened them. **No
+> alignment with either is claimed**, nothing is quoted from them, and no clause
+> is cited.
 
-Neither document is held by the steward, and nobody working on this memo has
-opened either. This memo claims no alignment with them, quotes nothing from
-them, and cites no clause of them. The definitions in §2 are its own words,
-written to keep two acts apart that plants already tell apart; they are not
-offered as a reading of either standard. A reader who holds those standards is
-invited to say, in this memo's pull request, where the definitions in §2 would
-mislead.
+The definitions in §2 describe what a producer declares and on what evidence;
+they are not offered as a reading of either document, and their technical
+adequacy is not established by having been written independently. A reader who
+holds those documents is invited to say, in this memo's pull request, where §2
+or §3 would mislead.
 
 # Author
 
