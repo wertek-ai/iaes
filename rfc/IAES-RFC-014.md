@@ -43,15 +43,22 @@ wertek-ai/iaes#44) and 010 to 013 are taken.
   an unplanned outage, with cases for a maintenance test, an asset already down,
   idle or standby, and a fault-triggered stop (§3).
 - "Not a failure" becomes "does not establish a failure" (§3, §6).
-- The test for `emergency_switching_off` is a **documented functional
-  relationship** between the device and the asset, not "the asset's own
-  device"; unknown topology means the value is not used (§3).
+- The test for `emergency_switching_off` is a **documented asset boundary**,
+  not "the asset's own device"; unknown topology means the value is not used
+  (§3).
 - A multi-asset example: one button, a line of assets (§7).
 - The counting claim is narrowed: these values mark qualifying outage
   declarations, not a complete log of activations or resets (§4).
 - The numeric stop-category idea and the scope sentence about the external
   standards are removed (§11, Appendix A).
 - The event-version gate is incorporated, with a mixed-version case (§9, §10).
+
+**Revised again 2026-11-12** after a verification pass on `1858a7c`:
+`emergency_switching_off` needs the same causal evidence as `emergency_stop`; the
+asset boundary it depends on is defined, with the reason an interruption inside
+it is the asset's down time; a fault-response stop may be declared
+`corrective_maintenance` directly; in the line example the jammed feeder is
+taken down by the jam, not the button; the abstract admits the planned test.
 
 # Copyright Notice
 
@@ -68,8 +75,9 @@ device, or by an **emergency switching-off** of the asset's electrical supply.
 
 This memo proposes **no new field and no schema change**. It publishes two
 values for `detail`, says when a producer may use them, places them on the
-RFC-010 timeline only when the act actually took the asset into an unplanned
-outage, and states a boundary: IAES events, their contents and their absence
+RFC-010 timeline only when the act actually took the asset down -- as an
+unplanned outage in the ordinary case, or a planned one for an authorized test
+(§3) -- and states a boundary: IAES events, their contents and their absence
 are never an input to a safety function or to a decision to restart.
 
 # Table of Contents
@@ -129,7 +137,7 @@ observations, and a producer may have evidence of one and not the others:
 | Value | A producer declares it when |
 |---|---|
 | `emergency_stop` | it declares a **down transition (B)** of the asset **and** has evidence that an **emergency stop device was activated (A)** and that the transition followed from that activation. |
-| `emergency_switching_off` | it declares a **down transition (B)** **and** has evidence that an **emergency switching-off device was activated (A)** **and** that the device has a documented functional relationship with this asset's electrical supply (§3). |
+| `emergency_switching_off` | it declares a **down transition (B)** **and** has evidence that an **emergency switching-off device was activated (A)** and that the transition followed from that activation, **and** the device lies within this asset's documented boundary (§3). |
 
 **What neither value establishes.** Neither establishes that a safety function
 performed as designed, that the asset or any part of it was isolated, that its
@@ -182,7 +190,8 @@ cause stays what the producer would declare under RFC-010 anyway.
 | **An authorized test of the device during a planned activity**, with the asset up | A planned outage, if the producer knows it was planned: `down_kind: planned`, `down_cause: other_planned`, with the `detail` value. |
 | **The asset is up and idle or in standby** when the device is operated | The ordinary case **only if** the producer declares a transition: the asset is now unable to perform until the device is reset. A producer that cannot tell declares nothing. |
 | **An automatic protective trip** -- no emergency device was operated | Not these values. RFC-010's `trip`. |
-| **A person operates the device in response to a fault they saw** | The ordinary case for the stop. If the item then needs repair, that is a second event with `corrective_maintenance` (RFC-010 §6 rule 1). A fault the producer can describe belongs in `asset.health`, not in `detail`. |
+| **A person operates the device in response to a fault they saw**, and the activation is what takes the asset down | The `detail` value, with the cause the producer knows **at that moment**: `corrective_maintenance` directly if it already knows the item needs repair, otherwise `other_unplanned` and, when the need for repair becomes known, a second event with `corrective_maintenance` (RFC-010 §6 rule 1). A fault the producer can describe belongs in `asset.health`, not in `detail`. |
+| **The fault itself took the asset down first**, and the device is operated afterwards | The first transition is declared from the fault, without these values (for example `trip`, or no `detail`). The later activation, with the asset already down, is the first row of this table: no new event. |
 | **One device stops several assets** | Each asset is declared on its own, from that asset's own evidence (§7). |
 
 **Emergency switching-off and externally disabled time.** RFC-010 §2 notes that
@@ -192,19 +201,36 @@ time as externally disabled **up** time (`up_mode: externally_disabled`). A loss
 of supply could therefore be declared either way, and the producer needs a rule
 it can apply.
 
-The rule proposed: a producer uses `emergency_switching_off` for an asset only
-when its own configuration **documents** that the operated device interrupts
-**this asset's** electrical supply as part of an emergency function -- a
-functional relationship, recorded by whoever configured the producer. Not where
-the device is mounted, not who owns it.
+**The asset boundary, for this rule.** The asset, plus the part of its
+electrical supply that runs from an emergency switching-off device to the
+asset, when the producer's configuration **documents** that this device exists
+to switch off **this asset** as an emergency function. Whoever configures the
+producer records that relationship; it is not inferred from where the device is
+mounted or who owns it. Everything upstream of that device is outside the
+boundary.
 
-- **Relationship documented, device activated, asset down** -- the ordinary
-  case, with `emergency_switching_off`.
-- **Supply lost and no documented relationship** with an operated device -- a
+**Why an interruption inside the boundary is the asset's down time.** RFC-010's
+externally disabled time is time when the asset cannot run because something
+it needs from **outside** is missing. An emergency switching-off inside the
+boundary is not that: it is an act on this asset, through a device that exists
+to stop this asset, and the asset is unable to perform until that act is
+undone. That is a deliberate stop of the asset, of the same kind as a manual
+shutdown, not a missing external input. This is the memo's own judgment, not a
+reading of ISO 14224 (§12 item 2 asks the steward to confirm it).
+
+The rule proposed: a producer uses `emergency_switching_off` for an asset only
+when the device that was activated lies **within that asset's documented
+boundary** and the producer has evidence that the activation caused the down
+transition.
+
+- **Device within the documented boundary, activated, and the activation caused
+  the transition** -- the ordinary case, with `emergency_switching_off`.
+- **Supply lost upstream of the boundary, or with no documented device** -- a
   utility outage, a breaker elsewhere, a cause the producer cannot see -- the
   producer declares what RFC-010 already allows (for example `up` with
   `up_mode: externally_disabled`), never `emergency_switching_off`.
-- **Topology unknown** -- the producer does not use the value.
+- **Boundary not documented, or topology unknown** -- the producer does not use
+  the value.
 
 §12 item 2 asks whether this rule is workable or the value should be deferred.
 
@@ -331,23 +357,27 @@ on that circuit. At 10:02 an operator presses one emergency stop button because
 FEEDER-1 is jamming. The producer's configuration documents which assets the
 circuit stops.
 
-| Asset | What the producer observes | What it declares at 10:02 |
+| Asset | What the producer observes | What it declares |
 |---|---|---|
-| FEEDER-1 | on the circuit; motion stopped; a jam the operator reported | `down`, `unplanned`, `other_unplanned`, `detail: emergency_stop`. When the jam needs repair, a second event: `corrective_maintenance` |
-| PRESS-201 | on the circuit; motion stopped | `down`, `unplanned`, `other_unplanned`, `detail: emergency_stop` |
-| WRAPPER-3 | on the circuit; motion stopped | `down`, `unplanned`, `other_unplanned`, `detail: emergency_stop` |
+| FEEDER-1 | stopped by the jam at 10:01, before the button: its own protection tripped | at **10:01**, from the jam: `down`, `unplanned`, `other_unplanned`, `detail: trip` (or `corrective_maintenance` directly if repair is already known). **Not** `emergency_stop`: the button did not cause this transition. At 10:02, already down: **no event** (§3) |
+| PRESS-201 | on the circuit; running until 10:02, motion stopped with the button | at 10:02: `down`, `unplanned`, `other_unplanned`, `detail: emergency_stop` |
+| WRAPPER-3 | on the circuit; running until 10:02, motion stopped with the button | at 10:02: `down`, `unplanned`, `other_unplanned`, `detail: emergency_stop` |
 | CONVEYOR-4 | not on the circuit; running empty, then stopped by its own logic for lack of material | not `emergency_stop`. What RFC-010 already allows for a lack of feed, for example `up` with `up_mode: externally_disabled`, if the producer can tell |
 
 - **Each asset is declared on its own**, with its own chain and its own
   `correlation_id` (RFC-010 §6 rule 7: one down interval is one chain, per
   asset). The producer does not copy one asset's classification to the others;
   each rests on that asset's own evidence and the documented circuit.
-- **Three asset transitions, one button press.** A consumer that counts these
-  events counts three declared outages. It cannot conclude that the button was
-  pressed three times, nor that it was pressed once, from these events alone.
-- **Which asset caused it** is not carried by `detail`. FEEDER-1's jam is
-  declared by its own later event and, if the producer can describe it, by
-  `asset.health`.
+- **Two outages declared as emergency stops, one button press.** PRESS-201
+  and WRAPPER-3 each carry `emergency_stop`, because the button took each of
+  them down. A consumer that counts these events counts two declared outages.
+  It cannot conclude that the button was pressed twice, nor that it was pressed
+  once, from these events alone.
+- **The asset that started it** is declared from its own cause. FEEDER-1 went
+  down at 10:01 from the jam; the button found it already down, so it carries
+  no `emergency_stop`. Had the producer's evidence been that the button stopped
+  FEEDER-1 while it was still running, the value would apply to it too. Its
+  fault, if the producer can describe it, belongs in `asset.health`.
 
 # 8. Compatibility level, part by part
 
@@ -478,9 +508,12 @@ Future work, mentioned so it is not proposed by accident:
    published values for the first time. Should `trip` and `manual_shutdown`,
    which RFC-010 already uses, be published at the same time?
 2. **Is the rule of §3 for `emergency_switching_off` workable, or should the
-   value be deferred?** It rests on a functional relationship documented in the
-   producer's configuration. If integrators cannot record it reliably,
-   publishing only `emergency_stop` now is the safer choice.
+   value be deferred?** It rests on an asset boundary documented in the
+   producer's configuration, and on the memo's own judgment that an
+   interruption inside it is the asset's down time rather than externally
+   disabled time. If integrators cannot record the boundary reliably, or the
+   steward does not accept that judgment, publishing only `emergency_stop` now
+   is the safer choice.
 3. **Repeated activations and resets.** Should anything in 2.x let a producer
    declare a second activation while the asset is already down, or a reset that
    does not change the state, or does that wait for the activation record of
