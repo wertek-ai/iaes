@@ -82,7 +82,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://iaes-server.example.com/api/v1/iaes/ingest",
+        "url": "https://iaes-server.example.com/iaes/ingest",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
