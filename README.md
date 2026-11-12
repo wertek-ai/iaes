@@ -353,7 +353,7 @@ One industrial story, told five times: a vibration model reads 4.2 mm/s RMS on a
 |---|---|---|
 | Python | [`scenarios/python/reference_scenarios.py`](scenarios/python/reference_scenarios.py) | the producer **is the model** |
 | TypeScript | [`scenarios/typescript/reference-scenarios.ts`](scenarios/typescript/reference-scenarios.ts) | the producer is a **service** |
-| Node-RED | [`scenarios/node-red/flow.json`](scenarios/node-red/flow.json) -- the flow file; a real Node-RED loads it unchanged on every commit | the reading is already on the wire, at the **OT boundary** |
+| Node-RED | [`scenarios/node-red/flow.json`](scenarios/node-red/flow.json) -- the flow file; a real Node-RED loads it unchanged on every commit; on 2026-11-12 `node-red-contrib-iaes` 2.0.2 from npm was installed in a real Node-RED 5.0.6 (Docker), the file imported unchanged and run: all 5 events reached the output and the invalid branch stayed silent | the reading is already on the wire, at the **OT boundary** |
 | n8n | [`scenarios/n8n/workflow.json`](scenarios/n8n/workflow.json) -- the workflow file; `run.js` executes its IAES nodes on every commit; on 2026-11-12 the file was imported unchanged into a real n8n 2.8.4 instance with `n8n-nodes-iaes` 2.0.2 from npm and run: all 5 events valid | the trigger is a **webhook or a schedule** |
 | Ignition | [`scenarios/ignition/tags.json`](scenarios/ignition/tags.json) -- the tag export; `run.py` executes its Gateway script on every commit, with a stand-in for `system.*` ([what that leaves unproven](scenarios/ignition/README.md#how-it-is-checked)) | the reading already lives in a **SCADA/MES Gateway** |
 
