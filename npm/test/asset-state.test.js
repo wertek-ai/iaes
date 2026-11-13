@@ -69,4 +69,31 @@ describe("asset.state", () => {
   it("an unpublished down_cause is not classified, not invalid", () => {
     validate(new AssetState({ ...TRIP, down_kind: "planned", down_cause: "acme_shift_change" }).toJSON());
   });
+
+  it("requires timestamp: for this type it is the fact, not the time of sending", () => {
+    const { timestamp, ...withoutTimestamp } = TRIP;
+    assert.throws(() => new AssetState(withoutTimestamp), /requires timestamp/);
+  });
+
+  it("the schema rejects fields of the other state", () => {
+    // up with a down kind or a down cause, down with an up mode.
+    const up = { ...TRIP, state: UpDownState.UP, down_kind: undefined, down_cause: undefined };
+    for (const extra of [{ down_kind: "planned" }, { down_cause: "acme_shift_change" }]) {
+      assert.throws(() => validate(new AssetState({ ...up, ...extra }).toJSON()), ValidationError);
+    }
+    assert.throws(() => validate(new AssetState({ ...TRIP, up_mode: UpMode.RUNNING }).toJSON()),
+      ValidationError);
+    // Control: the same up event without them is valid.
+    validate(new AssetState({ ...up, up_mode: UpMode.RUNNING }).toJSON());
+  });
+
+  it("the schema rejects asset.state declared as 2.0, where the type does not exist", () => {
+    const event = { ...new AssetState(TRIP).toJSON(), spec_version: "2.0" };
+    assert.throws(() => validate(event), ValidationError);
+  });
+
+  it("never computes a hash, so text RFC 8785 cannot serialise does not fail it", () => {
+    const event = new AssetState({ ...TRIP, reason: "a\ud800b" }).toJSON();
+    assert.equal("content_hash" in event, false);
+  });
 });

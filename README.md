@@ -379,12 +379,12 @@ npm install node-red-contrib-iaes
 
 ## Specification
 
-> **IAES 2.0** — DOI: [10.5281/zenodo.22663498](https://doi.org/10.5281/zenodo.22663498) · every release: [10.5281/zenodo.18973216](https://doi.org/10.5281/zenodo.18973216)
+> **IAES 2.1** — every release, resolving to the latest: [10.5281/zenodo.18973216](https://doi.org/10.5281/zenodo.18973216) · the 2.1 version DOI is minted when the release is deposited · 2.0: [10.5281/zenodo.22663498](https://doi.org/10.5281/zenodo.22663498)
 
 - **[IAES_SPEC.md](IAES_SPEC.md)** — **Normative.** The specification
 - **[GOVERNANCE.md](GOVERNANCE.md)** — **Normative.** Stewardship, compatibility policy, schema identity, and how the standard changes
 - **[rfc/](rfc/)** — why each change was made. **Rationale, not authority** (`GOVERNANCE.md` §6.1); `IAES-RFC-001` is the original 1.x memo
-- **[schema/](schema/)** — 8 JSON Schema files
+- **[schema/](schema/)** — 9 JSON Schema files
 - **[examples/](examples/)** — 11 JSON examples
 - **[iaes.dev](https://iaes.dev)** — Website
 
@@ -414,9 +414,9 @@ If you use IAES in research or industrial systems, please cite:
 
 ```
 Garza, G. (2026).
-Industrial Asset Event Standard (IAES) 2.0.
+Industrial Asset Event Standard (IAES) 2.1.
 Zenodo.
-https://doi.org/10.5281/zenodo.22663498
+https://doi.org/10.5281/zenodo.18973216
 ```
 
 BibTeX:
@@ -425,11 +425,11 @@ BibTeX:
 @software{garza_iaes_2026,
   author       = {Garza, Gilberto},
   title        = {Industrial Asset Event Standard (IAES)},
-  version      = {2.0},
+  version      = {2.1},
   year         = {2026},
   publisher    = {Zenodo},
-  doi          = {10.5281/zenodo.22663498},
-  url          = {https://doi.org/10.5281/zenodo.22663498}
+  doi          = {10.5281/zenodo.18973216},
+  url          = {https://doi.org/10.5281/zenodo.18973216}
 }
 ```
 
@@ -444,4 +444,4 @@ IAES is an open specification. The specification text and JSON schemas are licen
 
 ---
 
-*IAES v2.0 — September 2026*
+*IAES v2.1 — October 2026*

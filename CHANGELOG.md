@@ -11,7 +11,7 @@ The normative history of the specification is the version history in `IAES_SPEC.
 
 ---
 
-## Unreleased — 2.1.0, implementing IAES 2.1
+## 2.1.0 — 2026-10-07, implementing IAES 2.1
 
 The four packages move to **2.1.0** together (`GOVERNANCE.md` §3.1): they
 implement IAES 2.1, which accepts RFC-010, RFC-011 and RFC-013. The version
@@ -29,8 +29,10 @@ declares 2.0, and keeps its 2.0 hash.
 ### `asset.state` (IAES-RFC-010)
 
 - **Python and TypeScript:** `AssetState`, which never carries `content_hash`.
-  Set `timestamp`: for this type it is the instant of the transition, and the
-  default (now) produces a valid event and a wrong down interval. In
+  `timestamp` is **required**: for this type it is the instant of the
+  transition, and a default of "now" would produce a valid event and a wrong
+  down interval. Omitting it raises `TypeError` (Python) or throws (TypeScript,
+  where `AssetStateInit.timestamp` is also required by the type). In
   TypeScript `toJSON()` returns `IAESWireEnvelope`, whose `content_hash` is
   optional, and `fromObject` / `fromJSON` accept either envelope type.
 - **Five enumerations,** generated from the schema: `UpDownState`, `DownKind`
@@ -38,16 +40,64 @@ declares 2.0, and keeps its 2.0 hash.
   are open, and any other value is *not classified*, never an error). Not
   `AssetState`: the class takes that name.
 - **Node-RED `iaes route`:** output 8, `state`. It comes after the other
-  seven, so a flow wired before 2.1 keeps every wire; until now an
-  `asset.state` event left by output 7 as an unknown type.
+  seven, so a flow wired before 2.1 keeps every wire. **But `asset.state`
+  moves:** with a 2.0 package it left by output 7, `other` (an unknown type),
+  and from 2.1.0 it leaves by output 8. A 2.0 flow that handled it on output 7
+  drops it after the upgrade until output 8 is wired.
 - **Not yet:** the Node-RED and n8n nodes do not build `asset.state`. Neither
   lets a flow set the envelope timestamp, which for this type is the fact
   (`implementations.json`).
 - **A second reference story,** the trip of RFC-010's example, told by both
   SDKs and checked with its timestamps (`scenarios/fixture-asset-state.json`).
 - **Ignition scenario:** declares 2.1 and serialises by RFC 8785 itself, since
-  `json.dumps` is not JCS. Reproduces the 14 shared vectors on CPython and, on
-  2026-10-07, in Jython on a real Ignition 8.3.9 Gateway.
+  `json.dumps` is not JCS. Reproduces every shared JCS vector on CPython
+  (`tests/test_ignition_jcs.py`: 34 accepted, 3 refused), and all 37 in Jython
+  on a real Ignition 8.3.9 Gateway (2026-10-07). That Gateway run found that
+  Jython's `repr(float)` is Java's `Double.toString`, not the shortest form
+  (`1e23` → `9.999999999999999e+22`); the serialiser now takes the fewest
+  correctly rounded digits that read back as the same double.
+
+### Migration for consumers on a 2.0.x SDK
+
+The 2.0.x SDKs' `from_object` (Python, `models.py`) and `fromObject`
+(TypeScript, `models.ts`) raise `Unknown IAES event_type` on an `asset.state`
+event: they dispatch only the types they know. A consumer that passes every
+incoming event through them either guards that call or takes the 2.1.0
+packages. Nothing else on the wire needs a migration (`IAES_SPEC.md`, version
+history).
+
+### Before the cut: findings of an adversarial review
+
+Four reviewers read the release candidate before it was tagged. What changed:
+
+- **Integers in `content_hash`.** RFC 8785 works on IEEE-754 doubles. The
+  Python SDK and the Ignition script refused any integer above 2**53, so a
+  builder refused `value=10**16` while the TypeScript SDK hashed it. Now an
+  integer is hashed as the double nearest to it, as `JSON.parse` reads it
+  (`9007199254740993` as `9007199254740992`), and only one beyond the largest
+  double is refused. The specification now says so, and that producers should
+  not rely on the hash to tell apart integers a double cannot represent.
+- **Lone surrogates.** RFC 8785 serialises I-JSON, which has none. TypeScript
+  escaped and hashed them; Python failed with a codec error. Both now refuse
+  them with a clear error, and so does the Ignition script.
+- **Which rule a `spec_version` selects.** TypeScript hashed an absent version,
+  `3`, `2.1-rc` and `2.1a` by RFC 8785; Python by the 2.0 rule. Both now read
+  the version with the same expression, `^2\.([0-9]+)$`: RFC 8785 for a minor
+  of 1 or more, the 2.0 rule for anything else. In TypeScript an explicitly
+  absent version (`computeContentHash(data, event.spec_version)` on an event
+  without one) is now absent, not this SDK's version.
+- **TypeScript `canonicalJson`** throws on a `Date`, `Map`, `Set` or class
+  instance instead of writing it as `{}` or a string.
+- **`asset.state` contract**, tightened before the schema is served anywhere:
+  an `up` event carries no `down_kind` or `down_cause`, a `down` event no
+  `up_mode`, `down_kind` is never null, and the event declares 2.1 or a later
+  2.x minor. `tools/check_schema_compat.py` now reads the last release tag,
+  so it reports and does not block a narrowing of a schema that is in no
+  release yet; a released schema is guarded as before.
+- **New shared cases:** 23 more `content_hash` vectors (number boundaries,
+  U+2028/U+2029, U+007F, an escaped solidus in the source, key U+FFFF, nulls
+  and empty containers, three refusals, six version switches) and 7 more
+  validation cases for `asset.state`.
 
 ### Ranges kept on purpose
 

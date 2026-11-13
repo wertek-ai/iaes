@@ -11,7 +11,7 @@
 [![npm](https://img.shields.io/npm/v/@iaes/sdk)](https://www.npmjs.com/package/@iaes/sdk)
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
-Create, serialize, validate, and publish industrial asset events using the [IAES v2.0 specification](https://iaes.dev).
+Create, serialize, validate, and publish industrial asset events using the [IAES v2.1 specification](https://iaes.dev).
 
 ## Part of IAES
 
@@ -245,4 +245,4 @@ Both Python and TypeScript SDKs produce identical wire format and identical `con
 
 ---
 
-*IAES v2.0 — September 2026*
+*IAES v2.1 — October 2026*

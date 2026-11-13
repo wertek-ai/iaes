@@ -210,6 +210,23 @@ def validation_cases():
          state_event({"state": "down", "down_cause": "other_unplanned"}), False)
     case("schema.asset.state.cause_disagrees_with_kind", "a published down_cause agrees with down_kind",
          state_event({"state": "down", "down_kind": "planned", "down_cause": "corrective_maintenance"}), False)
+    # Fields of the other state. Each field describes one state, so carrying it on
+    # the other is a contradiction, not extra detail. Open values included: a
+    # down_cause the catalogue does not publish is still a down cause.
+    case("valid.asset.state.later_minor", "asset.state declared as a later 2.x minor",
+         state_event({"state": "up"}, spec_version="2.10"), True)
+    case("schema.asset.state.declared_2_0", "asset.state does not exist in 2.0: an event of this type declares 2.1 or later",
+         state_event({"state": "up"}, spec_version="2.0"), False)
+    case("schema.asset.state.up_with_down_kind", "an up state carries no down_kind",
+         state_event({"state": "up", "down_kind": "planned"}), False)
+    case("schema.asset.state.up_with_down_cause", "an up state carries no down_cause, published or not",
+         state_event({"state": "up", "down_cause": "acme_shift_change"}), False)
+    case("schema.asset.state.up_with_down_kind_null", "an up state carries no down_kind, not even null",
+         state_event({"state": "up", "down_kind": None}), False)
+    case("schema.asset.state.down_with_up_mode", "a down state carries no up_mode",
+         state_event({"state": "down", "down_kind": "unplanned", "up_mode": "running"}), False)
+    case("schema.asset.state.down_kind_null", "down_kind is never null: a down state knows its branch",
+         state_event({"state": "down", "down_kind": None}), False)
 
     # -- Accepted by the schema, not conforming to the specification ---------
     # In 2.x the schemas only ANNOTATE these formats (Draft 2020-12), and
@@ -347,9 +364,91 @@ def hash_cases():
          {"s": "a" + chr(8) + chr(9) + chr(10) + chr(12) + chr(13) + chr(7) + "z"},
          '{"s":"a' + bs + "b" + bs + "t" + bs + "n" + bs + "f" + bs + "r" + bs + 'u0007z"}'),
     ]
+    # Numbers. RFC 8785 works on IEEE-754 doubles: an integer in data is the double
+    # nearest to it, which is what JSON.parse reads. Written out by hand from the
+    # ECMAScript Number.prototype.toString algorithm.
+    solo_jcs += [
+        ("integer_1e16", "an integer above 2**53 that is a double: written in full, never refused",
+         {"value": 10 ** 16}, '{"value":10000000000000000}'),
+        ("integer_2p53_plus_2", "2**53 + 2 is a double, so it is written exactly",
+         {"value": 2 ** 53 + 2}, '{"value":9007199254740994}'),
+        ("integer_2p53_plus_1", "2**53 + 1 is not a double: hashed as the nearest one, 2**53, as JSON.parse reads it",
+         {"value": 2 ** 53 + 1}, '{"value":9007199254740992}'),
+        ("smallest_subnormal", "the smallest positive double",
+         {"value": 5e-324}, '{"value":5e-324}'),
+        ("largest_double", "the largest finite double",
+         {"value": 1.7976931348623157e308}, '{"value":1.7976931348623157e+308}'),
+        ("exponent_2e23", "2e23: exponent form from 1e21 up",
+         {"value": 2e23}, '{"value":2e+23}'),
+        ("exponent_1e23", "1e23 is not exactly a double; its shortest round-trip digits are 1",
+         {"value": 1e23}, '{"value":1e+23}'),
+        ("shortest_round_trip", "the shortest digits that round-trip, not a rounded decimal",
+         {"value": 0.30000000000000004}, '{"value":0.30000000000000004}'),
+    ]
+    # Strings and structure.
+    solo_jcs += [
+        ("line_separators", "U+2028 and U+2029 are not control characters: written as they are",
+         {"s": "a" + chr(0x2028) + "b" + chr(0x2029) + "c"},
+         '{"s":"a' + chr(0x2028) + "b" + chr(0x2029) + 'c"}'),
+        ("delete_character", "U+007F is not a control character for RFC 8785: written as it is",
+         {"s": "a" + chr(0x7F) + "b"}, '{"s":"a' + chr(0x7F) + 'b"}'),
+        ("escaped_solidus_in_source", "the source writes a solidus escaped; JCS writes it unescaped",
+         {"path": "a/b/c"}, '{"path":"a/b/c"}'),
+        ("key_uffff", "U+FFFF sorts after a character outside the BMP by UTF-16 code unit, before it by code point",
+         {chr(0xFFFF): 1, chr(0x1F600): 2, "a": 3},
+         '{"a":3,' + q + chr(0x1F600) + q + ":2," + q + chr(0xFFFF) + q + ":1}"),
+        ("null_in_array", "null inside an array is kept, not omitted",
+         {"a": [1, None, "x"]}, '{"a":[1,null,"x"]}'),
+        ("nested_empty", "empty objects and arrays, nested",
+         {"o": {}, "l": [], "n": {"e": {}, "a": []}}, '{"l":[],"n":{"a":[],"e":{}},"o":{}}'),
+    ]
     for case_id, title, data, canonical in solo_jcs:
         out.append({"id": case_id, "title": title, "data": data, "status": "jcs_only",
                     "jcs": {"canonical": canonical, "content_hash": sha16(canonical)}})
+
+    # What RFC 8785 cannot serialise. Every implementation must REFUSE these when
+    # hashing by JCS (Python: ValueError; TypeScript: an Error), and the producer
+    # omits content_hash. Never hashed by some other form.
+    reject = [
+        ("lone_surrogate", "a lone surrogate is not I-JSON (RFC 8785 section 3.1)",
+         {"s": "a" + chr(0xD800) + "b"}),
+        ("lone_surrogate_key", "a member name with a lone surrogate is not I-JSON either",
+         {chr(0xDC00): 1}),
+        ("integer_beyond_largest_double", "an integer beyond the largest double has no number form",
+         {"value": 10 ** 309}),
+    ]
+    for case_id, title, data in reject:
+        out.append({"id": case_id, "title": title, "data": data, "status": "jcs_reject",
+                    "jcs": {"reject": True}})
+
+    # Which rule: the spec_version the event declares selects it. JCS only for
+    # `2.<minor>` with minor >= 1; anything else -- absent, not of that form, another
+    # major -- keeps the 2.0 rule (IAES_SPEC.md, Producer Guidelines, recommended
+    # behavior 6). The payload is one where the 2.0 Python bytes, the 2.0 TypeScript
+    # bytes and JCS are three different strings, so a wrong switch cannot pass.
+    switch_data = {"9": 1, "10": 2, "value": 1e-7}
+    switch_py = '{"10":2,"9":1,"value":1e-07}'
+    switch_ts = '{"9":1,"10":2,"value":1e-7}'
+    switch_jcs = '{"10":2,"9":1,"value":1e-7}'
+    switches = [
+        ("absent", None, "2.0", "an event that declares no spec_version keeps the 2.0 rule"),
+        ("2.0", "2.0", "2.0", "2.0 keeps the 2.0 rule"),
+        ("2.1", "2.1", "jcs", "2.1 hashes by RFC 8785"),
+        ("2.10", "2.10", "jcs", "the minor is a number: 2.10 is later than 2.1, not a string below it"),
+        ("3", "3", "2.0", "not 2.<minor>: an implementation does not guess the rule of a version it cannot read"),
+        ("2.1-rc", "2.1-rc", "2.0", "not 2.<minor>: a suffix is not a minor"),
+    ]
+    for case_id, version, rule, title in switches:
+        case = {"id": "version_switch." + case_id, "title": title, "data": copy.deepcopy(switch_data),
+                "status": "version_switch", "rule": rule}
+        if version is not None:
+            case["spec_version"] = version
+        case["by_implementation"] = {
+            "python": {"canonical": switch_py, "content_hash": sha16(switch_py)},
+            "typescript": {"canonical": switch_ts, "content_hash": sha16(switch_ts)},
+        }
+        case["jcs"] = {"canonical": switch_jcs, "content_hash": sha16(switch_jcs)}
+        out.append(case)
     return out
 
 
@@ -362,8 +461,32 @@ def documents():
     }
 
 
+def _escape_surrogates(text):
+    """A lone surrogate has no UTF-8 form, so the file carries it as a JSON escape.
+
+    json.dumps(ensure_ascii=False) leaves every non-ASCII character as it is, and
+    a lone surrogate cannot then be written as UTF-8. Surrogates only occur inside
+    JSON strings, where a \\uXXXX escape is exactly what a parser expects; every
+    reader (json.loads, JSON.parse) turns it back into the same lone code unit.
+    """
+    return "".join("\\u%04x" % ord(ch) if 0xD800 <= ord(ch) <= 0xDFFF else ch for ch in text)
+
+
+#: The escaped_solidus_in_source case: its data is WRITTEN with `\/`, which every
+#: JSON parser reads as `/` and which RFC 8785 writes unescaped. json.dumps never
+#: emits `\/`, so the escape is put in here, at the one place it must appear.
+_SOLIDUS_PLAIN = '"path": "a/b/c"'
+_SOLIDUS_ESCAPED = '"path": "a\\/b\\/c"'
+
+
 def render(doc):
-    return json.dumps(doc, indent=2, ensure_ascii=False) + "\n"
+    text = _escape_surrogates(json.dumps(doc, indent=2, ensure_ascii=False))
+    if _SOLIDUS_PLAIN in text:
+        # Exactly once: the data member of that one case. Canonical strings are
+        # JSON-encoded inside the file (their quotes are escaped), so they cannot match.
+        assert text.count(_SOLIDUS_PLAIN) == 1, "the solidus marker must appear exactly once"
+        text = text.replace(_SOLIDUS_PLAIN, _SOLIDUS_ESCAPED)
+    return text + "\n"
 
 
 def main():

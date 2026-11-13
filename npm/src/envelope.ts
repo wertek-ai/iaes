@@ -56,36 +56,91 @@ export function canonicalJson(value: unknown): string {
     }
     return JSON.stringify(value);
   }
-  if (typeof value === "string") return JSON.stringify(value);
+  if (typeof value === "string") return jcsString(value);
   if (Array.isArray(value)) return "[" + value.map(canonicalJson).join(",") + "]";
   if (typeof value === "object") {
+    // Only a plain object is a JSON object. JSON.stringify writes a Map, a Set
+    // or a class instance as "{}" (or as whatever its toJSON returns), so two
+    // different values would hash the same; refuse instead of guessing.
+    const proto = Object.getPrototypeOf(value);
+    if (proto !== Object.prototype && proto !== null) {
+      const name = (value as object).constructor?.name ?? "object";
+      throw new Error(`${name} is not a JSON object; only plain objects can be hashed`);
+    }
     const obj = value as Record<string, unknown>;
     const keys = Object.keys(obj).filter((k) => obj[k] !== undefined).sort();
-    return "{" + keys.map((k) => JSON.stringify(k) + ":" + canonicalJson(obj[k])).join(",") + "}";
+    return "{" + keys.map((k) => jcsString(k) + ":" + canonicalJson(obj[k])).join(",") + "}";
   }
   throw new Error(`${typeof value} is not a JSON value`);
 }
 
-/** IAES-RFC-011: events that declare 2.1 or later hash by JCS; earlier ones keep their rule. */
-function usesJcs(specVersion: string): boolean {
-  const [major, minor] = String(specVersion).split(".").map((p) => parseInt(p, 10));
-  if (Number.isNaN(major) || Number.isNaN(minor)) return false;
-  return major > 2 || (major === 2 && minor >= 1);
+// A high surrogate not followed by a low one, or a low one not preceded by a high one.
+const LONE_SURROGATE = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:^|[^\uD800-\uDBFF])[\uDC00-\uDFFF]/;
+
+function isWellFormed(s: string): boolean {
+  const native = (s as unknown as { isWellFormed?: () => boolean }).isWellFormed;
+  return typeof native === "function" ? native.call(s) : !LONE_SURROGATE.test(s);
+}
+
+/**
+ * RFC 8785 serialises I-JSON (RFC 7493), which excludes lone surrogates.
+ * JSON.stringify would escape one as `\ud800` and hash it, while an
+ * implementation that encodes to UTF-8 cannot; refuse it, as the Python SDK does.
+ */
+function jcsString(s: string): string {
+  if (!isWellFormed(s)) {
+    throw new Error("a string with a lone surrogate is not I-JSON (RFC 8785, section 3.1); omit content_hash");
+  }
+  return JSON.stringify(s);
+}
+
+/**
+ * The only spec_version form that selects RFC 8785: `2.<minor>`, with the
+ * minor read as a number (so `2.10` is later than `2.9`). The same expression
+ * is in the Python SDK.
+ */
+const SPEC_VERSION_2X = /^2\.([0-9]+)$/;
+
+/**
+ * IAES-RFC-011 and IAES_SPEC.md, Producer Guidelines, recommended behavior 6.
+ *
+ * JCS when the event declares `2.<minor>` with minor 1 or later. Anything else
+ * -- absent, `2.0`, `3`, `2.1-rc` -- keeps the 2.0 computation: an
+ * implementation does not guess the rule of a version it cannot read.
+ */
+function usesJcs(specVersion: string | null | undefined): boolean {
+  if (typeof specVersion !== "string") return false;
+  const m = SPEC_VERSION_2X.exec(specVersion);
+  return m !== null && parseInt(m[1], 10) >= 1;
 }
 
 /**
  * SHA-256 prefix (16 chars) of the data payload for idempotency.
  *
  * The rule follows the `spec_version` the event declares (IAES-RFC-011 §5):
- * 2.1 and later hash the UTF-8 bytes of the JCS serialisation; 2.0 and earlier
- * keep the 2.0 computation, so an event built as 2.0 and retried after an
- * upgrade keeps its hash and is not counted twice.
+ * `2.<minor>` with minor 1 or later hashes the UTF-8 bytes of the JCS
+ * serialisation; anything else -- 2.0 and earlier, an absent `spec_version`
+ * (`undefined` or `null` passed explicitly), or a value that is not
+ * `2.<minor>` -- keeps the 2.0 computation, so an event built as 2.0 and
+ * retried after an upgrade keeps its hash and is not counted twice.
+ *
+ * Omitting the argument means this SDK's own version (`SPEC_VERSION`).
+ * Passing `event.spec_version` from an event that has none means absent, as
+ * in the Python SDK, where that value is `None`.
+ *
+ * @throws Error under RFC 8785, for a value it cannot serialise: NaN, an
+ *   infinity (which is also what an integer beyond the largest double parses
+ *   to), a lone surrogate, or something that is not a JSON value. The producer
+ *   omits `content_hash` (it is optional).
  */
 export function computeContentHash(
   data: Record<string, unknown>,
-  specVersion: string = SPEC_VERSION,
+  specVersion?: string | null,
 ): string {
-  const canonical = usesJcs(specVersion) ? canonicalJson(data) : JSON.stringify(sortKeys(data));
+  // `arguments.length`, not a default parameter: a default would turn an
+  // explicitly absent spec_version (undefined) into this SDK's version.
+  const declared = arguments.length < 2 ? SPEC_VERSION : specVersion;
+  const canonical = usesJcs(declared) ? canonicalJson(data) : JSON.stringify(sortKeys(data));
   return createHash("sha256").update(canonical, "utf8").digest("hex").slice(0, 16);
 }
 
@@ -176,6 +231,13 @@ export function buildEnvelope(opts: {
   data: Record<string, unknown>;
   /** Override the derived schema URI. Pass null to omit it entirely. */
   dataschema?: string | null;
+  /**
+   * false for `asset.state`, which MUST NOT carry `content_hash`
+   * (IAES_SPEC.md, `asset.state`, rule 3): the hash is then not computed at
+   * all, so a value RFC 8785 cannot serialise does not fail an event that
+   * never needed it. The caller drops the field and returns the wire type.
+   */
+  withContentHash?: boolean;
 }): IAESEnvelope {
   // Remove null/undefined values from data
   const cleanData: Record<string, unknown> = {};
@@ -190,7 +252,7 @@ export function buildEnvelope(opts: {
     correlation_id: opts.correlationId,
     timestamp: opts.timestamp,
     source: opts.source,
-    content_hash: computeContentHash(cleanData),
+    content_hash: opts.withContentHash === false ? "" : computeContentHash(cleanData),
     asset: opts.asset,
     data: cleanData,
   };

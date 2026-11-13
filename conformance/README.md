@@ -78,6 +78,17 @@ in 2.1):
 - **2.1 and later** hash the UTF-8 bytes of the RFC 8785 (JCS) serialisation. Every
   case carries `jcs` (canonical string and hash), the same in every implementation;
   `jcs_only` cases add RFC 8785's own example and the boundaries of the number form.
+  A number is hashed as its IEEE-754 double: `2**53 + 1` as `2**53`, as `JSON.parse`
+  reads it.
+- **`jcs_reject`** cases are what RFC 8785 cannot serialise (a lone surrogate, an
+  integer beyond the largest double). Every implementation must refuse them when
+  hashing by JCS -- a `ValueError` in Python, an `Error` in TypeScript -- and never
+  hash them by some other form; the producer omits `content_hash`.
+- **`version_switch`** cases say which rule a declared `spec_version` selects: JCS
+  for `2.<minor>` with a minor of 1 or more, the 2.0 rule for anything else, absent
+  included (the case has no `spec_version` key, and the runner passes `None` /
+  `undefined`). Their payload gives three different strings under the 2.0 Python
+  rule, the 2.0 TypeScript rule and JCS, so a wrong switch cannot pass.
 
 ## Where each implementation runs the cases
 
@@ -87,6 +98,7 @@ in 2.1):
 | TypeScript SDK | `npm/test/conformance.test.js` |
 | Node-RED nodes | `node-red/test/conformance.test.js` (both modes, plus a node saved before Strict existed) |
 | n8n nodes | `n8n-nodes/test/conformance.test.js` (both modes) |
+| Ignition scenario | `tests/test_ignition_jcs.py` (its RFC 8785 serialiser, on CPython, over every `jcs` entry) |
 
 ## Adding a case
 

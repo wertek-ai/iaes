@@ -15,6 +15,12 @@ pass --allow-major.
     python tools/check_schema_compat.py --baseline <git-ref>
     python tools/check_schema_compat.py --baseline HEAD~1 --allow-major
 
+A schema that is in no release yet (absent at the last `spec-v*` tag reachable
+from HEAD) is still compared, and its narrowings are reported, but they do not
+block: the promise is between releases, and no consumer was built against a
+schema that was never released. Without a release tag the guard fails closed
+and judges every schema as released.
+
 Exit codes: 0 compatible, 1 breaking change found, 2 usage or IO error.
 
 Deliberately written without dependencies: it has to run in CI before anything
@@ -254,6 +260,23 @@ def major_bump(baseline):
     return None
 
 
+def last_release():
+    """The most recent release tag reachable from HEAD, or None if there is none.
+
+    GOVERNANCE.md 4 promises that a consumer built for version N reads what N-1
+    produced: the promise is between RELEASES. A schema that is in no release
+    yet has no consumer built against it, so narrowing it while the release that
+    introduces it is being cut breaks nobody -- and that is exactly when a review
+    finds what to tighten. The tags are the evidence of what was released
+    (GOVERNANCE.md 8).
+    """
+    out = subprocess.run(["git", "describe", "--tags", "--abbrev=0", "--match", "spec-v*", "HEAD"],
+                         capture_output=True)
+    if out.returncode != 0:
+        return None
+    return out.stdout.decode("utf-8").strip() or None
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -278,7 +301,11 @@ def main():
         with open(SPEC_FILE, encoding="utf-8") as fh:
             declared = fh.read()
 
-    breaks, checked, added = [], 0, []
+    # Fail closed: without a release tag nothing can be shown to be unreleased,
+    # so every schema is judged as released.
+    release = last_release()
+
+    breaks, checked, added, unreleased = [], 0, [], []
     for name in files:
         path = os.path.join(SCHEMA_DIR, name).replace(os.sep, "/")
         old = read_at_ref(args.baseline, path)
@@ -290,13 +317,26 @@ def main():
         checked += 1
         found = []
         walk(old, new, "", found, declared)
-        breaks.extend((name,) + b for b in found)
+        if found and release and read_at_ref(release, path) is None:
+            unreleased.extend((name,) + b for b in found)
+        else:
+            breaks.extend((name,) + b for b in found)
 
     print("IAES compatibility check — GOVERNANCE.md 4 (mode: BACKWARD)")
     print("  baseline : %s" % args.baseline)
+    print("  release  : %s" % (release or "none reachable from HEAD: every schema is judged as released"))
     print("  compared : %d schema(s)" % checked)
     if added:
         print("  new      : %s (adding a schema is MINOR)" % ", ".join(added))
+    if unreleased:
+        print("\n%d narrowing(s) in a schema that is in no release up to %s, reported and"
+              % (len(unreleased), release))
+        print("not blocking: no consumer was built against it (GOVERNANCE.md 4 is between releases).\n")
+        for b in unreleased:
+            schema, where, what, detail, why = b
+            print("  %s  %s" % (schema, where))
+            print("      %s: %s" % (what, detail))
+            print("")
 
     # A schema present in the baseline and gone from the tree.
     removed = []

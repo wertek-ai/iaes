@@ -1329,6 +1329,173 @@
       }
     },
     {
+      "id": "valid.asset.state.later_minor",
+      "title": "asset.state declared as a later 2.x minor",
+      "event": {
+        "spec_version": "2.10",
+        "event_type": "asset.state",
+        "event_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+        "correlation_id": "9b2a3f4e-1c5d-4e6f-8a7b-0c1d2e3f4a5b",
+        "timestamp": "2026-10-06T12:00:00Z",
+        "source": "acme.monitoring",
+        "asset": {
+          "asset_id": "PUMP-101"
+        },
+        "data": {
+          "state": "up"
+        }
+      },
+      "expect": {
+        "schema_valid": true,
+        "conforming": true,
+        "nonconforming_fields": []
+      }
+    },
+    {
+      "id": "schema.asset.state.declared_2_0",
+      "title": "asset.state does not exist in 2.0: an event of this type declares 2.1 or later",
+      "event": {
+        "spec_version": "2.0",
+        "event_type": "asset.state",
+        "event_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+        "correlation_id": "9b2a3f4e-1c5d-4e6f-8a7b-0c1d2e3f4a5b",
+        "timestamp": "2026-10-06T12:00:00Z",
+        "source": "acme.monitoring",
+        "asset": {
+          "asset_id": "PUMP-101"
+        },
+        "data": {
+          "state": "up"
+        }
+      },
+      "expect": {
+        "schema_valid": false,
+        "conforming": false,
+        "nonconforming_fields": []
+      }
+    },
+    {
+      "id": "schema.asset.state.up_with_down_kind",
+      "title": "an up state carries no down_kind",
+      "event": {
+        "spec_version": "2.1",
+        "event_type": "asset.state",
+        "event_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+        "correlation_id": "9b2a3f4e-1c5d-4e6f-8a7b-0c1d2e3f4a5b",
+        "timestamp": "2026-10-06T12:00:00Z",
+        "source": "acme.monitoring",
+        "asset": {
+          "asset_id": "PUMP-101"
+        },
+        "data": {
+          "state": "up",
+          "down_kind": "planned"
+        }
+      },
+      "expect": {
+        "schema_valid": false,
+        "conforming": false,
+        "nonconforming_fields": []
+      }
+    },
+    {
+      "id": "schema.asset.state.up_with_down_cause",
+      "title": "an up state carries no down_cause, published or not",
+      "event": {
+        "spec_version": "2.1",
+        "event_type": "asset.state",
+        "event_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+        "correlation_id": "9b2a3f4e-1c5d-4e6f-8a7b-0c1d2e3f4a5b",
+        "timestamp": "2026-10-06T12:00:00Z",
+        "source": "acme.monitoring",
+        "asset": {
+          "asset_id": "PUMP-101"
+        },
+        "data": {
+          "state": "up",
+          "down_cause": "acme_shift_change"
+        }
+      },
+      "expect": {
+        "schema_valid": false,
+        "conforming": false,
+        "nonconforming_fields": []
+      }
+    },
+    {
+      "id": "schema.asset.state.up_with_down_kind_null",
+      "title": "an up state carries no down_kind, not even null",
+      "event": {
+        "spec_version": "2.1",
+        "event_type": "asset.state",
+        "event_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+        "correlation_id": "9b2a3f4e-1c5d-4e6f-8a7b-0c1d2e3f4a5b",
+        "timestamp": "2026-10-06T12:00:00Z",
+        "source": "acme.monitoring",
+        "asset": {
+          "asset_id": "PUMP-101"
+        },
+        "data": {
+          "state": "up",
+          "down_kind": null
+        }
+      },
+      "expect": {
+        "schema_valid": false,
+        "conforming": false,
+        "nonconforming_fields": []
+      }
+    },
+    {
+      "id": "schema.asset.state.down_with_up_mode",
+      "title": "a down state carries no up_mode",
+      "event": {
+        "spec_version": "2.1",
+        "event_type": "asset.state",
+        "event_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+        "correlation_id": "9b2a3f4e-1c5d-4e6f-8a7b-0c1d2e3f4a5b",
+        "timestamp": "2026-10-06T12:00:00Z",
+        "source": "acme.monitoring",
+        "asset": {
+          "asset_id": "PUMP-101"
+        },
+        "data": {
+          "state": "down",
+          "down_kind": "unplanned",
+          "up_mode": "running"
+        }
+      },
+      "expect": {
+        "schema_valid": false,
+        "conforming": false,
+        "nonconforming_fields": []
+      }
+    },
+    {
+      "id": "schema.asset.state.down_kind_null",
+      "title": "down_kind is never null: a down state knows its branch",
+      "event": {
+        "spec_version": "2.1",
+        "event_type": "asset.state",
+        "event_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+        "correlation_id": "9b2a3f4e-1c5d-4e6f-8a7b-0c1d2e3f4a5b",
+        "timestamp": "2026-10-06T12:00:00Z",
+        "source": "acme.monitoring",
+        "asset": {
+          "asset_id": "PUMP-101"
+        },
+        "data": {
+          "state": "down",
+          "down_kind": null
+        }
+      },
+      "expect": {
+        "schema_valid": false,
+        "conforming": false,
+        "nonconforming_fields": []
+      }
+    },
+    {
       "id": "nonconforming.event_id",
       "title": "event_id must be a UUID (RFC 4122)",
       "event": {

@@ -86,8 +86,11 @@ millisecond-precise; the timestamp is volatile and still a valid date-time.
 
 From 2.1 the hash is SHA-256 over the RFC 8785 (JCS) serialisation (IAES-RFC-011), and `json.dumps` is not JCS: it
 escapes non-ASCII text, writes `1e-07` and sorts keys by code point. So the script carries its own serialiser
-(`canonical`, `jcs_string`, `jcs_number`), written once for Jython 2.7 and CPython 3. On CPython it reproduces all 14
-shared JCS vectors in `conformance/content_hash.json`, including RFC 8785's own example.
+(`canonical`, `jcs_string`, `jcs_number`), written once for Jython 2.7 and CPython 3. On CPython it reproduces every
+shared JCS vector in `conformance/content_hash.json`, including RFC 8785's own example: `tests/test_ignition_jcs.py`
+runs the serialiser, taken out of the script unchanged, over all of them (34 serialised; 3 refused: a lone surrogate in
+a string and in a member name, and an integer beyond the largest double). An integer is hashed as the double nearest
+to it, as `JSON.parse` reads it.
 
 For the four payloads of the story the two rules give the same bytes (ASCII text, ordinary numbers), which is why the
 hashes above are unchanged.
@@ -102,6 +105,19 @@ the story at 2.1         -> 5 events, match the fixture; the four published ones
 ```
 
 The helper tag is not part of the scenario.
+
+**Re-measured after the pre-cut review (2026-10-07, same Gateway), over all 37 cases of `conformance/content_hash.json`:**
+
+```
+first run                -> 34 of 37: 5e-324, 2e23 and 1e23 hashed differently. In Jython repr(float) is Java's
+                            Double.toString, which is not the shortest form: repr(1e23) = 9.999999999999999e+22,
+                            repr(5e-324) = 4.9e-324, repr(2e23) = 1.9999999999999998e+23
+after the fix            -> 37 of 37. The serialiser now takes the fewest correctly rounded digits that read back as
+                            the same double ("%.*e"), which is the shortest form in CPython and in Jython alike
+refusals                 -> the integer beyond the largest double is refused by the serialiser; the two lone
+                            surrogates are refused one step earlier, by Jython's own json.loads ("Unpaired high
+                            surrogate"), so they never reach it on the normal path
+```
 
 **What the real Gateway found that the stand-in could not:** in Jython a **Java** exception (here `java.io.IOException`
 from `httpClient`, a receiver the Gateway could not reach) is not a Python `Exception`, so `except Exception` let it
@@ -127,5 +143,6 @@ STATUS        verified 2026-10-06 · on every commit: CPython with a stand-in fo
               Gateway (trial, Docker): the five events match the fixture, their content_hash equals python's, the four
               published ones validate, and the batch arrives at a receiver as ONE POST identical to what was emitted. Not
               verified: Ignition on Windows, a licensed Gateway, the Designer. The 2.1 script (its RFC 8785
-              serialiser) verified on the same Gateway on 2026-10-07: 14 of 14 shared JCS vectors in Jython.
+              serialiser) verified on the same Gateway on 2026-10-07: 37 of 37 shared JCS vectors in Jython,
+              including the 20 vectors and 3 refusals added by the pre-cut review.
 ```

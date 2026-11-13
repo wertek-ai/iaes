@@ -267,6 +267,373 @@
         "canonical": "{\"s\":\"a\\b\\t\\n\\f\\r\\u0007z\"}",
         "content_hash": "2393704dd20db5c0"
       }
+    },
+    {
+      "id": "integer_1e16",
+      "title": "an integer above 2**53 that is a double: written in full, never refused",
+      "data": {
+        "value": 10000000000000000
+      },
+      "status": "jcs_only",
+      "jcs": {
+        "canonical": "{\"value\":10000000000000000}",
+        "content_hash": "20be06524038a596"
+      }
+    },
+    {
+      "id": "integer_2p53_plus_2",
+      "title": "2**53 + 2 is a double, so it is written exactly",
+      "data": {
+        "value": 9007199254740994
+      },
+      "status": "jcs_only",
+      "jcs": {
+        "canonical": "{\"value\":9007199254740994}",
+        "content_hash": "ab21889a153140e1"
+      }
+    },
+    {
+      "id": "integer_2p53_plus_1",
+      "title": "2**53 + 1 is not a double: hashed as the nearest one, 2**53, as JSON.parse reads it",
+      "data": {
+        "value": 9007199254740993
+      },
+      "status": "jcs_only",
+      "jcs": {
+        "canonical": "{\"value\":9007199254740992}",
+        "content_hash": "3b0d9a238f369ef1"
+      }
+    },
+    {
+      "id": "smallest_subnormal",
+      "title": "the smallest positive double",
+      "data": {
+        "value": 5e-324
+      },
+      "status": "jcs_only",
+      "jcs": {
+        "canonical": "{\"value\":5e-324}",
+        "content_hash": "8f275eb622ce665f"
+      }
+    },
+    {
+      "id": "largest_double",
+      "title": "the largest finite double",
+      "data": {
+        "value": 1.7976931348623157e+308
+      },
+      "status": "jcs_only",
+      "jcs": {
+        "canonical": "{\"value\":1.7976931348623157e+308}",
+        "content_hash": "17579ea1287f0c7e"
+      }
+    },
+    {
+      "id": "exponent_2e23",
+      "title": "2e23: exponent form from 1e21 up",
+      "data": {
+        "value": 2e+23
+      },
+      "status": "jcs_only",
+      "jcs": {
+        "canonical": "{\"value\":2e+23}",
+        "content_hash": "ae009de35a9b7f20"
+      }
+    },
+    {
+      "id": "exponent_1e23",
+      "title": "1e23 is not exactly a double; its shortest round-trip digits are 1",
+      "data": {
+        "value": 1e+23
+      },
+      "status": "jcs_only",
+      "jcs": {
+        "canonical": "{\"value\":1e+23}",
+        "content_hash": "5add8f0ad0ac9f9e"
+      }
+    },
+    {
+      "id": "shortest_round_trip",
+      "title": "the shortest digits that round-trip, not a rounded decimal",
+      "data": {
+        "value": 0.30000000000000004
+      },
+      "status": "jcs_only",
+      "jcs": {
+        "canonical": "{\"value\":0.30000000000000004}",
+        "content_hash": "036c1902dbf44cd0"
+      }
+    },
+    {
+      "id": "line_separators",
+      "title": "U+2028 and U+2029 are not control characters: written as they are",
+      "data": {
+        "s": "a b c"
+      },
+      "status": "jcs_only",
+      "jcs": {
+        "canonical": "{\"s\":\"a b c\"}",
+        "content_hash": "5b2dc062ac2d05c4"
+      }
+    },
+    {
+      "id": "delete_character",
+      "title": "U+007F is not a control character for RFC 8785: written as it is",
+      "data": {
+        "s": "ab"
+      },
+      "status": "jcs_only",
+      "jcs": {
+        "canonical": "{\"s\":\"ab\"}",
+        "content_hash": "8f8675bc3c1b4364"
+      }
+    },
+    {
+      "id": "escaped_solidus_in_source",
+      "title": "the source writes a solidus escaped; JCS writes it unescaped",
+      "data": {
+        "path": "a\/b\/c"
+      },
+      "status": "jcs_only",
+      "jcs": {
+        "canonical": "{\"path\":\"a/b/c\"}",
+        "content_hash": "b0bb36063beff86f"
+      }
+    },
+    {
+      "id": "key_uffff",
+      "title": "U+FFFF sorts after a character outside the BMP by UTF-16 code unit, before it by code point",
+      "data": {
+        "￿": 1,
+        "😀": 2,
+        "a": 3
+      },
+      "status": "jcs_only",
+      "jcs": {
+        "canonical": "{\"a\":3,\"😀\":2,\"￿\":1}",
+        "content_hash": "ebf795fac6c6f147"
+      }
+    },
+    {
+      "id": "null_in_array",
+      "title": "null inside an array is kept, not omitted",
+      "data": {
+        "a": [
+          1,
+          null,
+          "x"
+        ]
+      },
+      "status": "jcs_only",
+      "jcs": {
+        "canonical": "{\"a\":[1,null,\"x\"]}",
+        "content_hash": "09eb9d670454768e"
+      }
+    },
+    {
+      "id": "nested_empty",
+      "title": "empty objects and arrays, nested",
+      "data": {
+        "o": {},
+        "l": [],
+        "n": {
+          "e": {},
+          "a": []
+        }
+      },
+      "status": "jcs_only",
+      "jcs": {
+        "canonical": "{\"l\":[],\"n\":{\"a\":[],\"e\":{}},\"o\":{}}",
+        "content_hash": "4b5af6e97ddb9b87"
+      }
+    },
+    {
+      "id": "lone_surrogate",
+      "title": "a lone surrogate is not I-JSON (RFC 8785 section 3.1)",
+      "data": {
+        "s": "a\ud800b"
+      },
+      "status": "jcs_reject",
+      "jcs": {
+        "reject": true
+      }
+    },
+    {
+      "id": "lone_surrogate_key",
+      "title": "a member name with a lone surrogate is not I-JSON either",
+      "data": {
+        "\udc00": 1
+      },
+      "status": "jcs_reject",
+      "jcs": {
+        "reject": true
+      }
+    },
+    {
+      "id": "integer_beyond_largest_double",
+      "title": "an integer beyond the largest double has no number form",
+      "data": {
+        "value": 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+      },
+      "status": "jcs_reject",
+      "jcs": {
+        "reject": true
+      }
+    },
+    {
+      "id": "version_switch.absent",
+      "title": "an event that declares no spec_version keeps the 2.0 rule",
+      "data": {
+        "9": 1,
+        "10": 2,
+        "value": 1e-07
+      },
+      "status": "version_switch",
+      "rule": "2.0",
+      "by_implementation": {
+        "python": {
+          "canonical": "{\"10\":2,\"9\":1,\"value\":1e-07}",
+          "content_hash": "77f63394d31fe9c5"
+        },
+        "typescript": {
+          "canonical": "{\"9\":1,\"10\":2,\"value\":1e-7}",
+          "content_hash": "72ce67c6b9db17bb"
+        }
+      },
+      "jcs": {
+        "canonical": "{\"10\":2,\"9\":1,\"value\":1e-7}",
+        "content_hash": "ef10700631c27a00"
+      }
+    },
+    {
+      "id": "version_switch.2.0",
+      "title": "2.0 keeps the 2.0 rule",
+      "data": {
+        "9": 1,
+        "10": 2,
+        "value": 1e-07
+      },
+      "status": "version_switch",
+      "rule": "2.0",
+      "spec_version": "2.0",
+      "by_implementation": {
+        "python": {
+          "canonical": "{\"10\":2,\"9\":1,\"value\":1e-07}",
+          "content_hash": "77f63394d31fe9c5"
+        },
+        "typescript": {
+          "canonical": "{\"9\":1,\"10\":2,\"value\":1e-7}",
+          "content_hash": "72ce67c6b9db17bb"
+        }
+      },
+      "jcs": {
+        "canonical": "{\"10\":2,\"9\":1,\"value\":1e-7}",
+        "content_hash": "ef10700631c27a00"
+      }
+    },
+    {
+      "id": "version_switch.2.1",
+      "title": "2.1 hashes by RFC 8785",
+      "data": {
+        "9": 1,
+        "10": 2,
+        "value": 1e-07
+      },
+      "status": "version_switch",
+      "rule": "jcs",
+      "spec_version": "2.1",
+      "by_implementation": {
+        "python": {
+          "canonical": "{\"10\":2,\"9\":1,\"value\":1e-07}",
+          "content_hash": "77f63394d31fe9c5"
+        },
+        "typescript": {
+          "canonical": "{\"9\":1,\"10\":2,\"value\":1e-7}",
+          "content_hash": "72ce67c6b9db17bb"
+        }
+      },
+      "jcs": {
+        "canonical": "{\"10\":2,\"9\":1,\"value\":1e-7}",
+        "content_hash": "ef10700631c27a00"
+      }
+    },
+    {
+      "id": "version_switch.2.10",
+      "title": "the minor is a number: 2.10 is later than 2.1, not a string below it",
+      "data": {
+        "9": 1,
+        "10": 2,
+        "value": 1e-07
+      },
+      "status": "version_switch",
+      "rule": "jcs",
+      "spec_version": "2.10",
+      "by_implementation": {
+        "python": {
+          "canonical": "{\"10\":2,\"9\":1,\"value\":1e-07}",
+          "content_hash": "77f63394d31fe9c5"
+        },
+        "typescript": {
+          "canonical": "{\"9\":1,\"10\":2,\"value\":1e-7}",
+          "content_hash": "72ce67c6b9db17bb"
+        }
+      },
+      "jcs": {
+        "canonical": "{\"10\":2,\"9\":1,\"value\":1e-7}",
+        "content_hash": "ef10700631c27a00"
+      }
+    },
+    {
+      "id": "version_switch.3",
+      "title": "not 2.<minor>: an implementation does not guess the rule of a version it cannot read",
+      "data": {
+        "9": 1,
+        "10": 2,
+        "value": 1e-07
+      },
+      "status": "version_switch",
+      "rule": "2.0",
+      "spec_version": "3",
+      "by_implementation": {
+        "python": {
+          "canonical": "{\"10\":2,\"9\":1,\"value\":1e-07}",
+          "content_hash": "77f63394d31fe9c5"
+        },
+        "typescript": {
+          "canonical": "{\"9\":1,\"10\":2,\"value\":1e-7}",
+          "content_hash": "72ce67c6b9db17bb"
+        }
+      },
+      "jcs": {
+        "canonical": "{\"10\":2,\"9\":1,\"value\":1e-7}",
+        "content_hash": "ef10700631c27a00"
+      }
+    },
+    {
+      "id": "version_switch.2.1-rc",
+      "title": "not 2.<minor>: a suffix is not a minor",
+      "data": {
+        "9": 1,
+        "10": 2,
+        "value": 1e-07
+      },
+      "status": "version_switch",
+      "rule": "2.0",
+      "spec_version": "2.1-rc",
+      "by_implementation": {
+        "python": {
+          "canonical": "{\"10\":2,\"9\":1,\"value\":1e-07}",
+          "content_hash": "77f63394d31fe9c5"
+        },
+        "typescript": {
+          "canonical": "{\"9\":1,\"10\":2,\"value\":1e-7}",
+          "content_hash": "72ce67c6b9db17bb"
+        }
+      },
+      "jcs": {
+        "canonical": "{\"10\":2,\"9\":1,\"value\":1e-7}",
+        "content_hash": "ef10700631c27a00"
+      }
     }
   ]
 }

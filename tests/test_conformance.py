@@ -53,8 +53,21 @@ def test_nonconforming_fields(case):
     assert find_nonconformities(case["event"]) == case["expect"]["nonconforming_fields"], case["title"]
 
 
-@pytest.mark.parametrize("case", [c for c in HASHES if c["status"] != "jcs_only"],
-                         ids=[c["id"] for c in HASHES if c["status"] != "jcs_only"])
+#: Cases that carry a 2.0 expectation. jcs_only and jcs_reject exist only for
+#: RFC 8785; version_switch cases are judged by test_the_declared_version_selects_the_rule.
+HASHES_2_0 = [c for c in HASHES if c["status"] in ("agreed", "divergent_2_0")]
+HASHES_JCS = [c for c in HASHES if c["status"] != "jcs_reject"]
+HASHES_REJECT = [c for c in HASHES if c["status"] == "jcs_reject"]
+HASHES_SWITCH = [c for c in HASHES if c["status"] == "version_switch"]
+
+
+def test_the_hash_suite_has_each_kind_of_case():
+    """Control: a suite with no refusal or no version switch proves nothing about either."""
+    assert {c["status"] for c in HASHES} == {
+        "agreed", "divergent_2_0", "jcs_only", "jcs_reject", "version_switch"}
+
+
+@pytest.mark.parametrize("case", HASHES_2_0, ids=[c["id"] for c in HASHES_2_0])
 def test_content_hash_2_0(case):
     """2.0 events keep the 2.0 rule (IAES-RFC-011 §5): what this SDK produced before."""
     expected = (case["content_hash"] if case["status"] == "agreed"
@@ -62,8 +75,28 @@ def test_content_hash_2_0(case):
     assert compute_content_hash(case["data"], "2.0") == expected, case["title"]
 
 
-@pytest.mark.parametrize("case", HASHES, ids=[c["id"] for c in HASHES])
+@pytest.mark.parametrize("case", HASHES_JCS, ids=[c["id"] for c in HASHES_JCS])
 def test_content_hash_2_1_is_jcs(case):
     """2.1 and later hash RFC 8785 (JCS): the same bytes in every implementation."""
     assert canonical_json(case["data"]) == case["jcs"]["canonical"], case["title"]
     assert compute_content_hash(case["data"], "2.1") == case["jcs"]["content_hash"], case["title"]
+
+
+@pytest.mark.parametrize("case", HASHES_REJECT, ids=[c["id"] for c in HASHES_REJECT])
+def test_content_hash_2_1_refuses_what_jcs_cannot_serialise(case):
+    """A value RFC 8785 cannot serialise is refused with a ValueError, never hashed some other way."""
+    with pytest.raises(ValueError):
+        canonical_json(case["data"])
+    with pytest.raises(ValueError):
+        compute_content_hash(case["data"], "2.1")
+
+
+@pytest.mark.parametrize("case", HASHES_SWITCH, ids=[c["id"] for c in HASHES_SWITCH])
+def test_the_declared_version_selects_the_rule(case):
+    """JCS only for 2.<minor> with minor >= 1; absent or unreadable keeps the 2.0 rule.
+
+    An absent spec_version is passed as None, which is what event.get("spec_version") gives.
+    """
+    expected = (case["jcs"]["content_hash"] if case["rule"] == "jcs"
+                else case["by_implementation"]["python"]["content_hash"])
+    assert compute_content_hash(case["data"], case.get("spec_version")) == expected, case["title"]

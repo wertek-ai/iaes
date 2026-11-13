@@ -684,3 +684,40 @@ class TestVersion:
             "iaes.__version__ is %s but pyproject.toml publishes %s"
             % (iaes.__version__, match.group(1))
         )
+
+
+class TestPreCut21:
+    """Findings of the adversarial review before the 2.1 cut."""
+
+    def test_a_measurement_of_1e16_builds_and_hashes(self):
+        """RFC 8785 works on doubles: 10**16 is one, and the builder must not refuse it."""
+        event = AssetMeasurement(asset_id="A", measurement_type="counter", value=10 ** 16,
+                                 unit="count").to_dict()
+        assert event["content_hash"] == iaes.compute_content_hash(
+            {"measurement_type": "counter", "unit": "count", "value": 10 ** 16})
+        assert iaes.canonical_json({"value": 10 ** 16}) == '{"value":10000000000000000}'
+
+    def test_asset_state_requires_timestamp(self):
+        """For asset.state the timestamp is the fact (IAES_SPEC.md, asset.state, rule 2)."""
+        import pytest
+
+        with pytest.raises(TypeError, match="requires timestamp"):
+            iaes.AssetState(asset_id="A", state="up")
+        event = iaes.AssetState(asset_id="A", state="up",
+                                timestamp=datetime(2026, 10, 6, 6, 10, tzinfo=timezone.utc)).to_dict()
+        assert event["timestamp"] == "2026-10-06T06:10:00+00:00"
+
+    def test_the_schema_rejects_fields_of_the_other_state(self):
+        import pytest
+
+        ts = "2026-10-06T06:10:00Z"
+        up = dict(asset_id="A", state="up", timestamp=ts, source="plant.scada")
+        for extra in ({"down_kind": "planned"}, {"down_cause": "acme_shift_change"}):
+            with pytest.raises(iaes.ValidationError):
+                iaes.validate(iaes.AssetState(**up, **extra).to_dict())
+        with pytest.raises(iaes.ValidationError):
+            iaes.validate(iaes.AssetState(asset_id="A", state="down", down_kind="unplanned",
+                                          up_mode="running", timestamp=ts,
+                                          source="plant.scada").to_dict())
+        # Control: the same up event without them is valid.
+        iaes.validate(iaes.AssetState(**up, up_mode="running").to_dict())

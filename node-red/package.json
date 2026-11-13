@@ -58,6 +58,7 @@
   },
   "files": [
     "nodes/",
+    "icons/",
     "examples/",
     "README.md",
     "LICENSE"
